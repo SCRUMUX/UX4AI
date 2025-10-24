@@ -1,0 +1,2932 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<title>Владимир Костял - UX4AI</title>
+<style>
+    /* Scroll world: make body tall so camera flies segment-by-segment */
+html, body {
+  margin: 0;
+  padding: 0;
+  background: #0B0F14;
+  color: #E6EEF8;
+  height: 100%;
+  overflow-x: hidden;
+  /* Establish consistent typography across the site: the base body text
+     corresponds to Text/Body/Base (16px/24px) from the design system【401908930998439†L284-L310】. */
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+    /* Height is set dynamically based on segments; keep minimal here */
+    #three-container { position:fixed; inset:0; overflow:hidden; }
+    #labels {
+      position: fixed; inset: 0; pointer-events: auto;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
+    }
+    .label {
+      position:absolute; transform:translate(-50%,-50%);
+      padding: 4px 10px;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+      font-weight: 500;
+      color: #E6EEF8;
+      background: rgba(18,23,34,0.85);
+      border: 1px solid #243041;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px rgba(36,48,65,0.4) inset, 0 2px 10px rgba(0,0,0,0.25);
+      white-space: nowrap;
+      opacity: 0.96;
+    }
+
+    .label:hover {
+      background: rgba(36, 48, 65, 0.95);
+      border-color: #5B9CFF;
+      color: #CFE8FF;
+      cursor: pointer;
+    }
+    /* HUD chips (layer hints) preserved for orientation */
+    .hud {
+      position: fixed; left: 12px; top: 12px; right: 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+      background:#121722cc; border:1px solid #243041; border-radius:12px; padding:8px 10px; backdrop-filter: blur(6px);
+      z-index:10; font-size:12px;
+    }
+    .chip { padding:4px 8px; border:1px solid #2a3b51; border-radius:10px; background:#162032; opacity:0.96; }
+    .spacer{flex:1}
+    .hint {opacity:0.7}
+
+    /* Overlay backdrop for node details. This layer darkens the background when a
+       node is selected and enables clicks outside of the panels to close the
+       overlay. */
+    #overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 900;
+    }
+    #overlay.active {
+      pointer-events: auto;
+      opacity: 1;
+    }
+    /* Hide unused legacy panels by default */
+    #object-icon, #big-panel, #small-panel {
+      display: none;
+    }
+    /* Detached HUD elements for the clicked node */
+    #hud-object-icon {
+      position: fixed;
+      top: 200px;
+      left: 450px;
+      right: auto;
+      width: 200px;
+      height: 200px;
+      border-radius: 50%;
+      background: #5B9CFF; /* will be overridden with the node’s colour via JS */
+      box-shadow: 0 0 20px rgba(91, 156, 255, 0.5);
+      border: 3px solid #243041;
+      display: none;
+      z-index: 1000;
+    }
+    #hud-big-panel {
+      position: fixed;
+      top: 200px;
+      right: 450px;
+      left: auto;
+      width: 580px;
+      height: 640px;
+      overflow-y: auto;
+      background: rgba(18, 23, 34, 0.9);
+      border: 1px solid #243041;
+      border-radius: 12px;
+      padding: 20px;
+      color: #E6EEF8;
+      line-height: 1.5;
+      white-space: pre-line;
+      display: none;
+      z-index: 1000;
+    }
+    #hud-small-panel {
+      position: fixed;
+      top: 200px;
+      left: 450px;
+      right: auto;
+      width: 250px;
+      display: none;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+      background: none;
+      border: none;
+      z-index: 1000;
+    }
+    #hud-small-panel, #hud-small-panel * { box-sizing: border-box; }
+    /* Section header inside HUD (title, summary, prev/next) */
+    #hud-small-panel .hud-section-header {
+      width: 100%;
+      text-align: left;
+      color: #E6EEF8;
+      background: rgba(18,23,34,0.60);
+      border: 1px solid #243041;
+      border-radius: 8px;
+      
+    }
+    #hud-small-panel .hud-section-title {
+      margin: 0 0 6px 0;
+      
+      font-weight: 600;
+      color: #CFE8FF;
+    }
+    #hud-small-panel .hud-section-summary {
+      margin: 0 0 8px 0;
+      
+      line-height: 1.4;
+      color: #9AA6B2;
+    }
+    #hud-small-panel .hud-section-nav {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    #hud-small-panel .hud-section-nav a {
+      font-size: 12px;
+      color: #9AA6B2;
+      text-decoration: none;
+      padding: 4px 6px;
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+    #hud-small-panel .hud-section-nav a:hover {
+      color: #5B9CFF;
+      background: rgba(91,156,255,0.08);
+    }
+    #hud-small-panel button {
+      width: 100%;
+      padding: 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #9AA6B2;
+      background: rgba(18, 23, 34, 0.80);
+      border: 1px solid #243041;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    #hud-small-panel button:hover {
+      color: #5B9CFF;
+      background: rgba(91, 156, 255, 0.08);
+    }
+    #hud-small-panel button.active-tab {
+      color: #CFE8FF;
+      background: rgba(91,156,255,0.12);
+      border-color: #5B9CFF;
+      box-shadow: 0 0 0 1px rgba(91,156,255,0.25) inset;
+    }
+
+    /* === Custom header, tagline and links panel for the portfolio site === */
+    header#site-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      /* Make the header more airy: increased blur and greater transparency
+         for a matte‑glass effect as per the dark theme palette【401908930998439†L148-L179】. */
+      background: rgba(18, 23, 34, 0.30);
+      border-bottom: 1px solid #243041;
+      backdrop-filter: blur(12px) saturate(160%);
+      font-family: inherit;
+    }
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .header-logo .name {
+      /* SemiBold weight for the name to match Text/H1/H2 from the design system */
+      font-weight: 600;
+      font-size: 18px;
+      letter-spacing: 0.2px;
+      color: #CFE8FF;
+      white-space: nowrap;
+    }
+    .header-logo .tagline {
+      margin-left: 12px;
+      font-size: 14px;
+      color: #9AA6B2;
+      font-weight: 400;
+      white-space: nowrap;
+    }
+    .header-spacer {
+      flex: 1;
+    }
+    .header-btn {
+      /* Ghost style buttons: narrow, no borders, muted text colour. */
+      padding: 4px 10px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #9AA6B2;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .header-btn:hover {
+      color: #5B9CFF;
+      background: rgba(91, 156, 255, 0.08);
+    }
+    .header-btn:active {
+      color: #4A8AE6;
+      background: rgba(91, 156, 255, 0.15);
+    }
+
+    /* =========================================================================
+       HUD Container Layout
+       Introduce a wrapper for the small and big panels so that they can be
+       horizontally centred on desktop and stacked on smaller screens.  The
+       legacy absolute positioning of #hud-big-panel and #hud-small-panel
+       remains defined above but will be overridden when they live inside the
+       #hud-container.
+    ========================================================================= */
+    #hud-container {
+      position: fixed;
+      top: 200px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: none;
+      flex-direction: row;
+      gap: 24px;
+      z-index: 1000;
+    }
+    /* Reset absolute positioning when the panels are inside the container */
+    #hud-container #hud-small-panel,
+    #hud-container #hud-big-panel {
+      position: static;
+      top: auto;
+      left: auto;
+      right: auto;
+    }
+    #hud-container #hud-small-panel {
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: none;
+      border: none;
+    }
+    #hud-container #hud-big-panel {
+      width: 580px;
+      height: 640px;
+      overflow-y: auto;
+      background: rgba(18, 23, 34, 0.90);
+      border: 1px solid #243041;
+      border-radius: 12px;
+      padding: 20px;
+      color: #E6EEF8;
+      line-height: 1.5;
+      white-space: pre-line;
+    }
+
+    /* Header styling improvements for the HUD */
+    #hud-small-panel .hud-section-header {
+      position: relative;
+      padding: 12px;
+      background: rgba(18,23,34,0.60);
+      border: 1px solid #243041;
+      border-radius: 8px;
+    }
+    #hud-small-panel .hud-section-title {
+      margin: 0 0 4px 0;
+      
+      font-weight: 700;
+      color: #CFE8FF;
+    }
+    #hud-small-panel .hud-section-summary {
+      margin: 0 0 8px 0;
+      
+      line-height: 1.4;
+      color: #9AA6B2;
+    }
+    #hud-small-panel .hud-section-nav {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-start;
+    }
+    #hud-small-panel .hud-section-nav a {
+      flex: 1 1 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 8px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #5B9CFF;
+      background: rgba(18, 23, 34, 0.80);
+      border: 1px solid #243041;
+      border-radius: 6px;
+      text-decoration: none;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+    }
+    #hud-small-panel .hud-section-nav a:hover {
+      color: #CFE8FF;
+      background: rgba(91,156,255,0.08);
+      border-color: #5B9CFF;
+    }
+    /* Close button styling for the header */
+    #hud-small-panel .hud-close-btn {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px 6px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #5B9CFF;
+      background: rgba(18, 23, 34, 0.80);
+      border: 1px solid #243041;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s, border-color 0.2s;
+
+      /* Ensure the close button remains a small icon rather than stretching like the tab buttons. */
+      width: auto !important;
+      height: auto !important;
+      flex: 0 0 auto;
+    }
+    #hud-small-panel .hud-close-btn:hover {
+      color: #CFE8FF;
+      background: rgba(91,156,255,0.10);
+      border-color: #5B9CFF;
+    }
+
+    /* Responsive layout for tablet screens: stack panels vertically */
+    @media (max-width: 767px) {
+      #hud-container {
+        top: 120px;
+        flex-direction: column;
+        gap: 16px;
+        width: 90%;
+      }
+      #hud-container #hud-small-panel {
+        width: 100%;
+      }
+      #hud-container #hud-big-panel {
+        width: 100%;
+        height: 50vh;
+      }
+      #hud-small-panel .hud-section-title {
+        font-size: 18px;
+      }
+      #hud-small-panel .hud-section-summary {
+        font-size: 14px;
+      }
+      #hud-small-panel button {
+        font-size: 15px;
+      }
+    }
+
+    /* Responsive layout for mobile screens: further increase text sizes and
+       allow the big panel to use more vertical space */
+    @media (max-width: 479px) {
+      #hud-container {
+        top: 100px;
+        width: 94%;
+      }
+      #hud-container #hud-big-panel {
+        height: 55vh;
+      }
+      #hud-small-panel .hud-section-title {
+        font-size: 20px;
+      }
+      #hud-small-panel .hud-section-summary {
+        font-size: 15px;
+      }
+    }
+    /* Removed floating tagline; tagline now integrated with header logo */
+    #links-panel {
+      position: fixed;
+      top: 90px;
+      right: 24px;
+      width: 280px;
+      z-index: 1850;
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      padding: 12px 12px 10px 12px;
+      /* Remove heavy backdrop: each quick link button will carry its own style. */
+      background: none;
+      border: none;
+      border-radius: 12px;
+    }
+    .link-row a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 500;
+      /* Override inherited colour from body with !important to ensure the muted tone */
+      color: #9AA6B2 !important;
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      transition: background 0.2s, color 0.2s;
+    }
+    .link-row a:hover {
+      color: #5B9CFF !important;
+      background: rgba(91, 156, 255, 0.08);
+    }
+    .link-kicker {
+      font-size: 12px;
+      color: #9AA6B2;
+      opacity: 0.75;
+    }
+
+    /* Close button for links panel */
+    #links-panel .close-btn {
+      position: absolute;
+      top: 4px;
+      right: 6px;
+      font-size: 18px;
+      color: #9AA6B2;
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    #links-panel .close-btn:hover {
+      color: #CFE8FF;
+    }
+    /* Ensure HUD buttons look slightly bolder: we already set weight via main
+       declaration. This override is removed to avoid conflicting with the
+       unified button styles. */
+    /* Removed redundant HUD weight override */
+
+    /* Orbit mode banner */
+    #mode-banner {
+      position: fixed;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2100;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #CFE8FF;
+      background: rgba(18,23,34,0.80);
+      border: 1px solid #243041;
+      border-radius: 10px;
+      backdrop-filter: blur(8px);
+      display: none;
+      pointer-events: none;
+    }
+  
+/* === Strict overrides: no borders on HUD controls; mobile containment === */
+#hud-small-panel .hud-section-nav a,
+#hud-small-panel .hud-close-btn {
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#hud-small-panel .hud-section-nav a:hover,
+#hud-small-panel .hud-close-btn:hover {
+  border: none !important;
+  background: rgba(91,156,255,0.08) !important;
+  color: #CFE8FF !important;
+}
+/* Big panel: contain within viewport; avoid horizontal overflow */
+#hud-big-panel {
+  width: 100%;
+  max-width: 100vw;
+  height: auto;
+  max-height: calc(100dvh - 260px); /* account for header + top gap */
+  overflow-y: auto;                  /* allow vertical scroll if needed */
+  overflow-x: hidden;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* When big panel is inside the responsive container */
+#hud-container #hud-big-panel {
+  width: 100%;
+  max-width: 100vw;
+  height: auto;
+  max-height: calc(100dvh - 260px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+/* Tablet */
+@media (max-width: 767px) {
+  #hud-container { top: 96px !important; }
+  #hud-container #hud-big-panel {
+    max-height: calc(100dvh - 140px) !important;
+  }
+}
+/* Mobile */
+@media (max-width: 479px) {
+  #hud-container { top: 88px !important; }
+  #hud-container #hud-big-panel {
+    max-height: calc(100dvh - 128px) !important;
+  }
+}
+
+
+/* === Patch: keep Prev/Next on one line === */
+#hud-small-panel .hud-section-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: nowrap; /* do not wrap to second line */
+}
+#hud-small-panel .hud-section-nav a {
+  flex: 0 0 auto !important;   /* don't stretch, don't wrap */
+  white-space: nowrap !important;
+  padding: 2px 6px !important;  /* tighter to fit in one row */
+  line-height: 1.1 !important;
+}
+
+/* === Patch: ensure end of text visible on mobile === */
+#hud-container #hud-big-panel {
+  padding-bottom: 28px !important; /* safe breathing room for last line/link */
+}
+@media (max-width: 479px) {
+  #hud-small-panel .hud-section-nav a { font-size: 12px !important; }
+  #hud-container #hud-big-panel {
+    max-height: calc(100dvh - 112px) !important; /* a bit more room than before */
+    padding-bottom: 32px !important;
+    overscroll-behavior: contain; /* prevent parent from hijacking scroll */
+  }
+}
+
+
+/* === Mobile: scroll the HUD container instead of the big panel to guarantee bottom visibility === */
+@media (max-width: 479px) {
+  #hud-container {
+    top: 72px !important;
+    bottom: 8px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 94% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;          /* scroll is on the container */
+    overflow-x: hidden !important;
+    padding-bottom: 24px !important;
+    -webkit-overflow-scrolling: touch;    /* smooth iOS scrolling */
+    overscroll-behavior: contain !important;
+  }
+  #hud-container #hud-big-panel {
+    height: auto !important;
+    max-height: none !important;          /* let it grow; container scrolls */
+    overflow: visible !important;
+    padding-bottom: 16px !important;      /* keep tail visible above radius/shadow */
+  }
+  /* Prev/Next: keep one line on very narrow devices */
+  #hud-small-panel .hud-section-nav a {
+    font-size: 12px !important;
+    padding: 2px 6px !important;
+    white-space: nowrap !important;
+    flex: 0 0 auto !important;
+    line-height: 1.1 !important;
+  }
+}
+
+/* Ultra-narrow safeguard */
+@media (max-width: 360px) {
+  #hud-small-panel .hud-section-nav a {
+    font-size: 11px !important;
+    padding: 2px 4px !important;
+  }
+}
+
+
+@media (max-width: 479px) {
+  #btn-demo { display: none !important; }
+}
+
+
+/* Mobile header: hide logo, left-align 'Обо мне' and 'Ссылки' */
+@media (max-width: 479px) {
+  header#site-header { justify-content: flex-start !important; gap: 8px !important; }
+  header#site-header .header-logo { display: none !important; }
+  header#site-header .header-spacer { display: none !important; }
+  #btn-demo { display: none !important; }
+  .header-btn { padding: 6px 10px !important; }
+}
+
+
+/* Mobile: show 'Смотреть демо' and keep buttons left-aligned */
+@media (max-width: 479px) {
+  #btn-demo { display: inline-flex !important; }
+  header#site-header { justify-content: flex-start !important; gap: 8px !important; }
+  .header-btn { padding: 6px 10px !important; }
+}
+
+
+/* === HUD title font refinement === */
+#hud-small-panel .hud-section-title {
+  font-weight: 500 !important;  /* lighter weight for cleaner look */
+  font-size: 15px !important;
+  letter-spacing: 0.2px;
+}
+#hud-small-panel .hud-section-summary {
+  font-weight: 400 !important;
+  font-size: 14px !important;
+  color: #A5B4C3 !important;
+}
+
+
+/* === Tablet: mirror mobile behavior (container scroll, tail always reachable) === */
+@media (max-width: 767px) {
+  #hud-container {
+    top: 80px !important;
+    bottom: 12px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    width: 94% !important;
+    height: auto !important;
+    max-height: none !important;
+    overflow-y: auto !important;          /* scroll on container */
+    overflow-x: hidden !important;
+    padding-bottom: 24px !important;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain !important;
+  }
+  #hud-container #hud-big-panel {
+    width: 100% !important;
+    max-width: 100vw !important;
+    height: auto !important;
+    max-height: none !important;          /* let it grow; container handles scroll */
+    overflow: visible !important;
+    padding-bottom: 16px !important;      /* ensure last line/link is not cut */
+    box-sizing: border-box !important;
+    overflow-wrap: anywhere !important;
+    word-break: break-word !important;
+  }
+  /* Keep Prev/Next in one row on tablet too */
+  #hud-small-panel .hud-section-nav {
+    flex-wrap: nowrap !important;
+  }
+  #hud-small-panel .hud-section-nav a {
+    flex: 0 0 auto !important;
+    white-space: nowrap !important;
+    padding: 3px 8px !important;
+    line-height: 1.1 !important;
+    font-size: 13px !important;
+  }
+}
+
+
+/* === Tablet header: show only logo (no tagline) and buttons === */
+@media (min-width: 480px) and (max-width: 767px) {
+  header#site-header { justify-content: space-between !important; gap: 12px !important; }
+  header#site-header .header-logo { display: flex !important; align-items: center !important; }
+  header#site-header .header-logo .tagline { display: none !important; } /* убрать подзаголовок */
+  /* Кнопки в одну строку, компактные отступы */
+  .header-btn { padding: 8px 12px !important; }
+  #btn-demo { display: inline-flex !important; } /* демо остаётся видимой */
+}
+
+
+/* === Unified thin dark scrollbars (mobile-like) === */
+html, body { scrollbar-gutter: stable both-edges; }
+
+/* Firefox */
+html, body,
+#overlay, #hud-container, #hud-big-panel {
+  scrollbar-width: thin;
+  scrollbar-color: #3B4A5F transparent;
+}
+
+/* Chromium/WebKit */
+html::-webkit-scrollbar,
+body::-webkit-scrollbar,
+#overlay::-webkit-scrollbar,
+#hud-container::-webkit-scrollbar,
+#hud-big-panel::-webkit-scrollbar { width: 8px; height: 8px; }
+
+html::-webkit-scrollbar-track,
+body::-webkit-scrollbar-track,
+#overlay::-webkit-scrollbar-track,
+#hud-container::-webkit-scrollbar-track,
+#hud-big-panel::-webkit-scrollbar-track { background: transparent; }
+
+html::-webkit-scrollbar-thumb,
+body::-webkit-scrollbar-thumb,
+#overlay::-webkit-scrollbar-thumb,
+#hud-container::-webkit-scrollbar-thumb,
+#hud-big-panel::-webkit-scrollbar-thumb {
+  background: rgba(59, 74, 95, 0.9);
+  border-radius: 8px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+#overlay:hover::-webkit-scrollbar-thumb,
+#hud-container:hover::-webkit-scrollbar-thumb,
+#hud-big-panel:hover::-webkit-scrollbar-thumb,
+html:hover::-webkit-scrollbar-thumb,
+body:hover::-webkit-scrollbar-thumb {
+  background: rgba(59, 74, 95, 1);
+}
+
+
+/* === Header buttons aligned to the right (non-breaking override) === */
+header#site-header { display: flex !important; align-items: center !important; }
+#btn-about { margin-left: auto !important; } /* pushes the button group to the right */
+header#site-header .header-spacer { display: none; } /* avoid unexpected gaps */
+
+</style>
+<link href="https://yourdomain.com/" rel="canonical"/>
+<meta content="Интерактивная демо‑сцена: HUD‑режим, кликабельные разделы и UX‑паттерны для AI‑сервисов." name="description"/>
+<meta content="Synaptik — AI‑UX Demo" property="og:title"/>
+<meta content="Интерактивная демо‑сцена: HUD, кликабельные разделы, прозрачный UX для ИИ." property="og:description"/>
+<meta content="website" property="og:type"/>
+<meta content="https://yourdomain.com/" property="og:url"/>
+<meta content="https://yourdomain.com/preview.png" property="og:image"/>
+<meta content="summary_large_image" name="twitter:card"/>
+<meta content="Synaptik — AI‑UX Demo" name="twitter:title"/>
+<meta content="Интерактивная демо‑сцена: HUD, кликабельные разделы, прозрачный UX для ИИ." name="twitter:description"/>
+<meta content="https://yourdomain.com/preview.png" name="twitter:image"/>
+<link href="favicon.png" rel="icon" sizes="32x32" type="image/png"/><link href="favicon.png" rel="shortcut icon" type="image/png"/></head>
+<body>
+<!-- Site header -->
+<header id="site-header">
+<div class="header-logo">
+<span class="name">Владимир Костял</span>
+<span class="tagline">проектирую UX архитектуру и интерфейсы для AI сервисов</span>
+</div>
+<div class="header-spacer"></div>
+<button class="header-btn" id="btn-about">Обо мне</button>
+<button class="header-btn" id="btn-links">Ссылки</button>
+<button class="header-btn" id="btn-demo">Смотреть демо</button>
+</header>
+<!-- Mode banner (shows current navigation mode) -->
+<div id="mode-banner">Режим: Орбита (ESC — вернуться к пролистыванию)</div>
+<!-- Quick links panel (hidden by default) -->
+<div id="links-panel">
+<button class="close-btn" id="btn-links-close">✕</button>
+<div class="link-row"><a href="#" id="lnk-tg-chat" target="_blank">💬 Написать в Telegram</a></div>
+<div class="link-row"><a href="#" id="lnk-tg-community" target="_blank">👥 Перейти в сообщество</a></div>
+<div class="link-row"><a href="#" id="lnk-resume" target="_blank">📄 Резюме (PDF)</a></div>
+<div class="link-kicker">Все контакты открываются в новой вкладке.</div>
+</div>
+<div id="three-container"></div>
+<div id="labels"></div>
+<!-- HUD chips removed for a cleaner dark layout -->
+<!-- Overlay and HUD for node descriptions. When a node in the 3D scene is clicked,
+       these elements will display a coloured icon, a panel with descriptive text,
+       and buttons to switch between multiple text variants. Colours and sizes are
+       styled to harmonise with the dark Synaptik palette. -->
+<div id="overlay">
+<div id="object-icon"></div>
+<div id="big-panel"></div>
+<div id="small-panel">
+<button data-index="0">Вариант 1</button>
+<button data-index="1">Вариант 2</button>
+<button data-index="2">Вариант 3</button>
+</div>
+</div>
+<div id="hud-object-icon"></div>
+<!-- Wrap the HUD panels inside a container so they can be centred and stacked responsively -->
+<div id="hud-container">
+<div id="hud-small-panel">
+<button data-index="0">Вариант 1</button>
+<button data-index="1">Вариант 2</button>
+<button data-index="2">Вариант 3</button>
+</div>
+<div id="hud-big-panel"></div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+  // Global error handler to surface runtime issues visibly on screen.
+  window.onerror = function (message, src, lineno, colno) {
+    const errDiv = document.createElement('div');
+    errDiv.style.position = 'fixed';
+    errDiv.style.top = '0';
+    errDiv.style.left = '0';
+    errDiv.style.padding = '8px';
+    errDiv.style.background = 'rgba(200,0,0,0.85)';
+    errDiv.style.color = 'white';
+    errDiv.style.zIndex = '10000';
+    errDiv.style.fontFamily = 'monospace';
+    errDiv.textContent = message + ' (' + lineno + ':' + colno + ')';
+    document.body.appendChild(errDiv);
+  };
+
+  // Ensure Three.js is available.
+  if (typeof THREE === 'undefined' || !THREE.MathUtils) {
+    throw new Error('Three.js not loaded');
+  }
+  // ----------------- Core scene (Calm) -----------------
+  const container = document.getElementById('three-container');
+  const labelsLayer = document.getElementById('labels');
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(innerWidth, innerHeight);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 0.9;
+  container.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+
+  // ----------------------------------------------------
+  // Energy pulse control (manual scheduling and animation)
+  // We group beams into sets representing a complete path (space → node → core → node → space).
+  // Each group will carry at most one active pulse at a time. Pulses travel along the four segments
+  // sequentially, and the entire round-trip lasts 2 seconds. At runtime we spawn at most three
+  // pulses within any 5-second window by scheduling new pulses with random delays.
+  const beamGroups = [];
+  const activePulses = [];
+  let nextPulseTime = 0.0;
+  const maxActivePulses = 3;
+
+  // Spawn a new pulse on a random group that is not currently active. This will initialise its
+  // startTime and schedule the next spawn. Pulses will be animated via updatePulses().
+  function spawnPulse(currentTime){
+    // Determine which groups are available (not currently active)
+    const available = [];
+    for(let i=0; i<beamGroups.length; i++){
+      let found = false;
+      for(let j=0; j<activePulses.length; j++){
+        if(activePulses[j].groupIndex === i){ found = true; break; }
+      }
+      if(!found) available.push(i);
+    }
+    if(available.length === 0) return;
+    const chosen = available[Math.floor(Math.random()*available.length)];
+    activePulses.push({ groupIndex: chosen, startTime: currentTime });
+    // schedule the next pulse after roughly one and a half to two seconds to ensure we
+    // don't exceed 3 pulses appearing within any 5-second window. Random jitter avoids patterns.
+    nextPulseTime = currentTime + (1.6 + Math.random()*0.8);
+  }
+
+  // Update all active pulses: compute which segment they are on and update the packet uniforms.
+  function updatePulses(time){
+    for(let i = activePulses.length - 1; i >= 0; i--){
+      const pulse = activePulses[i];
+      const group = beamGroups[pulse.groupIndex];
+      const dt = time - pulse.startTime;
+      if(dt > 2.0){
+        // Pulse finished its round trip: deactivate its beams and remove it.
+        group.beams.forEach((beamObj)=>{
+          beamObj.material.uniforms.packetActive.value = 0.0;
+        });
+        activePulses.splice(i,1);
+        continue;
+      }
+      // Determine which segment of the path the pulse is currently on
+      const dur = group.durations;
+      let segIdx = 0;
+      let local = 0.0;
+      if(dt < dur[0]){
+        segIdx = 0;
+        local = dt / dur[0];
+      } else if(dt < dur[0] + dur[1]){
+        segIdx = 1;
+        local = (dt - dur[0]) / dur[1];
+      } else if(dt < dur[0] + dur[1] + dur[2]){
+        segIdx = 2;
+        local = (dt - dur[0] - dur[1]) / dur[2];
+      } else {
+        segIdx = 3;
+        local = (dt - dur[0] - dur[1] - dur[2]) / dur[3];
+      }
+      // Update each beam in the group
+      for(let j=0; j<group.beams.length; j++){
+        const beamObj = group.beams[j];
+        const active = (j === segIdx) ? 1.0 : 0.0;
+        beamObj.material.uniforms.packetActive.value = active;
+        if(active > 0.5){
+          beamObj.material.uniforms.packetPos.value = local;
+          // Choose packet colour: segments 0 and 3 use the incoming/outgoing colour, 1 and 2 use the node colour
+          const packetColorHex = (j === 0 || j === 3) ? IMPULSE_IN_COLOR : group.nodeColor;
+          beamObj.material.uniforms.packetColor.value.set(packetColorHex);
+        }
+      }
+    }
+  }
+
+  // Removed diagnostic test cube
+
+
+// === Energy Beams (added) ===
+// Beam material: additive, animated "energy flow" along vUv.y (height), gradient color from -> to.
+function makeBeamMaterial(colorFromHex, colorToHex, packetColorHex) {
+  // Beam shader: additive blending with a faint baseline glow and a manually controlled energy packet.
+  const mat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      colorFrom: { value: new THREE.Color(colorFromHex) },
+      colorTo:   { value: new THREE.Color(colorToHex) },
+      packetColor: { value: new THREE.Color(packetColorHex || colorFromHex) },
+      packetPos: { value: -1.0 }, // position of the packet along the beam (0..1); -1 means inactive
+      packetActive: { value: 0.0 }, // 1.0 when a packet is present on this beam, 0.0 otherwise
+      packetWidth: { value: 0.15 },
+      // Increase the base glow so the beam tubes remain noticeable even
+      // without an active impulse.  A higher glow value makes the pipes
+      // subtly brighter without overwhelming the scene.
+      glow: { value: 0.03 }
+    },
+    vertexShader: `varying vec2 vUv; void main(){
+      vUv = uv;
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0);
+    }`,
+    fragmentShader: `uniform vec3 colorFrom, colorTo, packetColor; uniform float packetPos, packetActive, packetWidth, glow;
+      varying vec2 vUv;
+      void main(){
+        // radial attenuation across beam width
+        float radial = 1.0 - abs(vUv.x - 0.5)*2.0;
+        radial = smoothstep(0.0, 0.25, radial);
+        // base gradient colour along the beam
+        vec3 baseCol = mix(colorFrom, colorTo, vUv.y);
+        // packet influence based on distance to packetPos
+        float packet = 0.0;
+        if(packetActive > 0.5){
+          float dist = abs(vUv.y - packetPos);
+          packet = smoothstep(packetWidth, 0.0, dist);
+        }
+        // blend base and packet colour
+        vec3 col = mix(baseCol, packetColor, packet);
+        // alpha: faint glow plus brighter packet
+        float a = radial * (glow + packet * (1.0 - glow));
+        if(a < 0.01) discard;
+        gl_FragColor = vec4(col, a);
+      }`
+  });
+  return mat;
+}
+// Make a beam mesh oriented from point A to B (cylinder on Y axis)
+function makeBeamMesh(pA, pB, radius, material, signOverride){
+  // Build a curved tube between points A and B.  Instead of pushing the
+  // control point outward along the radial direction (which still yields
+  // nearly straight pipes when the endpoints lie on the same line), we
+  // construct an orthogonal normal vector around which the path will arc.
+  // This normal is perpendicular to the radial direction and chosen using a
+  // reference axis (Y or X) to avoid degenerate cases.  The amplitude of
+  // the offset scales with the length of the segment, producing quarter‑circle
+  // like curves reminiscent of the reference diagram.
+  const mid = new THREE.Vector3().addVectors(pA, pB).multiplyScalar(0.5);
+  const radialDir = mid.clone().normalize();
+  // Choose a reference axis that is not parallel to the radial direction
+  const refAxis = (Math.abs(radialDir.y) < 0.9) ? new THREE.Vector3(0,1,0) : new THREE.Vector3(1,0,0);
+  // Compute a normal vector perpendicular to the radial direction
+  const normal = new THREE.Vector3().crossVectors(radialDir, refAxis).normalize();
+  const segmentDist = pA.distanceTo(pB);
+  // Amplitude controls how far the curve bows away from the straight line.  We also
+  // flip the sign based on whether the starting point lies further from the
+  // origin than the end point.  This causes adjacent segments (space→node and
+  // node→core) to curve in opposite directions, creating an S‑shaped path
+  // similar to the provided reference.
+  const curvatureFactor = 0.8;
+  // Determine the direction of curvature.  If a sign override is provided,
+  // use it; otherwise fall back to flipping based on distance (inward vs outward).
+  const autoSign = (pA.length() > pB.length()) ? -1 : 1;
+  const sign = (typeof signOverride === 'number') ? signOverride : autoSign;
+  const amplitude = segmentDist * curvatureFactor * sign;
+  const controlPoint = mid.clone().add(normal.multiplyScalar(amplitude));
+  const curve = new THREE.QuadraticBezierCurve3(pA.clone(), controlPoint, pB.clone());
+  const tubularSegments = 32;
+  const radialSegments = 12;
+  const geometry = new THREE.TubeGeometry(curve, tubularSegments, radius, radialSegments, false);
+  const mesh = new THREE.Mesh(geometry, material);
+  mesh.renderOrder = 3;
+  return mesh;
+}
+// === FresnelGlow factory + Dark palette (added) ===
+function makeFresnel(baseHex){
+  const base = new THREE.Color(baseHex);
+  const glow = base.clone();
+  const darker = base.clone().multiplyScalar(0.35);
+  return new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false,
+    uniforms:{ time:{value:0}, base:{value:darker}, glow:{value:glow} },
+    vertexShader:`varying vec3 vN; varying vec3 vV;
+      void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0);
+        vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);
+        gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform vec3 base, glow; uniform float time;
+      varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fr = pow(1.0 - max(dot(normalize(vN), normalize(vV)), 0.0), 3.0);
+        float pulse = 0.78 + 0.22*sin(time*2.4);
+        vec3 col = mix(base, glow, fr) * pulse;
+        gl_FragColor = vec4(col, 0.18 + 0.82*fr);
+      }`
+  });
+}
+
+// Dark theme palette (Data Viz categorical 1–8)
+const NODE_PALETTE = [
+  '#5B9CFF', // Brand/Viz-1
+  '#22C55E', // Viz-2
+  '#F59E0B', // Viz-3
+  '#EF4444', // Viz-4
+  '#8B5CF6', // Viz-5
+  '#14B8A6', // Viz-6
+  '#E11D48', // Viz-7
+  '#A3E635'  // Viz-8
+];
+// Global colour for incoming impulses from space to nodes (common constant)
+const IMPULSE_IN_COLOR = '#5B9CFF';
+// === Node material variants (added minimal) ===
+function makeNodeMaterialVariants(){
+  const fresnelMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false,
+    uniforms:{ time:{value:0}, base:{value:new THREE.Color(0x0a2a6d)}, glow:{value:new THREE.Color(0x3dbfff)} },
+    vertexShader:`varying vec3 vN; varying vec3 vV;
+      void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0);
+        vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);
+        gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform vec3 base, glow; uniform float time;
+      varying vec3 vN; varying vec3 vV;
+      void main(){
+        float fr = pow(1.0 - max(dot(normalize(vN), normalize(vV)), 0.0), 3.0);
+        float pulse = 0.78 + 0.22*sin(time*2.4);
+        vec3 col = mix(base, glow, fr) * pulse;
+        gl_FragColor = vec4(col, 0.18 + 0.82*fr);
+      }`
+  });
+  const gridMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false,
+    uniforms:{ time:{value:0}, tint:{value:new THREE.Color(0x0e2d4f)}, line:{value:new THREE.Color(0x66d1ff)} },
+    vertexShader:`varying vec3 vN;
+      void main(){ vN=normalize(normalMatrix*normal);
+        gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader:`uniform vec3 tint, line; uniform float time;
+      varying vec3 vN;
+      vec2 uvSphere(vec3 n){
+        float u = atan(n.z, n.x) / 6.2831853 + 0.5;
+        float v = n.y*0.5 + 0.5; return vec2(u,v);
+      }
+      void main(){
+        vec2 uv = uvSphere(normalize(vN));
+        float g1 = smoothstep(0.49, 0.495, abs(fract(uv.x*36.0 - time*0.18) - 0.5));
+        float g2 = smoothstep(0.49, 0.495, abs(fract(uv.y*20.0 - time*0.14) - 0.5));
+        float grid = clamp(g1 + g2, 0.0, 1.0);
+        vec3 col = mix(tint, line, grid);
+        gl_FragColor = vec4(col, 0.7 + 0.3*grid);
+      }`
+  });
+  const glassMat = new THREE.MeshPhysicalMaterial({
+    color:0x0a1630, metalness:0.1, roughness:0.08,
+    transmission:0.7, thickness:0.4, transparent:true, opacity:0.92,
+    clearcoat:1.0, clearcoatRoughness:0.2,
+    emissive:0x083a6b, emissiveIntensity:0.17
+  });
+  return [fresnelMat, gridMat, glassMat];
+}
+
+  scene.background = new THREE.Color(0x0B0F14);
+
+  const camera = new THREE.PerspectiveCamera(60, innerWidth/innerHeight, 0.1, 1200);
+  camera.position.set(0, 1.2, 12);
+
+  // Orbit mode state
+  let orbitMode = false;
+  let isOrbitDragging = false;
+  let orbitDragMoved = false;
+  let suppressLabelClick = false;
+  let orbitTheta = 0; // around Y
+  let orbitPhi = Math.PI / 2; // from top
+  let orbitRadius = 6.5;
+  const ORBIT_MIN_RADIUS = 1.6; // prevent entering the shell (outer ~1.2)
+  const ORBIT_MAX_RADIUS = 12.0; // prevent flying too far
+  const ORBIT_ROTATE_SPEED = 0.006; // radians per pixel
+  const ORBIT_ZOOM_SPEED = 0.0025; // radius units per wheel delta
+  const modeBanner = document.getElementById('mode-banner');
+
+  function enterOrbitMode() {
+    if (orbitMode) return;
+    orbitMode = true;
+    // Initialize spherical from current camera position
+    const pos = camera.position.clone();
+    orbitRadius = Math.max(ORBIT_MIN_RADIUS, Math.min(ORBIT_MAX_RADIUS, pos.length()));
+    orbitTheta = Math.atan2(pos.z, pos.x);
+    const rXY = Math.sqrt(pos.x*pos.x + pos.z*pos.z);
+    orbitPhi = Math.atan2(rXY, pos.y); // polar angle from Y axis
+    // Show banner
+    if (modeBanner) modeBanner.style.display = 'block';
+  }
+
+  function exitOrbitMode() {
+    if (!orbitMode) return;
+    orbitMode = false;
+    isOrbitDragging = false;
+    if (modeBanner) modeBanner.style.display = 'none';
+    // Snap back to scroll cycle midpoint so nav resumes predictably
+    try { window.scrollTo({ top: cycleHeight, behavior: 'instant' }); } catch (_) { scrollTo(0, cycleHeight); }
+  }
+
+  function clampOrbit() {
+    const EPS = 0.001;
+    orbitPhi = Math.max(EPS, Math.min(Math.PI - EPS, orbitPhi));
+    orbitRadius = Math.max(ORBIT_MIN_RADIUS, Math.min(ORBIT_MAX_RADIUS, orbitRadius));
+  }
+
+  function updateCameraFromOrbit() {
+    clampOrbit();
+    const sinPhi = Math.sin(orbitPhi), cosPhi = Math.cos(orbitPhi);
+    const cosTheta = Math.cos(orbitTheta), sinTheta = Math.sin(orbitTheta);
+    const x = orbitRadius * sinPhi * cosTheta;
+    const y = orbitRadius * cosPhi;
+    const z = orbitRadius * sinPhi * sinTheta;
+    camera.position.set(x, y, z);
+    camera.up.set(0,1,0);
+    camera.lookAt(0,0,0);
+    camera.updateProjectionMatrix();
+  }
+
+  // Throttled resize handler: resizing the window triggers many events. To
+  // prevent heavy recalculations and frame drops, we debounce the resize
+  // updates so they occur only after the user pauses resizing.  We use a
+  // slightly longer timeout (250 ms) to avoid rapid reflows on devices
+  // with slower JavaScript engines.  The resize callback updates the
+  // Three.js camera, renderer and scroll world size.
+  let resizeTimeout;
+  addEventListener('resize', () => {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(() => {
+      camera.aspect = innerWidth / innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(innerWidth, innerHeight);
+      setBodyHeight(); // keep scroll world consistent
+    }, 250);
+  });
+
+  const hemi = new THREE.HemisphereLight(0xbfd4ff, 0x0e1219, 0.6); scene.add(hemi);
+  const dir = new THREE.DirectionalLight(0xffffff, 0.9); dir.position.set(3,6,8); scene.add(dir);
+
+  // Geometries
+  const gOuter = new THREE.SphereGeometry(1.2, 128, 128);
+  const gInner = new THREE.SphereGeometry(1.02, 128, 128);
+
+  // Hologram shell — Calm
+  const holoMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{ time:{ value:0 },
+      base:{ value:new THREE.Color('#6fb6ff') },
+      line:{ value:new THREE.Color('#c9ecff') },
+      speed:{ value:0.012 },
+      gridScale:{ value:new THREE.Vector2(28.0,14.0) },
+      gridBoost:{ value:1.05 }, baseBoost:{ value:0.45 } },
+    vertexShader:`varying vec3 vN; varying vec3 vV; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform float time; uniform vec3 base; uniform vec3 line; uniform float speed; uniform vec2 gridScale; uniform float gridBoost; uniform float baseBoost; varying vec3 vN; varying vec3 vV;
+      float fresnel(vec3 N, vec3 V){ return pow(1.0 - max(dot(N,V), 0.0), 3.0); }
+      void main(){ vec3 N=normalize(vN), V=normalize(vV);
+        float u=atan(N.z,N.x)/6.2831853+0.5, v=N.y*0.5+0.5; float t=time*speed;
+        float gx=smoothstep(0.0,0.006,abs(fract(u*28.0 - t*0.9)-0.5)-0.495);
+        float gy=smoothstep(0.0,0.006,abs(fract(v*14.0 + t*0.6)-0.5)-0.495);
+        float grid=max(gx,gy)*gridBoost; float fr=fresnel(N,V)*baseBoost;
+        vec3 col=base*fr + line*grid; float a=clamp(fr+grid,0.0,0.9); gl_FragColor=vec4(col,a); }`
+  });
+  const shell = new THREE.Mesh(gOuter, holoMat); shell.renderOrder=2; scene.add(shell);
+
+  // Inner core — chaotic
+  const swirlMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+    uniforms:{ time:{ value:0 },
+      colorInner:{ value:new THREE.Color('#a5f0ff') },
+      colorOuter:{ value:new THREE.Color('#58b7ff') },
+      opacity:{ value:0.55 },
+      warpAmp:{ value:1.10 }, warpScale:{ value:3.50 }, warpSpeed:{ value:0.60 }, flicker:{ value:0.25 }, chaos:{ value:0.62 } },
+    vertexShader:`varying vec3 vN; varying vec3 vV; varying vec3 vPos; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); vPos=position; gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform float time; uniform vec3 colorInner; uniform vec3 colorOuter; uniform float opacity; uniform float warpAmp; uniform float warpScale; uniform float warpSpeed; uniform float flicker; uniform float chaos; varying vec3 vN; varying vec3 vV; varying vec3 vPos;
+      float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7))) * 43758.5453); }
+      float noise(vec3 p){ vec3 i=floor(p), f=fract(p);
+        float a=hash(i), b=hash(i+vec3(1,0,0)), c=hash(i+vec3(0,1,0)), d=hash(i+vec3(1,1,0));
+        float e=hash(i+vec3(0,0,1)), g=hash(i+vec3(1,0,1)), h=hash(i+vec3(0,1,1)), k=hash(i+vec3(1,1,1));
+        vec3 u=f*f*(3.-2.*f);
+        return mix(mix(mix(a,b,u.x), mix(c,d,u.x), u.y),
+                   mix(mix(e,g,u.x), mix(h,k,u.x), u.y), u.z);
+      }
+      float fbm(vec3 p){ float v=0.0, a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.55; } return v; }
+      float fresnel(vec3 N, vec3 V){ return pow(1.0 - max(dot(N,V), 0.0), 2.0); }
+      void main(){
+        vec3 N = normalize(vN), V = normalize(vV), P = normalize(vPos);
+        float t = time * warpSpeed;
+        float n1 = fbm(P*warpScale + vec3(t, -t*0.6, t*0.3));
+        float n2 = fbm(P*warpScale*1.7 + vec3(-t*0.4, t*0.8, -t*0.2));
+        float n = smoothstep(0.0, 1.0, (n1*0.65 + n2*0.35) * (1.0 + warpAmp*0.6));
+        float moving = abs(n1 - n2);
+        float energy = mix(n, moving, 0.55);
+        float cloud = smoothstep(chaos, 1.0, energy);
+        float fr = fresnel(N,V);
+        float fl = mix(1.0-flicker, 1.0, 0.5+0.5*sin(time*3.7 + fbm(P*6.0)*4.0));
+        float a = (0.18 + 0.82*fr) * opacity * cloud * fl;
+        if(a < 0.01) discard;
+        vec3 col = mix(colorOuter, colorInner, fr*0.9) * (0.6 + 0.4*cloud);
+        gl_FragColor = vec4(col, a);
+      }`
+  });
+  const core = new THREE.Mesh(gInner, swirlMat); core.renderOrder=3; scene.add(core);
+
+  // === Icon materials and helpers ===
+  function neonMat(opts={}){
+    const emissive = new THREE.Color(opts.emissive || 0x66d1ff);
+    return new THREE.MeshStandardMaterial({ color: 0x0d1726, metalness: 0.2, roughness: 0.35, emissive, emissiveIntensity: opts.emissiveIntensity || 1.0, transparent: true, opacity: 0.95 });
+  }
+  function holoMatIcon(opts={}){
+    return new THREE.MeshStandardMaterial({ color: 0x143050, metalness: 0.15, roughness: 0.15, emissive: new THREE.Color(opts.emissive||0x3dbfff), emissiveIntensity: opts.emissiveIntensity||0.35, transparent:true, opacity:0.85 });
+  }
+  function ringArc({ R=0.6, tube=0.03, arc=Math.PI, rot=[0,0,0], mat }={}){
+    const geo = new THREE.TorusGeometry(R, tube, 14, 80, arc);
+    const mesh = new THREE.Mesh(geo, mat||neonMat());
+    mesh.rotation.set(rot[0]||0, rot[1]||0, rot[2]||0);
+    return mesh;
+  }
+  function labelCard({ w=0.35, h=0.22, d=0.04, mat }={}){
+    return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat||holoMatIcon());
+  }
+
+  // === Procedural icons per section ===
+  function iconUxBasics({ mat = holoMatIcon(), accent = neonMat({ emissive: 0x6af0ff }) } = {}){
+    const g = new THREE.Group();
+    const left = new THREE.Mesh(new THREE.BoxGeometry(0.55, 0.75, 0.06), mat);
+    const right = left.clone();
+    left.position.x = -0.31; right.position.x = 0.31;
+    const spine = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.78, 24), accent);
+    g.add(left, right, spine);
+    const dot = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 10), accent);
+    for (let yy = -2; yy <= 2; yy++){
+      for (let xx = -2; xx <= 2; xx++){
+        const p = dot.clone();
+        p.position.set(0.15 + xx*0.11, yy*0.12, 0.05);
+        g.add(p);
+      }
+    }
+    return g;
+  }
+  function iconInteractionPatterns({ nodes = 4, gap = 0.55, mat = holoMatIcon(), line = neonMat({ emissive: 0x88ddff }) } = {}){
+    const g = new THREE.Group();
+    const nodeGeo = new THREE.BoxGeometry(0.42, 0.24, 0.06);
+    const coneGeo = new THREE.ConeGeometry(0.06, 0.14, 18);
+    for (let i = 0; i < nodes; i++){
+      const n = new THREE.Mesh(nodeGeo, mat);
+      n.position.set((i - (nodes - 1)/2)*gap, (i%2?0.18:-0.18), 0);
+      g.add(n);
+      if (i < nodes - 1){
+        const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.015, gap - 0.3, 10), line);
+        bar.rotation.z = -Math.PI/2; bar.position.set(n.position.x + gap/2, 0, 0.01); g.add(bar);
+        const a = new THREE.Mesh(coneGeo, line); a.rotation.z = -Math.PI/2; a.position.set(n.position.x + gap*0.5 + (gap-0.3)/2, 0, 0.01); g.add(a);
+      }
+    }
+    g.add(ringArc({ R:0.85, arc:Math.PI*0.8, rot:[Math.PI/2.6,0,0] }));
+    g.add(ringArc({ R:0.85, arc:Math.PI*0.8, rot:[-Math.PI/2.6,0,0] }));
+    return g;
+  }
+  function iconAssistantSettings({ mat = holoMatIcon(), knob = neonMat({ emissive: 0x9fd4ff }) } = {}){
+    const g = new THREE.Group();
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.05, 0.05), mat);
+    const rail2 = rail.clone(); const rail3 = rail.clone();
+    rail.position.y = 0.25; rail2.position.y = 0; rail3.position.y = -0.25; g.add(rail, rail2, rail3);
+    const k = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, 0.12, 22), knob);
+    const k2 = k.clone(); const k3 = k.clone();
+    k.position.set(0.2, 0.25, 0.07); k2.position.set(-0.15, 0.0, 0.07); k3.position.set(0.35, -0.25, 0.07); g.add(k, k2, k3);
+    const toggleBase = new THREE.Mesh(new THREE.CapsuleGeometry(0.18, 0.5, 8, 16), mat);
+    const toggleDot = new THREE.Mesh(new THREE.SphereGeometry(0.12, 16, 12), knob);
+    toggleBase.rotation.z = Math.PI/2; toggleBase.position.set(-0.95, 0, 0); toggleDot.position.set(-0.75, 0.1, 0.06);
+    g.add(toggleBase, toggleDot);
+    return g;
+  }
+  function iconPromptsScenarios({ mat = holoMatIcon(), accent = neonMat({ emissive: 0xbfe1ff }) } = {}){
+    const g = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.SphereGeometry(0.6, 28, 20, 0, Math.PI*2, Math.PI/6, Math.PI*2/3), mat);
+    body.scale.set(1.05, 0.8, 0.24);
+    const tail = new THREE.Mesh(new THREE.ConeGeometry(0.17, 0.28, 20), mat);
+    tail.rotation.x = Math.PI/2; tail.position.set(-0.35, -0.4, 0); g.add(body, tail);
+    const stepMat = holoMatIcon({ emissive: 0x7fdfff, emissiveIntensity: 0.5 });
+    const step = labelCard({ w:0.35, h:0.22, d:0.04, mat: stepMat });
+    const s1 = step.clone(), s2 = step.clone(), s3 = step.clone();
+    s1.position.set(-0.7, 0.85, 0); s2.position.set(-0.25, 0.85, 0); s3.position.set(0.2, 0.85, 0);
+    const arrowGeo = new THREE.ConeGeometry(0.06, 0.16, 16);
+    const a1 = new THREE.Mesh(arrowGeo, accent), a2 = new THREE.Mesh(arrowGeo, accent);
+    a1.rotation.z = -Math.PI/2; a2.rotation.z = -Math.PI/2; a1.position.set(-0.47, 0.85, 0.02); a2.position.set(-0.02, 0.85, 0.02);
+    g.add(s1, s2, s3, a1, a2);
+    return g;
+  }
+  function iconOpsEfficiency({ mat = holoMatIcon(), accent = neonMat({ emissive: 0x6fff9d }) } = {}){
+    const g = new THREE.Group();
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.14, 18, 80), mat); g.add(ring);
+    const toothGeo = new THREE.BoxGeometry(0.12, 0.18, 0.12);
+    for (let i=0;i<12;i++){
+      const a = (i/12)*Math.PI*2;
+      const tooth = new THREE.Mesh(toothGeo, mat);
+      const rad = 0.6 + 0.14; tooth.position.set(Math.cos(a)*rad, Math.sin(a)*rad, 0); tooth.rotation.z = a; g.add(tooth);
+    }
+    const barMat = neonMat({ emissive: 0x9df6c8 });
+    const bars = [0.35, 0.6, 0.9].map((hh, ii)=>{ const b = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.07, hh, 20), barMat); b.position.set(-0.9 + ii*0.45, -0.9 + hh/2, 0.05); return b; });
+    bars.forEach(b=>g.add(b));
+    g.add(ringArc({ R:1.05, tube:0.02, arc:Math.PI*1.2, rot:[0,0,Math.PI*0.1], mat: accent }));
+    return g;
+  }
+  function iconSecurityCompliance({ mat = holoMatIcon(), accent = neonMat({ emissive: 0x9fe2ff }) } = {}){
+    const g = new THREE.Group();
+    const shield = new THREE.Mesh(new THREE.SphereGeometry(0.95, 36, 24, 0, Math.PI*2, 0, Math.PI/2), mat); shield.rotation.x = Math.PI; g.add(shield);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(0.92, 0.06, 14, 60), neonMat({ emissive: 0x7fc7ff })); g.add(rim);
+    const hoop = new THREE.Mesh(new THREE.TorusGeometry(0.35, 0.05, 12, 48, Math.PI), accent); hoop.rotation.x = Math.PI/2; hoop.position.y = -0.1; hoop.position.z = 0.08;
+    const lockBody = new THREE.Mesh(new THREE.BoxGeometry(0.6, 0.5, 0.14), mat); lockBody.position.set(0, -0.5, 0.06);
+    const tickA = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.45, 12), accent); tickA.rotation.z = -Math.PI/4; tickA.position.set(-0.1, -0.5, 0.12);
+    const tickB = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.04, 0.8, 12), accent); tickB.rotation.z = Math.PI/3; tickB.position.set(0.3, -0.42, 0.12);
+    g.add(hoop, lockBody, tickA, tickB);
+    return g;
+  }
+  function iconPlaybooksMarketplace({ mat = holoMatIcon(), accent = neonMat({ emissive: 0xffd36a }) } = {}){
+    const g = new THREE.Group();
+    for (let i=0;i<4;i++){
+      const p = new THREE.Mesh(new THREE.PlaneGeometry(1.05, 0.7), mat);
+      p.position.set(0, i*0.06, i*0.02); p.rotation.x = -0.2; g.add(p);
+    }
+    const tag = new THREE.Mesh(new THREE.BoxGeometry(0.38, 0.22, 0.06), accent); tag.position.set(0.65, 0.15, 0.12); tag.rotation.z = -0.35; g.add(tag);
+    const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.04, 12, 64), neonMat({ emissive: 0xffe49a })); ring2.position.set(-0.6, -0.05, 0.1); ring2.rotation.x = Math.PI/2.5; g.add(ring2);
+    return g;
+  }
+  function createSectionIcon(type, options = {}){
+    switch (type){
+      case 'ux-basics': return iconUxBasics(options);
+      case 'interaction-patterns': return iconInteractionPatterns(options);
+      case 'assistant-settings': return iconAssistantSettings(options);
+      case 'prompts-scenarios': return iconPromptsScenarios(options);
+      case 'ops-efficiency': return iconOpsEfficiency(options);
+      case 'security-compliance': return iconSecurityCompliance(options);
+      case 'playbooks-marketplace': return iconPlaybooksMarketplace(options);
+      default: return iconUxBasics(options);
+    }
+  }
+
+  // Inner nebula
+  const innerNebulaMat = new THREE.ShaderMaterial({
+    transparent:true, depthWrite:false, depthTest:true, side:THREE.BackSide, blending:THREE.AdditiveBlending,
+    uniforms:{ time:{ value:0 }, colorA:{ value:new THREE.Color('#7cd4ff') }, colorB:{ value:new THREE.Color('#9ecbff') },
+      opacity:{ value:0.18 }, scale:{ value:2.6 }, drift:{ value:0.22 }, density:{ value:0.85 } },
+    vertexShader:`varying vec3 vPos; varying vec3 vN; varying vec3 vV; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vPos=position; vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+    fragmentShader:`uniform float time; uniform vec3 colorA; uniform vec3 colorB; uniform float opacity; uniform float scale; uniform float drift; uniform float density;
+      varying vec3 vPos; varying vec3 vN; varying vec3 vV;
+      float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7, 74.7))) * 43758.5453); }
+      float noise(vec3 p){
+        vec3 i=floor(p), f=fract(p);
+        float a=hash(i), b=hash(i+vec3(1,0,0)), c=hash(i+vec3(0,1,0)), d=hash(i+vec3(1,1,0));
+        float e=hash(i+vec3(0,0,1)), g=hash(i+vec3(1,0,1)), h=hash(i+vec3(0,1,1)), k=hash(i+vec3(1,1,1));
+        vec3 u=f*f*(3.-2.*f);
+        return mix(mix(mix(a,b,u.x), mix(c,d,u.x), u.y),
+                   mix(mix(e,g,u.x), mix(h,k,u.x), u.y), u.z);
+      }
+      float fbm(vec3 p){
+        float v=0.0, a=0.55;
+        for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.03; a*=0.52; }
+        return v;
+      }
+      float fresnel(vec3 N, vec3 V){ return pow(1.0 - max(dot(N,V),0.0), 2.4); }
+      void main(){
+        vec3 P = normalize(vPos);
+        float t = time*drift;
+        float n = fbm(P*scale + vec3(t, -t*0.7, t*0.4));
+        float m = fbm(P*scale*1.7 + vec3(-t*0.5, t*0.9, -t*0.2));
+        float cloud = smoothstep(0.55, 0.95, n*0.7 + m*0.6);
+        float rim = fresnel(normalize(vN), normalize(vV));
+        float a = pow(cloud, 1.6) * (0.2 + 0.8*rim) * opacity * density;
+        if(a < 0.005) discard;
+        vec3 col = mix(colorA, colorB, n*0.6 + m*0.4) * (0.6 + 0.4*rim);
+        gl_FragColor = vec4(col, a);
+      }`
+  });
+  const innerNebula = new THREE.Mesh(new THREE.SphereGeometry(1.06, 128, 128), innerNebulaMat);
+  innerNebula.renderOrder = 2; scene.add(innerNebula);
+
+  // Data Stream rings
+  function makeStreamMat(){
+    return new THREE.ShaderMaterial({
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+      uniforms:{ time:{ value:0 }, color:{ value:new THREE.Color('#c6ecff') }, opacity:{ value:0.45 }, segs:{ value:16.0 }, speed:{ value:0.35 }, jitter:{ value:0.2 } },
+      vertexShader:`varying vec2 vUv2; varying vec3 vN; varying vec3 vV;
+        void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vUv2=uv; vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+      fragmentShader:`uniform float time; uniform vec3 color; uniform float opacity; uniform float segs; uniform float speed; uniform float jitter; varying vec2 vUv2; varying vec3 vN; varying vec3 vV;
+        float fr(vec3 N, vec3 V){ return pow(1.0 - max(dot(N,V),0.0), 2.0); }
+        float rnd(float x){ return fract(sin(x*78.233)*43758.5453); }
+        void main(){
+          float rim = smoothstep(0.35,1.0, fr(normalize(vN),normalize(vV)));
+          float u = vUv2.x; float t = time*speed;
+          float seg = floor(u*segs);
+          float off = rnd(seg)*jitter;
+          float head = fract(u*segs - t - off);
+          float pulse = smoothstep(0.05, 0.0, abs(head-0.5));
+          float tail = smoothstep(0.5, 0.2, head);
+          float a = (pulse*0.8 + tail*0.4) * rim * opacity;
+          if(a < 0.01) discard;
+          gl_FragColor = vec4(color * (0.6 + 0.4*pulse), a);
+        }`
+    });
+  }
+  (function buildStreamRings(){
+    const group = new THREE.Group();
+    const geo = new THREE.TorusGeometry(1.11, 0.022, 16, 360);
+    [0,1,2].forEach(i=>{
+      const m = new THREE.Mesh(geo, makeStreamMat());
+      if(i===0) m.rotation.x = 0.0;
+      if(i===1) m.rotation.x = Math.PI*0.5;
+      if(i===2) m.rotation.set(Math.PI*0.33, 0, Math.PI*0.23);
+      m.renderOrder=4; m.userData.phase=i*0.4;
+      group.add(m);
+    });
+    group.userData._rotate = { y: 0.00045 };
+    scene.add(group);
+  })();
+
+  // Moiré outer orbits — Calm
+  function matMoire(){
+    return new THREE.ShaderMaterial({
+      transparent:true, depthWrite:false, blending:THREE.AdditiveBlending,
+      uniforms:{ time:{ value:0 }, color:{ value:new THREE.Color('#cfefff') }, opacity:{ value:0.30 }, speed:{ value:0.005 }, freqA:{ value:22.0 }, freqB:{ value:26.0 } },
+      vertexShader:`varying vec2 vUv2; varying vec3 vN; varying vec3 vV; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vUv2=uv; vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); gl_Position=projectionMatrix*mv; }`,
+      fragmentShader:`uniform float time; uniform vec3 color; uniform float opacity; uniform float speed; uniform float freqA; uniform float freqB; varying vec2 vUv2; varying vec3 vN; varying vec3 vV;
+        float fr(vec3 N, vec3 V){ return pow(1.0 - max(dot(N,V),0.0), 2.2); }
+        void main(){
+          float u = vUv2.x*6.28318;
+          float w1 = 0.5 + 0.5*sin(u*freqA - time*speed*120.0);
+          float w2 = 0.5 + 0.5*sin(u*freqB + time*speed*140.0);
+          float moire = abs(w1 - w2);
+          float rim = smoothstep(0.35,1.0, fr(normalize(vN),normalize(vV)));
+          float a = rim * (0.35 + 0.65*moire) * opacity;
+          if(a<0.01) discard;
+          gl_FragColor = vec4(color * (0.6 + 0.4*moire), a);
+        }`
+    });
+  }
+  (function buildOrbitSet(){
+    const group = new THREE.Group();
+    
+group.userData._rotate = { y: 0.0003, x: 0.00012 };
+[3,4,5].forEach((r,i)=>{
+      const tor = new THREE.Mesh(new THREE.TorusGeometry(r, 0.06, 16, 720), matMoire());
+      if(i===0) tor.rotation.x = Math.PI*0.3;
+      if(i===1) tor.rotation.y = Math.PI*0.42;
+      if(i===2) tor.rotation.set(Math.PI*0.18, Math.PI*0.12, Math.PI*0.33);
+      tor.userData._mat = tor.material;
+      tor.renderOrder = 1;
+      group.add(tor);
+    });
+    scene.add(group);
+  })();
+
+  // Background: Mist + Stars (dark)
+  function makeBG_DataMist_Dark(){
+    const mat = new THREE.ShaderMaterial({
+      side:THREE.BackSide, transparent:true, depthWrite:false, depthTest:true, blending:THREE.NormalBlending,
+      // Colour the fog to match the nebula within the core sphere but one tone
+      // brighter. The inner nebula uses two blue hues (#7cd4ff and #9ecbff);
+      // here we select a slightly lighter shade (#a8d0ff) so the mist
+      // harmonises with the central glow while still standing out against
+      // the background. Higher opacity helps the swirling fog remain visible
+      // without overpowering other elements.
+      uniforms:{
+        time:{ value:0 },
+        opacity:{ value:0.6 },
+        scale:{ value:0.6 },
+        drift:{ value:0.05 },
+        color:{ value:new THREE.Color('#A8D0FF') }
+      },
+      vertexShader:`varying vec3 vPos; void main(){ vPos=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader:`uniform float time; uniform float opacity; uniform float scale; uniform float drift; uniform vec3 color;
+        varying vec3 vPos;
+        float hash(vec3 p){ return fract(sin(dot(p, vec3(127.1,311.7,74.7)))*43758.5453); }
+        float noise(vec3 p){ vec3 i=floor(p), f=fract(p);
+          float a=hash(i), b=hash(i+vec3(1,0,0)), c=hash(i+vec3(0,1,0)), d=hash(i+vec3(1,1,0));
+          float e=hash(i+vec3(0,0,1)), g=hash(i+vec3(1,0,1)), h=hash(i+vec3(0,1,1)), k=hash(i+vec3(1,1,1));
+          vec3 u=f*f*(3.-2.*f);
+          return mix(mix(mix(a,b,u.x), mix(c,d,u.x), u.y), mix(mix(e,g,u.x), mix(h,k,u.x), u.y), u.z);
+        }
+        float fbm(vec3 p){ float v=0., a=0.5; for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.02; a*=0.55;} return v; }
+        void main(){
+          vec3 P = normalize(vPos);
+          float t = time*drift;
+          float n = fbm(P*scale + vec3(t, -t*0.7, t*0.4));
+          float cloud = smoothstep(0.6, 0.95, n);
+          float a = pow(cloud, 1.6)*opacity;
+          if(a<0.01) discard;
+          gl_FragColor = vec4(color*(0.35+0.65*cloud), a);
+        }`
+    });
+    // Position the mist close to the core sphere so it is actually visible.  A
+    // smaller radius (around 15 units) keeps the fog within view of the
+    // camera rather than enclosing the entire scene at a far distance.
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(15, 64, 64), mat);
+    mesh.userData.tick = (t)=>{ mat.uniforms.time.value = t; };
+    return mesh;
+  }
+  function makeBG_ParallaxStars_Dark(){
+    function starLayer(count, radius, size, hex, opacity){
+      const g = new THREE.BufferGeometry();
+      const pos = new Float32Array(count*3);
+      for(let i=0;i<count;i++){
+        const th = Math.acos(2*Math.random()-1);
+        const ph = Math.random()*Math.PI*2;
+        pos[i*3+0] = radius*Math.sin(th)*Math.cos(ph);
+        pos[i*3+1] = radius*Math.cos(th);
+        pos[i*3+2] = radius*Math.sin(th)*Math.sin(ph);
+      }
+      g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const m = new THREE.PointsMaterial({ size, sizeAttenuation:true, transparent:true, depthWrite:false });
+      m.color = new THREE.Color(hex); m.opacity = opacity;
+      return new THREE.Points(g, m);
+    }
+    const group = new THREE.Group();
+    const far = starLayer(1200, 220, 0.04, '#9AA6B2', 0.38);
+    const near = starLayer(700, 150, 0.06, '#5B9CFF', 0.28);
+    group.add(far); group.add(near);
+    group.userData.tick = (t)=>{ far.rotation.y += 0.0002; near.rotation.y -= 0.00035; };
+    return group;
+  }
+  const bg = new THREE.Group(); scene.add(bg);
+  const mist = makeBG_DataMist_Dark();
+  const stars = makeBG_ParallaxStars_Dark();
+  bg.add(mist); bg.add(stars);
+
+  // ----------------- Nodes & scroll camera (from source, adapted) -----------------
+  const nodes = []; const labels = []; const beams = [];
+  const nodeBaseMeshes = []; // subtle base geometry under colored spheres
+  const nodeIcons = []; // { root: Group, mesh: Mesh } icons inside nodes (only for selected sections)
+  const ringSpeeds = []; const orbitMeshes = []; const orbitRotationSpeeds = [];
+  let targets=[]; let controls=[]; let rollAmplitudes=[]; let cycleHeight=0;
+
+  // Node layout (angles/radii) exactly as in source file
+  // Define node layout (angles/radii) for the portfolio. We structure the journey
+  // from simple interaction problems to complex operational and governance tasks.
+  const nodeDefs = [
+    { name: '▶️ Основы UX для AI',        theta:   0,  phi:  18, radius: 3.0 },  // Level 1: trust & transparency
+    { name: '🧩 Паттерны взаимодействия',       theta:  48,  phi: -22, radius: 3.6 },  // Level 1: Suggest/Validate/Automate
+    { name: '⚙️ Настройки ассистента',         theta:  96,  phi:  16, radius: 4.0 },  // Level 2: mission, tone, limits
+    { name: '📋 Промпты и Сценарии',      theta: 144,  phi: -28, radius: 4.6 },  // Level 2: version control, testing
+    { name: '📊 Операционная эффективность',                theta: 196,  phi:  22, radius: 5.0 },  // Level 3: performance and ROI
+    { name: '🛡️ Безопасность и соответствие',        theta: 260,  phi: -16, radius: 4.8 },  // Level 3: guardrails & audit
+    { name: '🧭 Плейбуки и маркетплейс',    theta: 320,  phi:  10, radius: 4.2 }   // Final: scale & share
+  ];
+
+  // Build nodes, labels, and beams with Synaptik dark styling
+  nodeDefs.forEach((def, idx)=>{
+const theta = THREE.MathUtils.degToRad(def.theta);
+    const phi = THREE.MathUtils.degToRad(def.phi);
+    const x = Math.cos(phi)*Math.cos(theta)*def.radius;
+    const y = Math.sin(phi)*def.radius;
+    const z = Math.cos(phi)*Math.sin(theta)*def.radius;
+    // === Energy beams for this node (fixed placement) ===
+    (function(){
+      const SPACE_COLOR = '#1B2B47';
+      const CORE_COLOR  = '#3dbfff';
+      const NODE_COLOR  = NODE_PALETTE[idx % NODE_PALETTE.length];
+
+      // Compute positions of space, node and core endpoints
+      const pNode = new THREE.Vector3(x,y,z);
+      const dir = pNode.clone().normalize();
+      const coreR = 1.06;
+      const pCore = dir.clone().multiplyScalar(coreR);
+      const extend = 2.2;
+      const rNode = def.radius;
+      const pSpace = pNode.clone().multiplyScalar((rNode + extend) / rNode);
+
+      // Create four beam materials and meshes. Packet colours will be controlled at runtime.
+      const beamRadius = 0.018;
+
+      // Space → Node (segment 0)
+      const matSpaceToNode = makeBeamMaterial(SPACE_COLOR, NODE_COLOR, IMPULSE_IN_COLOR);
+      const beamSpaceToNode = makeBeamMesh(pSpace, pNode, beamRadius, matSpaceToNode, -1);
+      scene.add(beamSpaceToNode);
+
+      // Node → Core (segment 1)
+      const matNodeToCore = makeBeamMaterial(NODE_COLOR, CORE_COLOR, NODE_COLOR);
+      const beamNodeToCore = makeBeamMesh(pNode, pCore, beamRadius*0.95, matNodeToCore, +1);
+      scene.add(beamNodeToCore);
+
+      // Core → Node (segment 2)
+      const matCoreToNode = makeBeamMaterial(CORE_COLOR, NODE_COLOR, NODE_COLOR);
+      const beamCoreToNode = makeBeamMesh(pCore, pNode, beamRadius*0.85, matCoreToNode, +1);
+      scene.add(beamCoreToNode);
+
+      // Node → Space (segment 3)
+      const matNodeToSpace = makeBeamMaterial(NODE_COLOR, SPACE_COLOR, IMPULSE_IN_COLOR);
+      const beamNodeToSpace = makeBeamMesh(pNode, pSpace, beamRadius*0.9, matNodeToSpace, -1);
+      scene.add(beamNodeToSpace);
+
+      // Calculate segment lengths and corresponding durations so the entire round trip takes 2 seconds
+      const d1 = pSpace.distanceTo(pNode);
+      const d2 = pNode.distanceTo(pCore);
+      const totalLength = 2.0 * (d1 + d2);
+      const v = totalLength / 2.0; // constant speed: totalLength / totalDuration
+      const t1 = d1 / v;
+      const t2 = d2 / v;
+      const t3 = d2 / v;
+      const t4 = d1 / v;
+      const durations = [t1, t2, t3, t4];
+
+      // Store this group of beams and their timing information. We'll control packet animation centrally.
+      beamGroups.push({
+        beams: [
+          { mesh: beamSpaceToNode, material: matSpaceToNode, defaultColor: IMPULSE_IN_COLOR },
+          { mesh: beamNodeToCore, material: matNodeToCore, defaultColor: NODE_COLOR },
+          { mesh: beamCoreToNode, material: matCoreToNode, defaultColor: NODE_COLOR },
+          { mesh: beamNodeToSpace, material: matNodeToSpace, defaultColor: IMPULSE_IN_COLOR }
+        ],
+        durations: durations,
+        nodeColor: NODE_COLOR
+      });
+    })();
+
+    const sphere = new THREE.Mesh(
+      new THREE.SphereGeometry(0.15, 16, 16),
+      makeFresnel(NODE_PALETTE[idx % NODE_PALETTE.length])
+    );
+    sphere.position.set(x,y,z);
+    sphere.name = def.name;
+    scene.add(sphere);
+    nodes.push(sphere);
+
+    // Subtle wireframe overlay to reveal mesh, similar to central shell grid
+    const baseMat = new THREE.MeshBasicMaterial({
+      color: new THREE.Color(NODE_PALETTE[idx % NODE_PALETTE.length]),
+      wireframe: true,
+      transparent: true,
+      opacity: 0.035,
+      depthWrite: false
+    });
+    const baseMesh = new THREE.Mesh(new THREE.SphereGeometry(0.153, 6, 4), baseMat);
+    baseMesh.position.set(x,y,z);
+    baseMesh.renderOrder = 1;
+    scene.add(baseMesh);
+    nodeBaseMeshes.push(baseMesh);
+
+    // 3D Play icon only for "Основы UX для AI": triangular prism with visible edges
+    (function addPlayIcon(){
+      return; // disabled by request
+if (!def.name.includes('Основы UX для AI')) return;
+      const iconRoot = new THREE.Group();
+      iconRoot.position.set(x, y, z);
+      // Triangle shape (play) pointing +X
+      const shape = new THREE.Shape();
+      shape.moveTo(-0.30, -0.20);
+      shape.lineTo(-0.30,  0.20);
+      shape.lineTo( 0.30,  0.00);
+      shape.closePath();
+      const geom = new THREE.ExtrudeGeometry(shape, { depth: 0.06, bevelEnabled: false });
+      // Center geometry
+      geom.center();
+      // Material: match node colour, make it slightly emissive
+      const col = new THREE.Color(NODE_PALETTE[idx % NODE_PALETTE.length]);
+      const mat = new THREE.MeshStandardMaterial({ color: col, metalness: 0.2, roughness: 0.35, emissive: col.clone().multiplyScalar(0.15), emissiveIntensity: 0.6, transparent: false });
+      const iconMesh = new THREE.Mesh(geom, mat);
+      // Visible geometry: wireframe edges overlay
+      const edges = new THREE.EdgesGeometry(geom);
+      const lineMat = new THREE.LineBasicMaterial({ color: col.clone().offsetHSL(0,0,-0.1), transparent: true, opacity: 0.85 });
+      const edgeLines = new THREE.LineSegments(edges, lineMat);
+      iconMesh.add(edgeLines);
+      // Scale to fit inside node sphere (radius ~0.15)
+      iconMesh.scale.set(0.45, 0.45, 0.45);
+      iconMesh.renderOrder = 5;
+      iconRoot.add(iconMesh);
+      scene.add(iconRoot);
+      nodeIcons.push({ root: iconRoot, mesh: iconMesh });
+    })();
+
+    const div = document.createElement('div');
+    div.className = 'label';
+    div.textContent = def.name;
+    labelsLayer.appendChild(div);
+    labels.push(div);
+
+    // Removed dashed line connecting node to origin
+  });
+
+  // Compute camera targets and curve controls
+  function computeTargets(){
+    targets = nodes.map(node=>{
+      const dir = node.position.clone().normalize();
+      const camOffset = dir.clone().multiplyScalar(2.0);
+      return { pos: node.position.clone().add(camOffset), lookAt: node.position.clone() };
+    });
+    controls=[]; rollAmplitudes=[];
+    const n = targets.length;
+    for(let i=0;i<n;i++){
+      const start = targets[i].pos;
+      const end = targets[(i+1)%n].pos;
+      const mid = start.clone().add(end).multiplyScalar(0.5);
+      const cross = start.clone().cross(end).normalize();
+      const dist = start.distanceTo(end);
+      const control = mid.clone().add(cross.multiplyScalar(dist*0.3));
+      controls.push(control);
+      rollAmplitudes.push((i%2===0?1:-1)*0.3);
+    }
+  }
+  computeTargets();
+
+  function setBodyHeight(){
+    cycleHeight = innerHeight * targets.length;
+    document.body.style.height = (cycleHeight * 3) + 'px';
+  }
+  setBodyHeight();
+  // Center to middle cycle for bidirectional scroll
+  scrollTo(0, cycleHeight);
+
+  // Infinite scroll loop bounds
+  addEventListener('scroll', ()=>{
+    if (orbitMode) return; // ignore scroll recentering while orbit mode is active
+    const y = scrollY;
+    const topLimit = cycleHeight * 0.5;
+    const bottomLimit = cycleHeight * 2.5;
+    if (y < topLimit) scrollTo(0, y + cycleHeight);
+    else if (y > bottomLimit) scrollTo(0, y - cycleHeight);
+  }, { passive:true });
+
+  // Easing
+  function ease(t){ if(t<0.5){ return 4*t*t*t; } const f=2*t-2; return 1 + (f*f*f)/2; }
+
+  function updateCameraFromScroll(){
+    if (orbitMode) return; // disabled during orbit mode
+    if(!targets.length) return;
+    const total = targets.length;
+    const y = scrollY - cycleHeight;
+    const localY = ((y % cycleHeight) + cycleHeight) % cycleHeight;
+    const progress = localY / cycleHeight;
+    const segFloat = progress * total;
+    const idx = Math.floor(segFloat);
+    const t = segFloat - idx;
+    const nextIdx = (idx + 1) % total;
+    const start = targets[idx], end = targets[nextIdx], control = controls[idx];
+    const et = ease(t), omt = 1 - et;
+
+    const p = new THREE.Vector3();
+    p.copy(start.pos).multiplyScalar(omt*omt)
+      .add(control.clone().multiplyScalar(2*omt*et))
+      .add(end.pos.clone().multiplyScalar(et*et));
+
+    const look = new THREE.Vector3().copy(start.lookAt).lerp(end.lookAt, et);
+
+    // Zoom in near nodes, out between — same logic as source
+    const nearFov = 35, farFov = 75;
+    const zoomFactor = Math.sin(Math.PI * et);
+    camera.fov = nearFov + (farFov - nearFov) * zoomFactor;
+    camera.updateProjectionMatrix();
+
+    camera.position.copy(p);
+    camera.lookAt(look);
+
+    const rollAmp = rollAmplitudes[idx];
+    const rollAngle = rollAmp * Math.sin(Math.PI * et);
+    camera.up.set(0,1,0);
+    camera.updateMatrixWorld();
+    camera.rotateZ(rollAngle);
+  }
+
+  function updateLabels(){
+    const w = innerWidth, h = innerHeight;
+    nodes.forEach((node,i)=>{
+      const s = node.position.clone().project(camera);
+      const x = (s.x*0.5+0.5)*w;
+      const y = (-s.y*0.5+0.5)*h;
+      const el = labels[i];
+      if(s.z < -1 || s.z > 1){ el.style.display='none'; }
+      else {
+        el.style.display='block';
+        el.style.left = x+'px';
+        el.style.top = y+'px';
+        el.dataset.index = String(i);
+      }
+    });
+  }
+
+  // --- Node description data and clickable overlay logic -----------------------
+  // Define descriptive texts for each node. Each node has three variants of text
+  // that can be switched via the small-panel buttons. These entries mirror
+  // the content from the data universe prototype.
+  const nodeInfos = {
+    Retriever: [
+      'Retriever — интеллектуальный модуль для поиска и сбора данных из различных источников. Он обеспечивает доступ к базам знаний, CRM, интернет‑ресурсам, каталогам и API. Благодаря ему пользователь получает необходимые сведения без ручного поиска.',
+      'Retriever отвечает за агрегацию информации: фильтрует и структурирует данные, избавляя пользователя от информационного шума. Он умеет индексировать документы, учитывать контекст запросов и выдавать только релевантные ответы.',
+      'Этот агент выполняет роль информационного посредника, быстро подготавливая данные для последующего анализа и принятия решений. Он легко интегрируется с корпоративными системами и сторонними сервисами для максимальной эффективности.'
+    ],
+    Analyst: [
+      'Analyst — аналитический модуль, превращающий сырые данные в полезные инсайты. Он применяет статистические методы, машинное обучение и визуализацию, выявляя скрытые тренды и закономерности.',
+      'Аналитик помогает увидеть взаимосвязи, оценить эффективность процессов и прогнозировать результаты. Его выводы подкреплены данными и помогают принимать более обоснованные решения.',
+      'Этот модуль автоматизирует исследования: генерирует отчёты и рекомендации, экономя время и ресурсы. Он превращает массивы цифр в понятные истории о состоянии вашего бизнеса.'
+    ],
+    Reviewer: [
+      'Reviewer — модуль для проверки корректности и точности результатов. Он оценивает качество данных и выводов, сравнивая их с эталонными и ожидаемыми значениями.',
+      'Ревьюер помогает обнаружить ошибки и отклонения, предупреждает о рисках и предлагает корректировки. Благодаря его работе повышается доверие к системе и принимаемым на её основе решениям.',
+      'Этот агент обеспечивает контроль качества, соблюдение стандартов и прозрачность результатов, укрепляя репутацию продукта и защищая бизнес от непредвиденных последствий.'
+    ],
+    Validator: [
+      'Validator — проверяющий модуль, подтверждающий правильность данных и результатов. Он применяет правила, нормы и бизнес‑логику для оценки решений.',
+      'Валидатор отсеивает недостоверную информацию, выявляет противоречия и гарантирует соответствие установленным требованиям. Это снижает вероятность ошибок на поздних этапах.',
+      'Его работа обеспечивает чистоту и целостность данных, позволяя строить надёжные аналитические и операционные процессы. Без такого контроля не обойтись в критически важных системах.'
+    ],
+    Operator: [
+      'Operator — координирующий модуль, управляющий процессами и распределяющий задачи между другими агентами. Он обеспечивает синхронность работы, мониторинг и логирование.',
+      'Оператор следит за состоянием системы, контролирует производительность и оптимизирует ресурсы. Он реагирует на события и корректирует работу агентов в режиме реального времени.',
+      'Эта роль облегчает взаимодействие модулей, обеспечивает масштабируемость и отказоустойчивость, помогая бизнесу работать без сбоев даже при высоких нагрузках.'
+    ],
+    PromptOps: [
+      'PromptOps — модуль подготовки и оптимизации запросов (промптов) к нейросетям. Он формирует понятные, точные и эффективные команды для ИИ, обеспечивая максимальную результативность.',
+      'Этот модуль анализирует контекст, подбирает правильные параметры и подсказки, снижая вероятность ошибочного понимания. Пользователь получает более корректные и полезные ответы.',
+      'PromptOps позволяет автоматизировать генерацию запросов, интегрируя шаблоны и сценарии. Это существенно ускоряет разработку и внедрение AI‑продуктов, делая их доступными широкой аудитории.'
+    ],
+    Playbooks: [
+      'Playbooks — библиотека готовых сценариев и шаблонов для решения типовых задач. Она содержит структурированные инструкции, лучшие практики и документы из разных областей.',
+      'Playbooks помогают быстро развернуть процессы, обучить сотрудников и масштабировать бизнес. Они экономят время, обеспечивая стандартизацию и повторяемость операций.',
+      'Эта коллекция знаний и методик служит источником вдохновения, позволяет экономить на экспериментах и минимизировать ошибки при внедрении новых функций или сервисов.'
+    ]
+  };
+
+  // ----------------- Structured data for new nodes (problem → solution → interface) -----------------
+  // Each entry corresponds to a node defined in nodeDefs. The keys must match exactly.
+  // The 'ui' field contains a description of the UI demo; 'figma' can be updated with a real link.
+  const NODES = {
+    '▶️ Основы UX для AI': {
+      summary: 'Как превратить чат в управляемый инструмент: цель, контекст, память и объяснимость.',
+      problem:
+`🤔 Проблемы
+
+Ассистенты всё ещё выглядят как чат, а не инструмент. Текстовый поток не даёт структуры или контекста, всё держится в голове пользователя. 
+
+Отсутствие визуальной логики повышает когнитивную нагрузку и вызывает недоверие.
+
+“Без статуса модели пользователи теряют ощущение направления в диалоге.” — Nielsen Norman Group, 2024
+
+Ассистенты не показывают, что они «знают». Пользователь не различает ошибку данных и логику модели. Потеря контекста воспринимается как сбой.
+
+“Пользователи ошибочно приписывают сбой системе, когда теряется контекст.” — MIT HCAI Lab, 2024
+
+LLM-модели дают разные ответы на один запрос, а интерфейс не раскрывает по каким причинам был получен такой ответ.
+
+“Невидимые стадии reasoning создают иллюзию стабильности, которая исчезает при сбое.” — Google PAIR, 2023`,
+      solution:
+`🧩 Решения
+
+Ассистент должен быть модульной сущностью, а не чатом.
+🎯 Цель — зачем создан.
+📚 Контекст — источники данных.
+🧠 Память — что знает.
+🚫 Границы — где не компетентен.
+
+“Явное представление цели повышает предсказуемость.” — CHI, 2024
+
+Добавляем пошаговую объяснимость: анализ → поиск → синтез → ответ. Пользователь видит, на каком этапе находится модель.
+“Сокращённая визуальная объяснимость усиливает доверие.” — ACM TiiS, 2024
+
+Интерактивный контроллер — управление параметрами (точность, стиль, длина). Пользователь чувствует контроль.
+
+“Explorable parameters помогают интуитивно управлять моделью.” — Google Research, 2023
+
+Inline-feedback: “уточни”, “перепиши”, “не используй этот источник”.
+“Inline-correction повышает успешность задач на 41%.” — Stanford HCI, 2024`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Карточка ассистента: роль, статус (“📊 Data Analyst — active”), бейдж доступа (🔒 / 🌐), линия reasoning-прогресса, hover-пояснения. Кнопки: “Показать источники”, “Повторить”.
+
+Панель памяти и контекста: список документов, дата обращения, кнопки “🧹 Очистить” / “📌 Закрепить”. Индикатор состояния диалога (timeline).
+Google Material Research, 2023
+
+Explain-Bar: визуализация стадий reasoning (🔵 анализ, 🟣 поиск, 🟢 синтез, 🟡 ответ). При клике — краткое пояснение. Microsoft Research, 2024
+
+Feedback-зона: кнопки “Уточнить”, “Добавить данные”, “Исправить”. Возможность задать правило поведения. TTFT-индикатор — метрика производительности.
+
+✨ Результат
+
+Интерфейс превращается из чата в операционную систему взаимодействия с интеллектом: поведение модели видно, состояние контролируется, диалог предсказуем и воспроизводим.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9203&t=WRdLcsC1gAuCeeSx-1'
+    },
+    '🧩 Паттерны взаимодействия': {
+      summary: 'Единые паттерны общения с ИИ для воспроизводимости и скорости работы.',
+      problem:
+`🤔 Проблемы
+
+Каждый сотрудник общается с ИИ по-своему: кто пишет длинные запросы, кто — одно слово.
+
+Результат — хаос, непоследовательность и потеря контекста. Даже одинаковые задачи дают разные ответы.
+
+“Разнородность промптов снижает воспроизводимость и эффективность на 37 %.” — MIT AI Collaboration Lab, 2023
+
+Ассистенты не имеют общей логики взаимодействия: нет стандартов, шаблонов, ролей и структуры.
+
+Обучение новым сотрудникам требует времени, а сценарии невозможно масштабировать.
+
+“Непоследовательный язык взаимодействия мешает обучению модели и команде.” — Stanford HCI Group, 2024`,
+      solution:
+`🧩 Решения
+
+Стандартизация общения с ИИ.
+
+Создаётся система базовых паттернов, понятных всем пользователям:
+1️⃣ Запрос-ответ — быстрый одношаговый формат.
+2️⃣ Уточнение контекста — диалог для прояснения деталей.
+3️⃣ Многошаговые цепочки — последовательные действия с промежуточной проверкой.
+4️⃣ Интерактивные формы — ввод параметров вместо длинного текста.
+5️⃣ Пост-обработка — уточнение стиля, тона и формата.
+
+“Единые interaction-patterns повышают успешность задач на 42 %.” — Google Research, 2024
+
+UX-решения включают шаблоны промптов, кнопки-модификаторы (“уточни”, “сократи”, “расширь”) и визуальный контроль шагов в цепочке.
+
+Бизнес-ценность — формирование корпоративного языка общения с ИИ,
+где все сотрудники используют единые принципы.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Панель паттернов: галерея готовых форматов (“Запрос-ответ”, “Цепочка”, “Форма”, “Пост-обработка”) с примерами запросов и подсказками.
+
+Библиотека best-practices: каталог корпоративных шаблонов с рейтингом и тегами (“финансы”, “маркетинг”).
+История использования показывает, какие паттерны эффективнее.
+
+Визуальный контроль: верхняя панель шагов (анализ → генерация → проверка → экспорт с цветовой кодировкой состояния.
+
+Интерактивные формы: поля для целей, аудитории, формата, что сокращает ошибки и экономит время.
+
+✨ Результат
+
+Ассистенты начинают говорить с пользователями на одном языке.
+Работа становится предсказуемой, сценарии — масштабируемыми,
+а ИИ — естественной частью корпоративного процесса.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9204&t=WRdLcsC1gAuCeeSx-1'
+    },
+    '⚙️ Настройки ассистента': {
+      summary: 'Паспорт ассистента и прозрачные параметры для предсказуемого поведения модели.',
+      problem:
+`🤔 Проблемы
+
+Большинство ассистентов ведут себя непредсказуемо: параметры разбросаны, интерфейсы не дают понять, почему модель отвечает именно так.
+
+Пользователи не видят, какие данные используются, сколько стоят запросы, и где проходят лимиты.
+
+“Скрытые настройки генерации создают эффект непредсказуемости и снижают доверие.” — Nielsen Norman Group, 2024
+
+Отсутствие прозрачности мешает масштабированию:
+• нельзя повторить поведение модели;
+• сложно управлять бюджетом;
+• невозможно понять, кто изменил параметры и зачем.
+
+“Недостаток explainability — главная причина ошибок при работе с LLM.” — Google DeepMind UX Report, 2023`,
+      solution:
+`🧩 Решения
+
+Ассистент как управляемая система.
+
+Каждый должен иметь свой “паспорт”:
+🎯 Миссия — цель и зона ответственности,
+🧠 Контекст — источники знаний и инструкции,
+🗝️ Роли и права — кто имеет доступ,
+💾 Память — что хранится и когда очищается,
+💸 Бюджет — лимиты по токенам и запросам.
+
+“Явное отображение параметров снижает число ошибок и повышает доверие пользователей на 28 %.” — CHI, 2024
+
+UX-подход: всё сгруппировано по функциональным зонам — параметры, контекст, источники, роли, лимиты.
+
+Видно, как изменение одного параметра влияет на поведение модели в реальном времени.
+
+Бизнес-ценность: прозрачность, контроль и предсказуемость ассистентов во всей организации.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Панель “Assistant Profile”:
+• роль и статус (“📊 Data Analyst — active”), бейдж доступа (🔒 / 🌐);
+• карточки temperature, max tokens, стиль ответов;
+• превью поведения модели при изменении настроек.
+
+Вкладки:
+• Mission — описание задач;
+• Tone — стиль общения (“Формально / Нейтрально / Дружелюбно”);
+• Context — активные документы и инструкции;
+• Memory — история и кнопка “🧹 Очистить память”;
+• Limits — бюджеты и лимиты.
+
+Дополнительно:
+• Hover-подсказки, предупреждения об ошибках, метрики TTFT и стоимости.
+• Кнопки “Сохранить”, “Тестировать”, “Опубликовать”.
+
+✨ Результат
+
+Ассистент становится прозрачным и воспроизводимым.
+Каждый параметр виден, каждое действие зафиксировано,
+а пользователи и менеджеры понимают, как управлять AI, а не просто им пользоваться.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9205&t=WRdLcsC1gAuCeeSx-1#'
+    },
+    '📋 Промпты и Сценарии': {
+      summary: 'PromptOps: создание, тесты и версии сценариев без хаоса и дублирования.',
+      problem:
+`🤔 Проблемы
+
+Промпты живут в хаосе: дублируются, теряются, правятся вручную.
+У каждого — своя версия, своя логика и свой результат.
+
+Невозможно понять, почему одна команда получает точные ответы, а другая — нет.
+
+“Без истории и версий промптов воспроизводимость AI-результатов падает более чем на 60 %.” — MIT AI Ops Lab, 2024
+
+Команды не видят, какие параметры влияют на результат, а сценарии невозможно тестировать.
+
+Ошибки повторяются, данные теряются, знания не передаются.
+
+“Отсутствие централизованной PromptOps-системы приводит к росту стоимости задач и деградации качества.” — Google Research, 2024`,
+      solution:
+`🧩 Решения
+
+PromptOps — операционная среда для сценариев.
+
+Единая система, где все промпты и цепочки создаются, тестируются и версионируются.
+
+Основные элементы:
+• Визуальный билдер — создание цепочек из блоков (модель → фильтр → валидация → вывод).
+• Версионность — сохранение изменений, авторов, комментариев.
+• Интеграция с базой знаний — подключение корпоративных источников и API.
+• Автотесты — проверка качества сценария перед публикацией.
+
+“Визуальные пайплайны повышают точность и скорость отладки на 47 %.” — Google Research, Modular AI Workflows, 2024
+
+UX-ценность: наглядность процессов и автоматизация повторяющихся задач.
+
+Бизнес-ценность: масштабирование AI-операций без хаоса и дублирования.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Scenario Builder:
+• Канва с блоками: Input → Model → Filter → Validator → Output.
+• Линии потоков данных и подсветка активных шагов.
+• При клике — параметры блока (модель, температура, лимиты).
+
+Панель версий:
+• История изменений с датой, автором, комментарием.
+• Кнопка “🔄 Откатить версию”.
+• Diff-подсветка различий в промптах и параметрах.
+
+Тестирование:
+• “▶ Запустить тест” — прогон сценария с визуальной трассировкой.
+• Отображение времени, стоимости и точности.
+• Граф зависимости шагов и их состояния.
+
+Интеграция и публикация:
+• Панель источников данных.
+• Кнопки: “Сохранить”, “Запустить”, “Опубликовать”.
+
+✨ Результат
+PromptOps превращает хаотичные промпты в управляемые процессы.
+Каждый шаг прозрачен, каждая версия сохранена.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9206&t=WRdLcsC1gAuCeeSx-1'
+    },
+    '📊 Операционная эффективность': {
+      summary: 'AI Live Ops: метрики TTFT, стоимость, ROI и стабильность в одном дашборде.',
+      problem:
+`🤔 Проблемы
+
+Руководители видят только итог — “ассистенты работают” —
+но не знают как, насколько эффективно и почему система стала медленнее или дороже.
+
+Всё, что остаётся — ощущение магии без контроля.
+
+• Почему ответы стали медленнее?
+• Куда уходят токены и бюджеты?
+• Какие ассистенты реально приносят ROI, а какие — только потребляют ресурсы?
+
+“Без операционных метрик доверие к AI-системам падает, а решения принимаются на интуиции, а не на данных.”
+— Stanford AI Governance Report, 2024
+
+Без Live Ops-компонента ассистенты превращаются в чёрные ящики:
+ошибки замечают пользователи, бюджеты утекли вчера,
+а эффективность никто не измерял.`,
+      solution:
+`🧩 Решения
+
+AI Live Ops — центр управления интеллектом.
+Единый дашборд, где отображаются ключевые показатели работы ассистентов в реальном времени.
+
+Основные метрики:
+• TTFT (Time to First Token) — скорость отклика модели;
+• Cost per Request — стоимость обработки;
+• ROI / Assistant — отдача от каждого ассистента;
+• Error Rate — стабильность и качество ответов;
+• Load — нагрузка и пропускная способность.
+
+UX-подход:
+• графики и индикаторы SLA с цветовой кодировкой (🟢🟠🔴);
+• алерты и отчёты об инцидентах;
+• фильтры по ролям, отделам и периодам;
+• сравнение ассистентов и прогноз динамики.
+
+Бизнес-ценность: измеримость, управляемость и прозрачность AI-процессов.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+AI Operations Center:
+• Главный экран с картой ассистентов и KPI.
+• Графики TTFT, стоимости и ROI по командам.
+• Фильтры по контурам (🔒 internal / 🌐 external), ролям и времени.
+
+Система алертов:
+• SLA-индикаторы по цветам.
+• Панель инцидентов с рекомендациями действий (“Снизить температуру”, “Рестарт”).
+• Кнопка “📄 Отчёт” — экспорт данных и логов.
+
+Сравнение и прогноз:
+• Граф сравнения ассистентов по ROI и TTFT.
+• Блок “Прогноз” — ожидаемая производительность.
+• История изменений и реакции команды.
+
+✨ Результат
+
+Live Ops делает AI-систему прозрачной и измеримой.
+Руководители видят эффективность, аналитики управляют метриками,
+а ассистенты становятся контролируемыми бизнес-инструментами, а не магией.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9207&t=WRdLcsC1gAuCeeSx-1'
+    },
+    '🛡️ Безопасность и соответствие': {
+      summary: 'Контуры безопасности, аудит и provenance-теги для доверия и контроля.',
+      problem:
+`🤔 Проблемы
+
+Когда ассистенты начинают работать с реальными данными — начинается паника.
+
+Что они видят? Куда это уходит? Кто несёт ответственность за утечку?
+Большинство компаний не готовы к аудиту AI-операций:
+модели вызываются из внешнего облака, сотрудники не знают, какие данные туда попадают, а системы логирования просто отсутствуют.
+
+“70 % корпоративных команд не имеют базовых инструментов контроля происхождения данных и действий моделей.”
+— Gartner AI Risk Study, 2024
+
+Без чётких контуров безопасности ассистенты становятся потенциальной уязвимостью:
+• персональные данные попадают в внешние API,
+• отсутствует видимость, кто что запрашивал,
+• невозможно доказать происхождение результата.
+
+“Доверие к AI-системе напрямую зависит от прозрачности и аудируемости её контуров.” — Microsoft Research, Responsible AI Interfaces, 2023`,
+      solution:
+`🧩 Решения
+
+Многоуровневая система безопасности и контроля.
+
+Каждый ассистент работает в своём контуре исполнения:
+🔒 Internal — доступ к внутренним данным,
+🌐 External — использование внешних моделей,
+⚙️ Hybrid — комбинированный режим с фильтрацией данных.
+
+Политики безопасности:
+• маскирование PII перед внешними вызовами;
+• фильтрация запрещённых тем и доменов;
+• контроль источников данных и прав доступа.
+
+Аудит и ролевой доступ:
+• логирование всех действий пользователей и ассистентов;
+• отчёты об инцидентах и фиксация нарушений;
+• метаданные provenance: модель, версия, контур, дата, фильтры.
+
+“Provenance-теги повышают доверие к AI-ответам на 36 %.” — Stanford HAI, 2024
+
+Бизнес-ценность: зрелая архитектура AI-governance, готовая для корпоративного уровня.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Карта контуров безопасности:
+• Три зоны — 🔒 Internal / 🌐 External / ⚙️ Hybrid.
+• Анимированные потоки данных между контурами.
+• Hover-подсказки: “PII masked”, “Safe data”, “Restricted”.
+
+Бейджи доступа:
+• Каждый ассистент имеет бейдж контуров.
+• При попытке выхода за границы — предупреждение.
+
+Панель аудита:
+• Журнал действий по пользователям, моделям и данным.
+• Фильтры по типам инцидентов.
+• Кнопка “📄 Отчёт о событии”.
+
+Provenance-панель:
+• Под каждым ответом — метаданные:
+“Model: GPT-4 | Version: 2025.10 | Contour: 🌐 External | PII: Masked”.
+
+✨ Результат
+Ассистенты становятся прозрачными и контролируемыми. Компания управляет потоками данных и соблюдает стандарты безопасности,а пользователи уверены, что их информация защищена и под контролем.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9208&t=WRdLcsC1gAuCeeSx-1'
+    },
+    '🧭 Плейбуки и маркетплейс': {
+      summary: 'Внутренний маркетплейс ассистентов и сценариев для тиражирования лучших практик.',
+      problem:
+`🤔 Проблемы
+
+Корпоративные знания расползаются между отделами.
+
+Один разработал эффективный сценарий — другой даже не знает о его существовании.
+
+Результаты теряются в чатах, документах и “локальных гениях”,
+а каждая команда изобретает свои шаблоны заново.
+
+“Отсутствие централизованных AI-плейбуков приводит к 40% дублированию задач и утрате контекста экспертизы.” — McKinsey AI Adoption Survey, 2024
+
+Без общей библиотеки ассистентов организация теряет скорость:
+• одни и те же промпты создаются заново;
+• не видно, какие сценарии реально приносят пользу;
+• знания остаются «в головах» сотрудников.`,
+      solution:
+`🧩 Решения
+
+Корпоративный маркетплейс ассистентов и сценариев.
+
+Единая библиотека, где каждая команда может выбирать, настраивать и запускать готовые AI-инструменты.
+
+Основные разделы:
+• Каталог ассистентов по задачам и ролям (“Аналитика”, “Маркетинг”, “Юридический анализ”).
+• Шаблоны сценариев PromptOps с описанием шагов и параметров.
+• Рейтинг эффективности и ROI.
+• Отзывы и рекомендации пользователей.
+
+“Внутренние AI-маркетплейсы ускоряют внедрение решений в 3 раза.” — Harvard Business Review, 2023
+
+UX-подход:
+плиточная структура каталога, фильтры по задачам и ROI, карточки ассистентов с кратким описанием, показателями и действиями.
+
+Бизнес-ценность: тиражирование лучших практик, прозрачность использования ИИ и ускорение внедрения инноваций.`,
+      ui:
+`💡 Реализация в интерфейсе
+
+Internal AI Marketplace:
+• Главная страница — плиточная сетка ассистентов: аватар, описание, ROI, теги.
+• Фильтры: “Отдел”, “Тип задачи”, “Эффективность”, “Дата обновления”.
+• Кнопки: “▶ Запустить”, “📁 Добавить в команду”, “🧩 Открыть сценарий”.
+
+Карточка ассистента:
+• Описание миссии, подключённых источников и сценариев.
+• История запусков и средний ROI.
+• Раздел “Отзывы” и рейтинг.
+
+Библиотека плейбуков:
+• Каталог типовых сценариев по отраслям.
+• Метрики успешности и частота использования.
+• Раздел “Популярное” — лучшие практики недели.
+
+✨ Результат
+Playbooks & Marketplace превращает разрозненные AI-инициативы в систему знаний.Команды перестают работать в изоляции, делятся опытом и используют лучшие сценарии повторно. Организация получает живую экосистему, где ассистенты становятся инфраструктурой знаний, а инновации — ежедневной практикой.`,
+      figma: 'https://www.figma.com/design/ZPhjQ4vsxxZGRz7ttXIyIx/Synaptik-DS-%E2%80%94-Library--Core-?node-id=494-9209&t=WRdLcsC1gAuCeeSx-1'
+    }
+  };
+
+  // Grab overlay and HUD elements
+  const overlay = document.getElementById('overlay');
+  const objectIcon = document.getElementById('object-icon');
+  const bigPanel = document.getElementById('big-panel');
+  const smallPanel = document.getElementById('small-panel');
+  const hudObjectIcon = document.getElementById('hud-object-icon');
+  const hudBigPanel = document.getElementById('hud-big-panel');
+  const hudSmallPanel = document.getElementById('hud-small-panel');
+  const hudContainer = document.getElementById('hud-container');
+  // Prepare HUD object icon container (we will render per-node SVG here)
+  if (hudObjectIcon) {
+    hudObjectIcon.style.display = 'none';
+    hudObjectIcon.style.background = 'transparent';
+    hudObjectIcon.style.border = 'none';
+    hudObjectIcon.style.boxShadow = 'none';
+    hudObjectIcon.innerHTML = '';
+  }
+
+  // Rename the tab buttons to reflect the new structure: Problem → Solution → Interface
+  (function(){
+    // Only select the tab buttons (marked with data-index) so we do not modify the close button
+    const btns = hudSmallPanel.querySelectorAll('button[data-index]');
+    if(btns && btns.length >= 3){
+      btns[0].textContent = 'Проблема';
+      btns[1].textContent = 'Решение';
+      btns[2].textContent = 'Интерфейс';
+    }
+  })();
+  let activeOverlay = false;
+  let currentInfo = [];
+  let currentNodeName = '';
+  let currentNodeIndex = -1;
+
+  // Order of sections for navigation
+  const SECTION_ORDER = ['👤 Обо мне', ...nodeDefs.map(d => d.name)];
+
+  function renderHudSectionHeader(name){
+    const data = NODES[name] || {};
+    let header = hudSmallPanel.querySelector('.hud-section-header');
+    if(!header){
+      header = document.createElement('div');
+      header.className = 'hud-section-header';
+      const titleEl = document.createElement('div');
+      titleEl.className = 'hud-section-title';
+      const summaryEl = document.createElement('div');
+      summaryEl.className = 'hud-section-summary';
+      const navEl = document.createElement('div');
+      navEl.className = 'hud-section-nav';
+      const prevA = document.createElement('a');
+      prevA.href = '#';
+      prevA.textContent = '← Предыдущий';
+      prevA.addEventListener('click', (e)=>{ e.preventDefault(); navigateSection(-1); });
+      const nextA = document.createElement('a');
+      nextA.href = '#';
+      nextA.textContent = 'Следующий →';
+      nextA.addEventListener('click', (e)=>{ e.preventDefault(); navigateSection(1); });
+      navEl.appendChild(prevA);
+      navEl.appendChild(nextA);
+      header.appendChild(titleEl);
+      header.appendChild(summaryEl);
+      header.appendChild(navEl);
+      hudSmallPanel.insertBefore(header, hudSmallPanel.firstChild);
+    }
+    const titleEl = header.querySelector('.hud-section-title');
+    const summaryEl = header.querySelector('.hud-section-summary');
+    if(titleEl) titleEl.textContent = name;
+    // For About section, custom summary short line
+    const summaryText = (name === '👤 Обо мне')
+      ? 'Собрал по разделам кейсы для демонстрации потенциала продуманного UX в решении проблем AI продуктов'
+      : (data.summary || '');
+    if(summaryEl) summaryEl.textContent = summaryText;
+
+    // Ensure a dedicated close button is present in the header and wired to hide the HUD.
+    let closeBtn = header.querySelector('.hud-close-btn');
+    if(!closeBtn){
+      closeBtn = document.createElement('button');
+      closeBtn.className = 'hud-close-btn';
+      closeBtn.type = 'button';
+      closeBtn.textContent = '✕';
+      closeBtn.setAttribute('aria-label','Закрыть');
+      closeBtn.addEventListener('click', (e)=>{
+        e.preventDefault();
+        hideOverlay();
+      });
+      header.appendChild(closeBtn);
+    }
+  }
+
+  function navigateSection(delta){
+    if(currentNodeIndex < 0){ currentNodeIndex = Math.max(0, SECTION_ORDER.indexOf(currentNodeName)); }
+    const total = SECTION_ORDER.length;
+    const nextIdx = (currentNodeIndex + delta + total) % total;
+    const nextName = SECTION_ORDER[nextIdx];
+    const nodeIdx = nodes.findIndex(n => n.name === nextName);
+    if(nodeIdx >= 0){
+      showOverlay(nodes[nodeIdx]);
+    } else if (nextName === '👤 Обо мне') {
+      showAboutPanel();
+    }
+  }
+
+  // Show the overlay for a clicked node. This uses the structured NODES object
+  // instead of the legacy nodeInfos array. Each tab displays a different facet
+  // of the node: problem, solution or interface. The interface tab also
+  // includes calls to actions (Figma / Telegram / Community).
+  function showOverlay(node) {
+    if (!node || !node.name || !NODES[node.name]) return;
+    const data = NODES[node.name];
+    currentNodeName = node.name;
+    currentNodeIndex = SECTION_ORDER.indexOf(currentNodeName);
+    // Render a canvas snapshot of the 3D icon into HUD (approximation):
+    if (hudObjectIcon) { /* HUD icon removed by request */
+      hudObjectIcon.style.display = 'none'; /* keep hidden */
+      hudObjectIcon.innerHTML = '';
+      const idx = nodes.indexOf(node);
+      if (idx >= 0 && nodeIcons[idx]){
+        // For now, insert a placeholder badge using the node's palette colour for consistency
+        const badge = document.createElement('div');
+        badge.style.width = '100%';
+        badge.style.height = '100%';
+        badge.style.borderRadius = '50%';
+        badge.style.boxShadow = '0 0 20px rgba(91,156,255,0.35) inset';
+        badge.style.background = 'radial-gradient( circle at 50% 50%, rgba(111,182,255,0.25), rgba(18,23,34,0.0) 60%)';
+        hudObjectIcon.appendChild(badge);
+      }
+    }
+    // Helper to render content based on tab index
+    function renderTab(idx) {
+      // Hide previous content and reset
+      hudBigPanel.innerHTML = '';
+      if (idx === 0) {
+        hudBigPanel.textContent = data.problem || '—';
+      } else if (idx === 1) {
+        hudBigPanel.textContent = data.solution || '—';
+      } else {
+        // Interface: show description and CTA buttons
+        const html = [];
+        html.push('<div style="white-space:pre-line; margin-bottom:12px;">'+
+          (data.ui || '—').replace(/</g, '&lt;')+
+        '</div>');
+        html.push('<div style="display:flex; gap:8px; flex-wrap:wrap;">');
+        // Figma link
+        html.push('<a target="_blank" href="'+(data.figma||'#')+'" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть макет Figma</a>');
+        // Telegram chat
+        html.push('<a target="_blank" href="'+(LINKS.tgChat||'#')+'" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в Telegram</a>');
+        // Community
+        html.push('<a target="_blank" href="'+(LINKS.tgCommunity||'#')+'" class="header-btn" style="text-decoration:none; display:inline-block;">Перейти в сообщество</a>');
+        html.push('</div>');
+        hudBigPanel.innerHTML = html.join('');
+      }
+    }
+    // Rename tab buttons back to the default names for nodes.
+    // We explicitly target buttons with a data-index attribute to avoid
+    // accidentally modifying the close button appended to the header.
+    const hudButtons = hudSmallPanel.querySelectorAll('button[data-index]');
+    if(hudButtons && hudButtons.length >= 3){
+      hudButtons[0].textContent = 'Проблема';
+      hudButtons[1].textContent = 'Решение';
+      hudButtons[2].textContent = 'Интерфейс';
+    }
+    // Attach click handlers to small-panel buttons and manage active state
+    hudButtons.forEach((btn, idx) => {
+      btn.onclick = () => {
+        hudButtons.forEach(b=>b.classList.remove('active-tab'));
+        btn.classList.add('active-tab');
+        renderTab(idx);
+      };
+    });
+    // Show HUD elements
+    if (hudObjectIcon) hudObjectIcon.style.display = 'block';
+    // Show the HUD container so panels appear centred and responsive
+    if (hudContainer) hudContainer.style.display = 'flex';
+    hudBigPanel.style.display = 'block';
+    hudSmallPanel.style.display = 'flex';
+    // Render section header (title, summary, nav)
+    renderHudSectionHeader(node.name);
+    // Activate overlay backdrop
+    overlay.classList.add('active');
+    activeOverlay = true;
+    // Render default tab (problem) and set active
+    hudButtons.forEach(b=>b.classList.remove('active-tab'));
+    if(hudButtons[0]) hudButtons[0].classList.add('active-tab');
+    renderTab(0);
+  }
+
+  // Hide overlay and reset state
+  function hideOverlay() {
+    overlay.classList.remove('active');
+    activeOverlay = false;
+    currentNodeName = '';
+    currentInfo = [];
+    hudObjectIcon.style.display = 'none';
+    hudBigPanel.style.display = 'none';
+    hudSmallPanel.style.display = 'none';
+    if (hudContainer) hudContainer.style.display = 'none';
+  }
+
+  // Raycaster for detecting node clicks
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  // Handle mouse click events on the renderer canvas
+  function onDocumentClick(event) {
+    // Allow picking in orbit mode when not actively dragging/pending
+    if (orbitMode && (isOrbitDragging)) return;
+    const canvas = renderer.domElement;
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+    if (x < 0 || y < 0 || x > rect.width || y > rect.height) return;
+    mouse.x = (x / rect.width) * 2 - 1;
+    mouse.y = -(y / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    const intersects = raycaster.intersectObjects(nodes);
+    if (intersects.length > 0) {
+      showOverlay(intersects[0].object);
+    }
+  }
+
+  // Label click handler (mirror of 3D picking): click on visible label opens overlay for that node
+  function onLabelClick(e){
+    // Allow in orbit mode if not actively dragging and not suppressing click
+    if (orbitMode && (isOrbitDragging)) return;
+    const target = e.target;
+    if (!(target instanceof HTMLElement)) return;
+    if (!target.classList.contains('label')) return;
+    if (suppressLabelClick) return;
+    const idxStr = target.dataset.index;
+    if (!idxStr) return;
+    const idx = parseInt(idxStr, 10);
+    if (Number.isNaN(idx) || !nodes[idx]) return;
+    showOverlay(nodes[idx]);
+  }
+
+  // Hide overlay on scroll
+  // Close the overlay on scroll only on desktop screens.  On tablets and mobiles
+  // the HUD should remain open when the user scrolls the background.
+  function handleOverlayScroll() {
+    if (activeOverlay && innerWidth >= 768) {
+      hideOverlay();
+    }
+  }
+
+  renderer.domElement.addEventListener('click', onDocumentClick, false);
+  window.addEventListener('scroll', handleOverlayScroll);
+  // Close on click outside panels
+  overlay.addEventListener('click', (e)=>{
+    if(e.target === overlay){ hideOverlay(); }
+  });
+  labelsLayer.addEventListener('click', onLabelClick);
+
+  // --- Orbit mode input handling ---
+  (function initOrbitControls(){
+    const canvas = renderer.domElement;
+    let lastX = 0, lastY = 0;
+    let isMouseDown = false;
+    let orbitPending = false;
+    let orbitStartTimer = null;
+    const ORBIT_ACTIVATE_DELAY_MS = 180;
+    const ORBIT_MOVE_SLOP = 4; // pixels
+
+    canvas.addEventListener('mousedown', (e)=>{
+      if (e.button !== 0) return; // only LMB
+      isMouseDown = true;
+      orbitPending = true;
+      orbitDragMoved = false;
+      lastX = e.clientX; lastY = e.clientY;
+      // delayed activation
+      clearTimeout(orbitStartTimer);
+      orbitStartTimer = setTimeout(()=>{
+        if (isMouseDown && orbitPending) {
+          enterOrbitMode();
+          isOrbitDragging = true;
+        }
+      }, ORBIT_ACTIVATE_DELAY_MS);
+    });
+    // Also support starting orbit drag from labels overlay
+    labelsLayer.addEventListener('mousedown', (e)=>{
+      if (e.button !== 0) return;
+      isMouseDown = true;
+      orbitPending = true;
+      orbitDragMoved = false;
+      lastX = e.clientX; lastY = e.clientY;
+      clearTimeout(orbitStartTimer);
+      orbitStartTimer = setTimeout(()=>{
+        if (isMouseDown && orbitPending) {
+          enterOrbitMode();
+          isOrbitDragging = true;
+        }
+      }, ORBIT_ACTIVATE_DELAY_MS);
+    });
+    window.addEventListener('mousemove', (e)=>{
+      if (!isMouseDown) return;
+      const dx = e.clientX - lastX;
+      const dy = e.clientY - lastY;
+      lastX = e.clientX; lastY = e.clientY;
+      // If pending and moved beyond slop, enter orbit
+      if (orbitPending && (Math.abs(dx) + Math.abs(dy) > ORBIT_MOVE_SLOP)) {
+        enterOrbitMode();
+        isOrbitDragging = true;
+      }
+      if (!orbitMode || !isOrbitDragging) return;
+      if (!orbitDragMoved && (Math.abs(dx) + Math.abs(dy) > 2)) {
+        orbitDragMoved = true;
+        suppressLabelClick = true;
+      }
+      orbitTheta -= dx * ORBIT_ROTATE_SPEED; // horizontal drag rotates around Y
+      orbitPhi   -= dy * ORBIT_ROTATE_SPEED; // vertical drag tilts up/down
+    });
+    window.addEventListener('mouseup', ()=>{
+      isMouseDown = false;
+      orbitPending = false;
+      clearTimeout(orbitStartTimer);
+      isOrbitDragging = false;
+      setTimeout(()=>{ suppressLabelClick = false; orbitDragMoved = false; }, 0);
+    });
+    // Wheel zoom (prevent scroll when orbiting)
+    canvas.addEventListener('wheel', (e)=>{
+      if (!orbitMode) return;
+      e.preventDefault();
+      orbitRadius += e.deltaY * ORBIT_ZOOM_SPEED;
+      clampOrbit();
+    }, { passive:false });
+    // Wheel over labels also zooms when in orbit mode
+    labelsLayer.addEventListener('wheel', (e)=>{
+      if (!orbitMode) return;
+      e.preventDefault();
+      orbitRadius += e.deltaY * ORBIT_ZOOM_SPEED;
+      clampOrbit();
+    }, { passive:false });
+    // ESC exits orbit mode
+    window.addEventListener('keydown', (e)=>{
+      if (e.key === 'Escape') {
+        exitOrbitMode();
+      }
+    });
+  })();
+
+  // --- Header interactions and About panel logic (added) ---
+  // Grab header buttons and links
+  const BTN = {
+    about: document.getElementById('btn-about'),
+    links: document.getElementById('btn-links'),
+    demo:  document.getElementById('btn-demo')
+  };
+  const linksPanel = document.getElementById('links-panel');
+  // Replace these URLs with your actual destinations
+  const LINKS = {
+    tgChat:      'https://t.me/scrumux',        // TODO: замените на ваш чат
+    tgCommunity: 'https://t.me/ux4ai',   // TODO: замените на ваше сообщество
+    resume:      'https://drive.google.com/file/d/1UnKbXcd8K74KkkrdNs7aCbpog0jOo9Tx/view?usp=sharing'
+  };
+  // Update anchor hrefs in the links panel
+  document.getElementById('lnk-tg-chat').href      = LINKS.tgChat;
+  document.getElementById('lnk-tg-community').href = LINKS.tgCommunity;
+  document.getElementById('lnk-resume').href       = LINKS.resume;
+
+  // About content definition
+  const ABOUT = {
+    title: 'Обо мне',
+    text: `Я создаю UX-архитектуру и интерфейсы для AI-продуктов, совмещая системное мышление продуктолога и опыт дизайнера.
+
+Ищу проект, где можно применять знания в области аналитики, метрик, сценариев и роста продукта, участвовать в развитии команды и управлении бэклогом.
+
+В дизайне более 10 лет, из них 5 лет — управление командами и проектами.
+Работаю на стыке UX, аналитики и AI-архитектуры, делая интеллект понятным и управляемым.
+
+💡 Ключевые проекты:
+
+• Дизайн MVP и UX-архитектуры AI-сервиса для «Китобдор» (нац. электронная библиотека Таджикистана) — автоматизация рецензий и превалидации запросов.
+• UX-архитектура AI-продукта «АйЮрист» — система юридической аналитики и генерации документов.
+• Руководство дизайн-командой в крупной медиакомпании (NDA) — создание комплексной платформы полного цикла для digital-рекламы.
+
+Фокус — создавать продукты с метриками, масштабом и смыслом, где AI становится инструментом роста, а не загадкой.`,
+    skills: `🧠 Ключевые навыки
+
+AI & UX Design
+• Проектирование UX-архитектуры и интерфейсов для AI-сервисов и ассистентов
+• Создание дизайн-систем: токены, компоненты, паттерны, гайдлайны
+• Разработка прозрачных UX-паттернов для Explainable AI и доверия к модели
+
+Product Thinking
+• Формулирование метрик продукта (TTFT, ROI, task success)
+• Анализ сценариев и оптимизация пользовательских потоков
+• Планирование бэклога, приоритизация и продуктовая аналитика
+
+Design Leadership
+• Управление дизайн-командой, менторинг, контроль качества
+• Настройка процессов DesignOps / AI-Ops / PromptOps
+• Взаимодействие с продактами, аналитиками и разработчиками
+
+Инструменты
+• Figma (Auto Layout, Variants, Tokens, Components)
+• Cursor, GitHub, WeWeb, Bubble, Notion, Miro
+• Prompt-инжиниринг, системные промпты, LLM API (OpenAI, Gemini, Anthropic)
+• Аналитика и визуализация данных: Metabase, FigJam Charts
+`,
+    ctas: [
+      { label: 'Написать в Telegram', href: LINKS.tgChat },
+      { label: 'Перейти в сообщество', href: LINKS.tgCommunity },
+      { label: 'Открыть резюме (PDF)', href: LINKS.resume }
+    ]
+  };
+
+  // Render the About panel inside the HUD big panel using existing small-panel tabs
+  function showAboutPanel() {
+    overlay.classList.add('active');
+    activeOverlay = true;
+    currentNodeName = '👤 Обо мне';
+    currentNodeIndex = 0;
+    // Render an About icon on the left for consistency
+    if (hudObjectIcon) { /* HUD icon removed by request */
+      hudObjectIcon.style.display = 'none'; /* keep hidden */
+      hudObjectIcon.innerHTML = '';
+      // SVG removed
+      // URL removed
+      // IMG removed
+}
+    // Show the HUD container for the About panel
+    if (hudContainer) hudContainer.style.display = 'flex';
+    hudBigPanel.style.display = 'block';
+    hudSmallPanel.style.display = 'flex';
+    // Render unified section header with nav for About
+    renderHudSectionHeader('👤 Обо мне');
+    // Set tab names specifically for the About panel.  Only target the tab
+    // buttons that represent sections (these are marked with the data-index
+    // attribute) so we do not modify the close button that lives inside the
+    // header.  Without this filter the close button would incorrectly be
+    // renamed to 'Обо мне'.
+    const tabs = hudSmallPanel.querySelectorAll('button[data-index]');
+    if(tabs.length >= 3){
+      tabs[0].textContent = 'Обо мне';
+      tabs[1].textContent = 'Навыки';
+      tabs[2].textContent = 'Контакты';
+    }
+    function renderAboutTab(idx){
+      if(idx === 0){
+        hudBigPanel.textContent = ABOUT.text;
+      } else if(idx === 1){
+        hudBigPanel.textContent = ABOUT.skills;
+      } else {
+        // contacts
+        hudBigPanel.innerHTML = ABOUT.ctas.map(c => `<p><a href="${c.href}" target="_blank" style="color:#9cd3ff">${c.label}</a></p>`).join('');
+      }
+    }
+    // Attach click handlers only to the About tabs (again using data-index)
+    const aboutTabs = hudSmallPanel.querySelectorAll('button[data-index]');
+    aboutTabs.forEach((b,i) => {
+      b.onclick = () => {
+        aboutTabs.forEach(bb => bb.classList.remove('active-tab'));
+        b.classList.add('active-tab');
+        renderAboutTab(i);
+      };
+    });
+    // Activate the first tab by default
+    aboutTabs.forEach(bb => bb.classList.remove('active-tab'));
+    if(aboutTabs[0]) aboutTabs[0].classList.add('active-tab');
+    renderAboutTab(0);
+  }
+
+  // Wire up header buttons
+  BTN.about && (BTN.about.onclick = () => {
+    showAboutPanel();
+  });
+  BTN.links && (BTN.links.onclick = () => {
+    const visible = linksPanel.style.display === 'flex';
+    linksPanel.style.display = visible ? 'none' : 'flex';
+  });
+  BTN.demo && (BTN.demo.onclick = () => {
+    // Always open HUD for the "Основы UX" section in any mode
+    try {
+      const idx = nodes.findIndex(n => typeof n.name === 'string' && n.name.includes('Основы UX'));
+      if (idx >= 0) {
+        showOverlay(nodes[idx]);
+        // Ensure quick links are hidden if open
+        if (linksPanel && linksPanel.style.display === 'flex') linksPanel.style.display = 'none';
+        return;
+      }
+    } catch(_) {}
+    // Fallback: scroll to nodes loop if not found
+    window.scrollTo({ top: cycleHeight, behavior: 'smooth' });
+  });
+
+  // Close button inside links panel: hide the panel when clicked
+  const btnLinksClose = document.getElementById('btn-links-close');
+  if (btnLinksClose) {
+    btnLinksClose.addEventListener('click', (e) => {
+      e.stopPropagation();
+      linksPanel.style.display = 'none';
+    });
+  }
+
+  // Close the quick links panel on scroll to avoid overlapping with the scene or
+  // header. This improves UX on long pages. Note: overlay closing is handled
+  // separately via handleOverlayScroll.
+  window.addEventListener('scroll', () => {
+    if (linksPanel.style.display === 'flex') {
+      linksPanel.style.display = 'none';
+    }
+  });
+
+  // ----------------- Animate -----------------
+  let t=0;
+  function animateFrame(time){
+    requestAnimationFrame(animateFrame);
+    t += 0.016;
+    // Update energy pulses: animate active pulses and spawn new ones if needed
+    updatePulses(t);
+    if(t >= nextPulseTime && activePulses.length < maxActivePulses){
+      spawnPulse(t);
+    }
+
+    // Update the document title on each frame to confirm the animation loop is running.
+    try { document.title = "Владимир Костял - UX4AI"; } catch (err) {}
+
+    // Gentle rotations
+    shell.rotation.y += 0.0025;
+    core.rotation.y  -= 0.0018;
+    innerNebula.rotation.y += 0.0012;
+
+    // BG tick
+    if(mist.userData && mist.userData.tick) mist.userData.tick(t);
+    if(stars.userData && stars.userData.tick) stars.userData.tick(t);
+
+    // shader times
+    if(holoMat.uniforms) holoMat.uniforms.time.value = t;
+    if(swirlMat.uniforms) swirlMat.uniforms.time.value = t;
+    if(innerNebulaMat.uniforms) innerNebulaMat.uniforms.time.value = t;
+
+    // (diagnostic test cube removed)
+
+    if (orbitMode) {
+      updateCameraFromOrbit();
+    } else {
+      updateCameraFromScroll();
+    }
+    // Billboard and rotate node icons (only those that exist)
+    for (let i=0;i<nodeIcons.length;i++){
+      const entry = nodeIcons[i];
+      if (!entry || !entry.root || !entry.mesh) continue;
+      entry.root.lookAt(camera.position);
+      entry.mesh.rotation.y += 0.02;
+    }
+    // Update time on shader materials and rotate tagged groups
+    scene.traverse(obj=>{
+      const m = obj.material;
+      if (m && m.uniforms && m.uniforms.time) { m.uniforms.time.value = t; }
+      if (obj.userData && obj.userData._rotate && obj.rotation){
+        const r = obj.userData._rotate;
+        if (r.x) obj.rotation.x += r.x;
+        if (r.y) obj.rotation.y += r.y;
+        if (r.z) obj.rotation.z += r.z;
+      }
+    });
+    updateLabels();
+
+    renderer.render(scene, camera);
+  }
+  try { document.title = "Владимир Костял - UX4AI"; } catch (err) {}
+  animateFrame();
+  </script>
+<script>
+(function(){
+  function safeHideHUD(){
+    try {
+      var overlay = document.getElementById('overlay');
+      var hudContainer = document.getElementById('hud-container');
+      var hudIcon = document.getElementById('hud-object-icon');
+      if (typeof hideOverlay === 'function') { hideOverlay(); }
+      if (overlay) overlay.classList.remove('active');
+      if (hudContainer) hudContainer.style.display = 'none';
+      if (hudIcon) hudIcon.style.display = 'none';
+      window.activeOverlay = false;
+    } catch(e){ /* no-op */ }
+  }
+  document.addEventListener('DOMContentLoaded', function(){
+    var linksBtn = document.getElementById('btn-links');
+    if (linksBtn) {
+      linksBtn.addEventListener('click', function(){
+        // close HUD whenever Links panel is opened
+        safeHideHUD();
+      }, {capture:true});
+    }
+  });
+})();
+</script>
+<script>
+(function(){
+  function closeLinksPanel(){
+    var panel = document.getElementById('links-panel');
+    if (panel) { panel.style.display = 'none'; }
+    var btnClose = document.getElementById('btn-links-close');
+    if (btnClose) { try { btnClose.click(); } catch(e){} }
+  }
+  // Hook About button
+  document.addEventListener('DOMContentLoaded', function(){
+    var aboutBtn = document.getElementById('btn-about');
+    if (aboutBtn) {
+      aboutBtn.addEventListener('click', function(){
+        // при активации "Обо мне" закрываем панель ссылок
+        closeLinksPanel();
+      }, {capture:true});
+    }
+  });
+  // Monkey-patch showOverlay / showAboutPanel to always close Links before HUD
+  var _showOverlay = window.showOverlay;
+  if (typeof _showOverlay === 'function') {
+    window.showOverlay = function(){
+      closeLinksPanel();
+      return _showOverlay.apply(this, arguments);
+    };
+  } else {
+    // если функция появится позже, подстрахуемся
+    document.addEventListener('DOMContentLoaded', function(){
+      if (typeof window.showOverlay === 'function') {
+        var _so = window.showOverlay;
+        window.showOverlay = function(){
+          closeLinksPanel();
+          return _so.apply(this, arguments);
+        };
+      }
+    });
+  }
+  var _showAboutPanel = window.showAboutPanel;
+  if (typeof _showAboutPanel === 'function') {
+    window.showAboutPanel = function(){
+      closeLinksPanel();
+      return _showAboutPanel.apply(this, arguments);
+    };
+  } else {
+    document.addEventListener('DOMContentLoaded', function(){
+      if (typeof window.showAboutPanel === 'function') {
+        var _sap = window.showAboutPanel;
+        window.showAboutPanel = function(){
+          closeLinksPanel();
+          return _sap.apply(this, arguments);
+        };
+      }
+    });
+  }
+})();
+</script>
+</body>
+</html>
