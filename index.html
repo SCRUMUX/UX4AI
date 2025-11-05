@@ -3,27 +3,56 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1" name="viewport"/>
-<title>UX4AI — UX архитектура и интерфейсы для AI сервисов</title>
-<meta name="description" content="UX4AI: проектирование UX-архитектуры и интерфейсов для AI-сервисов. Практика, паттерны, демо-сцены, подходы к построению взаимодействия с ИИ."/>
+<title>Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI</title>
+<meta name="description" content="Владимир Костял — проектирую UX-архитектуру и интерфейсы для AI‑сервисов. UX4AI: демо‑сцены, паттерны, подходы к взаимодействию с ИИ."/>
 <meta name="keywords" content="UX, AI, UX архитектура, интерфейсы, проектирование, взаимодействие с ИИ, UX4AI"/>
 <link rel="canonical" href="https://ux4ai.pro/"/>
 
 <!-- Open Graph -->
 <meta property="og:type" content="website"/>
 <meta property="og:url" content="https://ux4ai.pro/"/>
-<meta property="og:title" content="UX4AI — UX архитектура и интерфейсы для AI сервисов"/>
-<meta property="og:description" content="Проектирование UX-архитектуры и интерфейсов для AI-сервисов. Практика, паттерны, демо-сцены."/>
-<meta property="og:image" content="https://ux4ai.pro/preview.png"/>
+<meta property="og:site_name" content="Владимир Костял — UX4AI"/>
+<meta property="og:title" content="Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI"/>
+<meta property="og:description" content="Проектирую UX‑архитектуру и интерфейсы для AI‑сервисов. Демо‑сцены, паттерны, подходы."/>
+<!-- Open Graph images (multiple formats) -->
+<meta property="og:image" content="https://ux4ai.pro/preview.webp?v=3"/>
+<meta property="og:image:type" content="image/webp"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image" content="https://ux4ai.pro/preview.png?v=3"/>
+<meta property="og:image:type" content="image/png"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
+<meta property="og:image" content="https://ux4ai.pro/preview.jpg?v=3"/>
+<meta property="og:image:type" content="image/jpeg"/>
+<meta property="og:image:width" content="1200"/>
+<meta property="og:image:height" content="630"/>
 
 <!-- Twitter Card -->
 <meta name="twitter:card" content="summary_large_image"/>
-<meta name="twitter:title" content="UX4AI — UX архитектура и интерфейсы для AI сервисов"/>
-<meta name="twitter:description" content="Проектирование UX-архитектуры и интерфейсов для AI-сервисов. Практика, паттерны, демо-сцены."/>
-<meta name="twitter:image" content="https://ux4ai.pro/preview.png"/>
+<meta name="twitter:title" content="Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI"/>
+<meta name="twitter:description" content="Проектирую UX‑архитектуру и интерфейсы для AI‑сервисов. Демо‑сцены, паттерны, подходы."/>
+<meta name="twitter:image" content="https://ux4ai.pro/preview.webp?v=3"/>
+<meta name="twitter:image:alt" content="UX4AI — демо‑сцена и HUD интерфейс"/>
 
 <!-- Verification (replace content values with real codes) -->
 <meta name="google-site-verification" content="REPLACE_WITH_GOOGLE_CODE"/>
 <meta name="yandex-verification" content="REPLACE_WITH_YANDEX_CODE"/>
+
+<!-- Schema.org Person markup for better name discoverability -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "name": "Владимир Костял",
+  "url": "https://ux4ai.pro/",
+  "jobTitle": "UX-архитектор",
+  "worksFor": {
+    "@type": "Organization",
+    "name": "UX4AI"
+  }
+}
+</script>
 
 <!-- Yandex.Metrika counter -->
 <script type="text/javascript">
@@ -64,6 +93,8 @@ body {
   background: transparent;
   color: var(--text);
 }
+/* While orbit is active on mobile, block browser gestures (pan/zoom) */
+.orbit-active, .orbit-active body, .orbit-active #three-container { touch-action: none; }
     /* Height is set dynamically based on segments; keep minimal here */
     #three-container { 
       position:fixed; 
@@ -572,6 +603,10 @@ body {
       display: none;
       pointer-events: none;
     }
+    /* Hide orbit banner on mobile */
+    @media (max-width: 767px) {
+      #mode-banner { display: none !important; }
+    }
     /* Also remove blur on big HUD panels during HUD activity */
     .hud-active #hud-big-panel,
     .hud-active #hud-container #hud-big-panel {
@@ -1016,6 +1051,20 @@ body:hover::-webkit-scrollbar-thumb {
 </head>
 <body>
 
+<!-- Preloader overlay -->
+<div id="preloader-overlay" aria-hidden="true">
+  <iframe id="preloader-frame" src="./ux4ai-preloader-loop-outline-noise.html" title="UX4AI Preloader" loading="eager"></iframe>
+  <style>
+    #preloader-overlay {
+      position: fixed; inset: 0; z-index: 3000;
+      background: #0B0F14; /* match theme bg to avoid flash */
+      display: flex; align-items: center; justify-content: center;
+    }
+    #preloader-overlay.hidden { display: none !important; }
+    #preloader-frame { width: 100%; height: 100%; border: 0; }
+  </style>
+</div>
+
 <!-- Header -->
 <header id="site-header">
   <div class="header-logo">
@@ -1088,6 +1137,8 @@ async function init() {
     console.log('[Bootstrap] Importing THREE via importmap...');
     const THREE = await import('three');
     console.log('✓ THREE imported');
+    // Try hiding preloader as soon as core deps are ready
+    try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
     
     // Make available globally for modules
     window.THREE = THREE;
@@ -1102,6 +1153,8 @@ async function init() {
       canvasParent: document.getElementById('three-container'),
       labelsElement: document.getElementById('labels')
     });
+    // Hide preloader once engine is created (early UX)
+    try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
     // Expose engine for grid overlay to query current scene state
     try { window._engine = engine; } catch(_) {}
     
@@ -1126,9 +1179,25 @@ async function init() {
           btnLinksClose: document.getElementById('btn-links-close')
         });
       }
+      // Hide preloader when the first theme fully mounts
+      try {
+        const pre = document.getElementById('preloader-overlay');
+        if (pre) setTimeout(() => pre.classList.add('hidden'), 150);
+      } catch {}
     });
     
     console.log('[Bootstrap] ✅ Ready!');
+    // Safety: hide preloader on load even if themeMounted didn't fire (fallback)
+    window.addEventListener('load', () => {
+      try {
+        const pre = document.getElementById('preloader-overlay');
+        if (pre) pre.classList.add('hidden');
+      } catch {}
+    }, { once: true });
+    // Absolute safety: hide regardless after a maximum wait
+    setTimeout(() => {
+      try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
+    }, 8000);
 
     // Ensure any prior custom cursor element is removed
     try { const old = document.getElementById('custom-cursor'); if (old) old.remove(); } catch(_) {}

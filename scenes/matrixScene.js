@@ -86,7 +86,7 @@ export function matrixSceneFactory(config) {
         devLabelEl.style.textAlign = 'center';
         devLabelEl.style.maxWidth = '90vw';
         devLabelEl.style.whiteSpace = 'pre-wrap';
-        devLabelEl.textContent = 'Фигачит глубокая творческая разработочка :)';
+        devLabelEl.textContent = 'Тут крч пока во всю идет творческий процесс.... разработка... тест материалов и прочая кухня...) Нооо....Молодец, что зашел;)';
         const closeBtn = document.createElement('button');
         closeBtn.type = 'button';
         closeBtn.setAttribute('aria-label', 'Закрыть');
