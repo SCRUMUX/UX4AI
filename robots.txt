@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://yourdomain.com/sitemap.xml
+Host: https://ux4ai.pro
+Sitemap: https://ux4ai.pro/sitemap.xml

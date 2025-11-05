@@ -1,0 +1,118 @@
+/* Base HUD and layout styles referencing CSS variables.
+   Non-breaking: not imported yet. */
+
+html { background: var(--bg); color: var(--text); }
+body { background: transparent; color: var(--text); }
+
+/* Header */
+header#site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 14px;
+  background: var(--panel-ghost);
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(20px) saturate(160%);
+  font-family: inherit;
+}
+.header-logo { display: flex; align-items: center; gap: 12px; }
+.header-logo .name {
+  font-weight: 600;
+  font-size: 18px;
+  letter-spacing: 0.2px;
+  color: #CFE8FF;
+  white-space: nowrap;
+}
+.header-logo .tagline {
+  margin-left: 12px;
+  font-size: 14px;
+  color: var(--muted);
+  font-weight: 400;
+  white-space: nowrap;
+}
+.header-spacer { flex: 1; }
+.header-btn {
+  padding: 4px 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.header-btn:hover {
+  color: var(--accent);
+  background: rgba(91, 156, 255, 0.08);
+}
+.header-btn:active {
+  color: #4A8AE6;
+  background: rgba(91, 156, 255, 0.15);
+}
+
+/* Labels */
+.label {
+  color: var(--text);
+  background: var(--panel);
+  border: 1px solid var(--border);
+  box-shadow: 0 0 0 1px rgba(36,48,65,0.4) inset, var(--shadow-soft);
+}
+.label:hover {
+  background: rgba(36,48,65,0.95);
+  border-color: var(--accent);
+  color: #CFE8FF;
+}
+
+/* HUD panels */
+#hud-big-panel {
+  background: rgba(18, 23, 34, 0.60);
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+#hud-small-panel .hud-section-nav a,
+#hud-small-panel .hud-close-btn {
+  color: var(--muted);
+}
+#hud-small-panel .hud-section-nav a:hover,
+#hud-small-panel .hud-close-btn:hover {
+  color: var(--accent);
+}
+
+/* Overlay */
+#overlay { background: rgba(0, 0, 0, 0.45); }
+
+
+/* HUD mode: enforce square corners everywhere */
+.hud-active #hud-container,
+.hud-active #hud-container *,
+.hud-active #hud-small-panel,
+.hud-active #hud-small-panel *,
+.hud-active #hud-big-panel,
+.hud-active #hud-big-panel *,
+.hud-active .hud,
+.hud-active .hud * {
+  border-radius: 0 !important;
+}
+
+/* Also cover generic UI controls while HUD is active */
+.hud-active button,
+.hud-active a,
+.hud-active input,
+.hud-active select,
+.hud-active textarea,
+.hud-active .chip,
+.hud-active .label,
+.hud-active .link-row a,
+.hud-active .btn,
+.hud-active .panel,
+.hud-active .card {
+  border-radius: 0 !important;
+}
+
+
