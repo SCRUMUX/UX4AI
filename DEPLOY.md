@@ -27,16 +27,16 @@ git push -u origin main
 3. Branch: `main` and `/ (root)`
 4. Save. GitHub will publish to `https://<your-username>.github.io/ux4ai/`
 
-Note: This is a static site, no build step required. The entry is `index-final.html`.
+Note: This is a static site, no build step required. The entry is `index.html`.
 
 ## Optional: Use `/docs` as Pages source
-If you prefer Pages to serve from `/docs`, copy or move `index-final.html` and assets under `docs/` and set Pages source to `main /docs`.
+If you prefer Pages to serve from `/docs`, copy or move `index.html` and assets under `docs/` and set Pages source to `main /docs`.
 
 ## Local preview
 ```bash
 # Using serve (Node)
 npx --yes serve -l 5173 .
-# Then open http://localhost:5173/index-final.html
+# Then open http://localhost:5173/
 ```
 
 ## FAQ
