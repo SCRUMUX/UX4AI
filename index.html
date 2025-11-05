@@ -1047,6 +1047,11 @@ body:hover::-webkit-scrollbar-thumb {
 
 /* (Reset rules are defined once above; duplicates removed) */
 
+  /* === HUD spacing normalization: equal top padding in headers and big panel === */
+  #hud-small-panel .hud-section-header { padding: 16px 12px 12px 12px; }
+  #hud-big-panel, #hud-container #hud-big-panel { padding-top: 16px; }
+  #hud-big-panel > :first-child, #hud-container #hud-big-panel > :first-child { margin-top: 0 !important; }
+
 </style>
 </head>
 <body>
