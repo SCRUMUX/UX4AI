@@ -35,6 +35,7 @@ const ORBIT_MIN_RADIUS = 1.6;
 const ORBIT_MAX_RADIUS = 12.0;
 const ORBIT_ROTATE_SPEED = 0.006;
 const ORBIT_ZOOM_SPEED = 0.0025;
+const ORBIT_ZOOM_SPEED_PINCH = 0.004; // mobile pinch
 
 export function initNavigation(camera, nodes, modeBanner, canvas) {
   console.log('[Navigation] Initializing global navigation system');
@@ -307,6 +308,8 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     // --- Touch support for mobile orbit ---
     let touchActive = false;
     let touchId = null;
+    let pinchActive = false;
+    let pinchStartDist = 0;
     const getTouch = (e) => {
       if (touchId == null) return e.touches[0];
       for (let i=0;i<e.touches.length;i++) if (e.touches[i].identifier === touchId) return e.touches[i];
@@ -315,23 +318,40 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     const onTouchStart = (e) => {
       if (navDisabled()) return;
       if (!e.touches || e.touches.length === 0) return;
+      // Two-finger pinch starts zoom interaction only if already in orbit mode
+      if (e.touches.length === 2) {
+        pinchActive = true;
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        pinchStartDist = Math.hypot(dx, dy) || 1;
+        return;
+      }
+      // Single-finger: do NOT enter orbit automatically on mobile
       const t = e.touches[0];
       touchId = t.identifier;
       touchActive = true;
-      orbitPending = true;
       orbitDragMoved = false;
       lastX = t.clientX;
       lastY = t.clientY;
-      clearTimeout(orbitStartTimer);
-      orbitStartTimer = setTimeout(() => {
-        if (touchActive && orbitPending) {
-          enterOrbitMode();
-          isOrbitDragging = true;
-        }
-      }, ORBIT_ACTIVATE_DELAY_MS);
+      // Only allow rotation if already in orbitMode (toggled via button)
+      isOrbitDragging = !!orbitMode;
     };
     const onTouchMove = (e) => {
       if (navDisabled()) return;
+      // Pinch zoom
+      if (pinchActive && e.touches && e.touches.length === 2) {
+        if (!orbitMode) return; // zoom acts only in orbit mode
+        const dx = e.touches[0].clientX - e.touches[1].clientX;
+        const dy = e.touches[0].clientY - e.touches[1].clientY;
+        const dist = Math.hypot(dx, dy) || 1;
+        const delta = dist - pinchStartDist;
+        pinchStartDist = dist;
+        orbitRadius -= delta * ORBIT_ZOOM_SPEED_PINCH;
+        updateCameraFromOrbit();
+        try { e.preventDefault(); } catch {}
+        return;
+      }
+      // One-finger rotate when already in orbit
       if (!touchActive) return;
       const t = getTouch(e);
       if (!t) return;
@@ -339,10 +359,6 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
       const dy = t.clientY - lastY;
       lastX = t.clientX;
       lastY = t.clientY;
-      if (orbitPending && (Math.abs(dx) + Math.abs(dy) > ORBIT_MOVE_SLOP)) {
-        enterOrbitMode();
-        isOrbitDragging = true;
-      }
       if (!orbitMode || !isOrbitDragging) return;
       if (!orbitDragMoved && (Math.abs(dx) + Math.abs(dy) > 2)) {
         orbitDragMoved = true;
@@ -350,16 +366,15 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
       }
       orbitTheta -= dx * ORBIT_ROTATE_SPEED;
       orbitPhi -= dy * ORBIT_ROTATE_SPEED;
-      // prevent page scroll/zoom while dragging
       try { e.preventDefault(); } catch {}
     };
     const onTouchEnd = () => {
       if (navDisabled()) return;
       touchActive = false;
       touchId = null;
-      orbitPending = false;
       clearTimeout(orbitStartTimer);
       isOrbitDragging = false;
+      pinchActive = false;
       setTimeout(() => {
         suppressLabelClick = false;
         orbitDragMoved = false;
