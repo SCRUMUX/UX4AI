@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UX4AI — Loop (SVG Outline Glitch + Noise) + Streaming</title>
+<style>
+  :root{
+    --bg:#0b0d10; --fg:#e6f1ff; --muted:#98b4d6;
+    --accent:#7fd7ff;   /* контур/свечение логотипа */
+    --c1:#00e5ff;       /* glitch cyan outline */
+    --c2:#ff2ea6;       /* glitch magenta outline */
+    --ok:#20d67b;       /* галочка */
+    --spin:#9fb7d4;     /* спиннер */
+  }
+  html,body{height:100%}
+  body{margin:0; background:var(--bg); color:var(--fg); font:14px/1.6 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial}
+
+  #ux4ai-preloader{
+    position:fixed; inset:0; z-index:9999; display:grid; place-items:center;
+    background:var(--bg); color:var(--fg);
+    transition:opacity .6s ease, visibility .6s ease;
+  }
+  #ux4ai-preloader.is-hidden{ opacity:0; visibility:hidden; pointer-events:none }
+  html.ux4ai-preload-lock, body.ux4ai-preload-lock{ overflow:hidden }
+
+  .stage{ position:relative; display:grid; place-items:center; gap:18px; }
+  .logo-wrap{ position:relative; width:min(66vw,700px); }
+
+  /* ===== Shared glyph metrics (IDENTICAL for base and glitch) ===== */
+  .ux4ai-glyph{
+    font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial;
+    font-weight: 800;
+    font-size: 155px;
+    line-height: 1;
+    letter-spacing: .012em;
+    dominant-baseline: middle;
+    text-anchor: middle;
+  }
+
+  /* ===== SVG word ===== */
+  svg.ux4ai-logo{ display:block; width:100%; height:auto }
+  .ux4ai-text{
+    fill: transparent;
+    stroke: var(--accent);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    stroke-dasharray: 1800;
+    stroke-dashoffset: 1800;
+    filter: drop-shadow(0 0 0 rgba(127,215,255,0));
+  }
+  .ux4ai-text.shadow{ stroke: rgba(127,215,255,.35); filter: blur(2px) }
+
+  .caption{
+    text-align:center; color:var(--muted);
+    font:600 12px/1.3 system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Arial;
+    letter-spacing:.14em; text-transform:uppercase;
+    opacity:.95;
+  }
+
+  /* ===== Streaming list ===== */
+  .stream-wrap{ width:min(74vw,760px); }
+  .stream{
+    list-style:none; margin:0; padding:0;
+    border:1px solid #1a2430; background:#0e1318; border-radius:12px;
+    box-shadow: 0 8px 26px rgba(0,0,0,.25) inset;
+    max-height: 260px; overflow:auto;
+    scrollbar-width: none; -ms-overflow-style: none;
+  }
+  .stream::-webkit-scrollbar{ display:none }
+  .stream li{
+    display:flex; align-items:center; gap:10px;
+    padding:10px 12px; border-bottom:1px solid #121a22;
+    font: 400 14px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial;
+  }
+  .stream li:last-child{ border-bottom:none }
+  .mono{ font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; color:#cfe2ff }
+  .text{ white-space:pre-wrap; }
+  .tail{ margin-left:auto; display:flex; align-items:center; gap:8px; min-width:32px; justify-content:flex-end }
+
+  .spinner{
+    width:16px; height:16px; border-radius:50%;
+    border:2px solid transparent; border-top-color: var(--spin); border-right-color: var(--spin);
+    animation: spin 800ms linear infinite;
+  }
+  @keyframes spin{ to{ transform: rotate(360deg) } }
+
+  .ok{ width:18px; height:18px; display:inline-grid; place-items:center; color:var(--ok) }
+  .ok svg{ display:block }
+</style>
+</head>
+<body>
+<div id="ux4ai-preloader" role="status" aria-live="polite" aria-label="Loading UX4AI">
+  <div class="stage">
+    <div class="logo-wrap">
+      <svg class="ux4ai-logo" viewBox="0 0 1200 320" aria-hidden="true" id="logo">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#e6f1ff"/>
+            <stop offset="100%" stop-color="#b6cfff"/>
+          </linearGradient>
+
+          <!-- Фильтр шума/дисплейсмента для glitch outline -->
+          <filter id="noiseDisp" x="-20%" y="-40%" width="140%" height="180%">
+            <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+
+        <!-- base shadow and main -->
+        <text x="600" y="160" class="ux4ai-glyph ux4ai-text shadow" id="shadow">UX4AI</text>
+        <text x="600" y="160" class="ux4ai-glyph ux4ai-text main"   id="main">UX4AI</text>
+
+        <!-- OUTLINE-ONLY GLITCH layers (same size, only stroke) -->
+        <g id="glitchGroup" filter="url(#noiseDisp)" opacity="0">
+          <text x="600" y="160" class="ux4ai-glyph" id="gC"
+                fill="none" stroke="var(--c1)" stroke-width="2">UX4AI</text>
+          <text x="600" y="160" class="ux4ai-glyph" id="gM"
+                fill="none" stroke="var(--c2)" stroke-width="1.6">UX4AI</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="caption">initializing interface</div>
+
+    <div class="stream-wrap">
+      <ul class="stream" id="streamList"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const DEMO_MODE = true; // ← false в проде
+  const root = document.documentElement, body = document.body;
+  const overlay = document.getElementById('ux4ai-preloader');
+  const mainText = document.getElementById('main');
+  const shadowText = document.getElementById('shadow');
+  const gGroup = document.getElementById('glitchGroup');
+  const gC = document.getElementById('gC');
+  const gM = document.getElementById('gM');
+  const turb = document.getElementById('turb');
+  const streamList = document.getElementById('streamList');
+
+  root.classList.add('ux4ai-preload-lock'); body.classList.add('ux4ai-preload-lock');
+
+  const tStroke = 1200;
+  const tFill   = 700;
+  const tGlitch = 900;   // окно глитча
+  const gap     = 160;
+
+  const LINES = [
+    "Собрал приколный загрузчик...",
+    "Что бы проверять ваше терпение со вкусом...)",
+    "..ой ладно просто шучу )",
+    "пошел смотреть че там так долго рил",
+    "говорят это все из-за рептилоидов",
+    "тааак.... а теперь что случилось!?!?",
+    "исполняю знаменитый танец с бубном",
+    "стучу нотуом по деревянной голове...",
+    "делаю тройное сальто назад",
+    "трах тибидох... и .... пое-е-хали!!!"
+  ];
+
+  /* ====== LOGO ANIMATIONS */
+  function animateStroke(el){
+    el.style.strokeDasharray = 1800;
+    el.style.strokeDashoffset = 1800;
+    return el.animate([
+      { strokeDashoffset: 1800 },
+      { strokeDashoffset:   0 }
+    ], { duration: tStroke, easing: 'ease', fill: 'forwards' });
+  }
+  function animateFill(el){
+    const a = el.animate([
+      { fill: 'transparent', strokeWidth: 3 },
+      { fill: 'url(#grad)',  strokeWidth: 2 }
+    ], { duration: tFill, easing: 'ease', fill: 'forwards' });
+    return a;
+  }
+  function resetSVG(){
+    [mainText, shadowText].forEach(el=>{
+      el.getAnimations().forEach(a=>a.cancel());
+      el.style.strokeDashoffset = 1800;
+      el.style.strokeWidth = 3;
+      el.style.fill = 'transparent';
+    });
+    [gC, gM].forEach(el => el.removeAttribute('transform'));
+    gGroup.setAttribute('opacity','0');
+  }
+
+  function runOutlineNoiseGlitch(){
+    gGroup.setAttribute('opacity','1');
+    let rafId = null;
+    const t0 = performance.now();
+    function tick(){
+      const t = performance.now() - t0;
+      // каналовые сдвиги (только translate, чтобы размер не менялся)
+      const cx = Math.round(Math.sin(t/18)*6);
+      const cy = Math.round(Math.cos(t/22)*5);
+      const mx = Math.round(Math.sin(t/20 + 1.2)*7);
+      const my = Math.round(Math.cos(t/24 + 0.7)*5);
+      gC.setAttribute('transform', `translate(${cx},${cy})`);
+      gM.setAttribute('transform', `translate(${mx},${my})`);
+      // живая анимация шума: меняем seed и чуть baseFrequency
+      const bf = 0.010 + (Math.sin(t/300)+1)*0.004; // 0.01..0.018
+      turb.setAttribute('baseFrequency', bf.toFixed(3));
+      turb.setAttribute('seed', Math.floor(t/60)%100 + 1);
+      if (t < tGlitch) { rafId = requestAnimationFrame(tick); }
+    }
+    rafId = requestAnimationFrame(tick);
+    return new Promise(res=> setTimeout(()=>{
+      if (rafId) cancelAnimationFrame(rafId);
+      res();
+    }, tGlitch));
+  }
+  function endGlitch(){
+    gGroup.setAttribute('opacity','0');
+    [gC, gM].forEach(el => el.removeAttribute('transform'));
+  }
+
+  async function loopLogo(onFirstCycleEnd){
+    let first = true;
+    while(true){
+      resetSVG();
+      await Promise.all([
+        animateStroke(shadowText).finished,
+        animateStroke(mainText).finished
+      ]);
+      await animateFill(mainText).finished;
+      await runOutlineNoiseGlitch();
+      endGlitch();
+      if(first && typeof onFirstCycleEnd === 'function'){
+        first = false;
+        onFirstCycleEnd();
+      }
+      await new Promise(r=> setTimeout(r, gap));
+    }
+  }
+
+  /* ====== STREAMING LINES */
+  async function typeLine(text, li){
+    const span = document.createElement('span');
+    span.className = 'text';
+    li.insertBefore(span, li.querySelector('.tail'));
+
+    const charDelay = Math.max(40, Math.min(120, Math.floor(3000 / Math.max(6, text.length)))); // ~3с
+    for(let i=0;i<text.length;i++){
+      span.textContent += text[i];
+      await new Promise(r=> setTimeout(r, charDelay));
+    }
+  }
+  function makeTailSpinner(){
+    const tail = document.createElement('span');
+    tail.className = 'tail';
+    const sp = document.createElement('span');
+    sp.className = 'spinner';
+    tail.appendChild(sp);
+    return tail;
+  }
+  function makeTailOk(){
+    const tail = document.createElement('span');
+    tail.className = 'tail';
+    const ok = document.createElement('span');
+    ok.className = 'ok';
+    ok.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    tail.appendChild(ok);
+    return tail;
+  }
+  async function streamAllLines(){
+    for(let i=0;i<LINES.length;i++){
+      const li = document.createElement('li');
+      li.innerHTML = '<span class="mono">#'+String(i+1).padStart(2,'0')+'</span>';
+      li.appendChild(makeTailSpinner());
+      streamList.appendChild(li);
+      streamList.scrollTop = streamList.scrollHeight;
+
+      await typeLine(LINES[i], li);
+
+      await new Promise(r=> setTimeout(r, 2000)); // 2с спиннер
+      const tail = li.querySelector('.tail');
+      tail.replaceWith(makeTailOk());
+    }
+  }
+
+  function hidePreloader(){
+    overlay.classList.add('is-hidden');
+    root.classList.remove('ux4ai-preload-lock');
+    body.classList.remove('ux4ai-preload-lock');
+    setTimeout(()=>overlay.remove(), 700);
+  }
+  window.hidePreloader = hidePreloader;
+
+  if (!DEMO_MODE){
+    window.addEventListener('load', hidePreloader);
+    setTimeout(hidePreloader, 70000); // страховка
+  }
+
+  loopLogo(()=>{
+    streamAllLines();
+  });
+})();
+</script>
+
+<!-- Кнопка для теста (скрыть вручную) -->
+<div style="position:fixed; right:16px; bottom:16px; z-index:1">
+  <button onclick="window.hidePreloader && window.hidePreloader()"
+    style="background:#1d2630;color:#e6f1ff;border:1px solid #2a3542;border-radius:10px;padding:10px 14px;cursor:pointer">
+    Завершить загрузку
+  </button>
+</div>
+</body>
+</html>

@@ -296,11 +296,30 @@ export function initHUD(options) {
     if (linksPanel) linksPanel.style.display = 'block';
     // Mark links-active so grid can stay visible in links mode
     document.documentElement.classList.add('links-active');
+    // Install outside-click handler
+    try {
+      document.addEventListener('click', onDocumentClickOutsideLinks, true);
+      document.addEventListener('touchstart', onDocumentClickOutsideLinks, { passive: true, capture: true });
+    } catch {}
   }
 
   function closeLinksPanel() {
     if (linksPanel) linksPanel.style.display = 'none';
     document.documentElement.classList.remove('links-active');
+    // Remove outside-click handler
+    try {
+      document.removeEventListener('click', onDocumentClickOutsideLinks, true);
+      document.removeEventListener('touchstart', onDocumentClickOutsideLinks, { capture: true });
+    } catch {}
+  }
+
+  function onDocumentClickOutsideLinks(e) {
+    if (!linksPanel || linksPanel.style.display === 'none') return;
+    const target = e.target;
+    // Keep panel open if click is inside the panel or on the Links button
+    if (linksPanel.contains(target)) return;
+    if (btnLinks && (target === btnLinks || (target.closest && target.closest('#btn-links')))) return;
+    closeLinksPanel();
   }
 
   // Header buttons

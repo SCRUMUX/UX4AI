@@ -168,6 +168,12 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     } else {
       console.warn('[Navigation] mode-banner not found!');
     }
+    // Prevent page scroll/zoom gestures while orbiting (mobile)
+    try {
+      if (document && document.documentElement) {
+        document.documentElement.classList.add('orbit-active');
+      }
+    } catch {}
   }
 
   function exitOrbitMode() {
@@ -176,6 +182,11 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     isOrbitDragging = false;
     if (modeBanner) modeBanner.style.display = 'none';
     // Не трогаем позицию скролла при выходе из орбиты
+    try {
+      if (document && document.documentElement) {
+        document.documentElement.classList.remove('orbit-active');
+      }
+    } catch {}
   }
 
   function clampOrbit() {
@@ -292,6 +303,72 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
       updateCameraFromOrbit();
     };
     on(canvas, 'wheel', onWheel, { passive: false });
+
+    // --- Touch support for mobile orbit ---
+    let touchActive = false;
+    let touchId = null;
+    const getTouch = (e) => {
+      if (touchId == null) return e.touches[0];
+      for (let i=0;i<e.touches.length;i++) if (e.touches[i].identifier === touchId) return e.touches[i];
+      return e.touches[0];
+    };
+    const onTouchStart = (e) => {
+      if (navDisabled()) return;
+      if (!e.touches || e.touches.length === 0) return;
+      const t = e.touches[0];
+      touchId = t.identifier;
+      touchActive = true;
+      orbitPending = true;
+      orbitDragMoved = false;
+      lastX = t.clientX;
+      lastY = t.clientY;
+      clearTimeout(orbitStartTimer);
+      orbitStartTimer = setTimeout(() => {
+        if (touchActive && orbitPending) {
+          enterOrbitMode();
+          isOrbitDragging = true;
+        }
+      }, ORBIT_ACTIVATE_DELAY_MS);
+    };
+    const onTouchMove = (e) => {
+      if (navDisabled()) return;
+      if (!touchActive) return;
+      const t = getTouch(e);
+      if (!t) return;
+      const dx = t.clientX - lastX;
+      const dy = t.clientY - lastY;
+      lastX = t.clientX;
+      lastY = t.clientY;
+      if (orbitPending && (Math.abs(dx) + Math.abs(dy) > ORBIT_MOVE_SLOP)) {
+        enterOrbitMode();
+        isOrbitDragging = true;
+      }
+      if (!orbitMode || !isOrbitDragging) return;
+      if (!orbitDragMoved && (Math.abs(dx) + Math.abs(dy) > 2)) {
+        orbitDragMoved = true;
+        suppressLabelClick = true;
+      }
+      orbitTheta -= dx * ORBIT_ROTATE_SPEED;
+      orbitPhi -= dy * ORBIT_ROTATE_SPEED;
+      // prevent page scroll/zoom while dragging
+      try { e.preventDefault(); } catch {}
+    };
+    const onTouchEnd = () => {
+      if (navDisabled()) return;
+      touchActive = false;
+      touchId = null;
+      orbitPending = false;
+      clearTimeout(orbitStartTimer);
+      isOrbitDragging = false;
+      setTimeout(() => {
+        suppressLabelClick = false;
+        orbitDragMoved = false;
+      }, 0);
+    };
+    on(canvas, 'touchstart', onTouchStart, { passive: false });
+    on(canvas, 'touchmove', onTouchMove, { passive: false });
+    on(canvas, 'touchend', onTouchEnd, { passive: false });
+    on(canvas, 'touchcancel', onTouchEnd, { passive: false });
   }
 
   // Track pressed keys
