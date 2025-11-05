@@ -24,7 +24,7 @@
 /styles
   variables.css    # CSS Custom Properties (:root --bg, --text, ...)
   main.css         # Базовые стили HUD/панелей/кнопок
-index.html / index-final.html # Bootstrap (ES-модули)
+index.html              # Bootstrap (ES-модули, основной entry)
 ```
 
 ## Контракты

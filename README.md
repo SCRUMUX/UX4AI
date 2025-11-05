@@ -5,7 +5,7 @@ Interactive demo site (static)
 
 ```bash
 npx --yes serve -l 5173 .
-# then open http://localhost:5173/index-final.html
+# then open http://localhost:5173/
 ```
 
 ## Deploy to GitHub Pages (quick)
