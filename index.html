@@ -158,6 +158,22 @@ body {
       transition: opacity 0.3s ease;
       z-index: 900;
     }
+    /* In HUD we используем #hud-backdrop для затемнения, оставляем #overlay прозрачным для кликов */
+    .hud-active #overlay { background: transparent !important; }
+    /* HUD backdrop (similar to tour backdrop) - shows when HUD is active */
+    #hud-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(5,8,12,0.60);
+      backdrop-filter: blur(2px) saturate(120%);
+      z-index: 940;
+      pointer-events: none;
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+    #hud-backdrop.hidden {
+      display: none !important;
+    }
     /* Hide overlay on mobile when not active */
     @media (max-width: 479px) {
       #overlay:not(.active) {
@@ -184,7 +200,7 @@ body {
       width: 200px;
       height: 200px;
       border-radius: 50%;
-      background: var(--accent); /* will be overridden with the node’s colour via JS */
+      background: var(--accent); /* will be overridden with the node's colour via JS */
       box-shadow: 0 0 20px rgba(91, 156, 255, 0.5);
       border: 3px solid var(--border);
       display: none;
@@ -199,8 +215,8 @@ body {
       height: auto;                    /* desktop: show full content */
       overflow-y: visible;             /* no inner scroll on desktop */
       overflow-x: hidden;            /* avoid nested horizontal scroll */
-      background: rgba(18, 23, 34, 0.60);
-      backdrop-filter: blur(8px);
+      background: rgba(18, 23, 34, 0.35);
+      backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
       border-radius: 12px;
       padding: 20px;
@@ -238,7 +254,8 @@ body {
       width: 100%;
       text-align: left;
       color: #E6EEF8;
-      background: rgba(18,23,34,0.60);
+      background: rgba(18,23,34,0.35);
+      backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid var(--border);
       border-radius: 8px;
       
@@ -270,7 +287,8 @@ body {
       height: auto;                    /* desktop (container mode): no inner scroll */
       overflow-y: visible;
       overflow-x: hidden;            /* avoid nested horizontal scroll */
-      background: rgba(18, 23, 34, 0.60);
+      background: rgba(18, 23, 34, 0.35);
+      backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
       border-radius: 12px;
       padding: 20px;
@@ -315,7 +333,8 @@ body {
       font-size: 14px;
       font-weight: 500;
       color: #9AA6B2;
-      background: rgba(18, 23, 34, 0.80);
+      background: rgba(18, 23, 34, 0.50);
+      backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid var(--border);
       border-radius: 8px;
       cursor: pointer;
@@ -392,13 +411,19 @@ body {
     }
     .header-spacer { flex: 1; }
     .header-btn {
-      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px !important; /* unify size across viewports */
+      height: 36px; /* fixed visual height */
+      line-height: 1;
+      box-sizing: border-box;
       font-size: 14px;
       font-weight: 500;
       color: var(--muted);
       background: transparent;
-      border: none;
-      border-radius: 8px;
+      border: 1px solid transparent; /* stabilize size on hover */
+      border-radius: 0;
       cursor: pointer;
       transition: background 0.2s, color 0.2s;
     }
@@ -410,12 +435,38 @@ body {
       color: #4A8AE6;
       background: rgba(91, 156, 255, 0.15);
     }
+    /* Normalize theme toggle container children to button size */
+    #theme-toggle-container { display: flex; align-items: center; gap: 8px; }
+    /* Normalize all header controls to identical size and states */
+    #theme-toggle-container > * {
+      width: 44px; height: 44px; padding: 10px;
+      border-radius: 0 !important;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-sizing: border-box;
+      background: transparent; color: var(--muted);
+      border: 1px solid transparent; cursor: pointer;
+      line-height: 1; gap: 0;
+    }
+    /* Hover/active match header buttons */
+    #theme-toggle-container > *:hover { color: var(--accent); background: rgba(91,156,255,0.08); }
+    #theme-toggle-container > *:active { color: #4A8AE6; background: rgba(91,156,255,0.15); }
+    /* Icon sizes and color unification */
+    #theme-toggle-container img, #tour-restart-btn img { width: 24px; height: 24px; display: block; }
+    #theme-toggle-container svg, #tour-restart-btn svg { width: 24px; height: 24px; }
+    /* Project gray color for icons */
+    :root { --icon-gray: #9AA6B2; }
+    #theme-toggle-container svg { fill: var(--icon-gray) !important; stroke: var(--icon-gray) !important; }
+    #tour-restart-btn img { filter: brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(342%) hue-rotate(176deg) brightness(92%) contrast(89%); }
+    /* Hover: accent tint, matches buttons */
+    #theme-toggle-container > *:hover svg { fill: #5B9CFF !important; stroke: #5B9CFF !important; }
+    #tour-restart-btn:hover img { filter: brightness(0) saturate(100%) invert(66%) sepia(58%) saturate(618%) hue-rotate(186deg) brightness(101%) contrast(101%); }
     /* === Custom header, tagline and links panel for the portfolio site === */
     /* Header styling improvements for the HUD */
     #hud-small-panel .hud-section-header {
       position: relative;
       padding: 12px;
-      background: rgba(18,23,34,0.60);
+      background: rgba(18,23,34,0.35);
+      backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
       border-radius: 8px;
     }
@@ -528,17 +579,28 @@ body {
     #links-panel {
       position: fixed;
       top: 90px;
-      right: 24px;
-      width: 280px;
+      right: 20px;
+      width: 420px; /* desktop: larger than before */
       z-index: 1850;
       display: none;
       flex-direction: column;
-      gap: 8px;
+      gap: 13px; /* line spacing increased by 5px */
       padding: 12px 12px 10px 12px;
-      /* Remove heavy backdrop: each quick link button will carry its own style. */
+      /* Container stays transparent; items style themselves */
       background: none;
       border: none;
       border-radius: 12px;
+    }
+    /* Mobile: full width and centered */
+    @media (max-width: 767px) {
+      #links-panel {
+        left: 20px;
+        right: 20px;
+        transform: none;
+        width: auto;
+        max-width: none;
+        top: 72px;
+      }
     }
     .link-row a {
       display: flex;
@@ -563,6 +625,8 @@ body {
       font-size: 12px;
       color: #9AA6B2;
       opacity: 0.75;
+      padding: 0 12px; /* align with link rows */
+      margin-top: 10px; /* shift down by 10px */
     }
 
     /* Close button for links panel */
@@ -627,6 +691,74 @@ body {
     body * { border: none !important; }
     /* In HUD mode render grid canvas below header and text panels, but above overlay */
     .hud-active #grid-canvas { z-index: 950 !important; pointer-events: none; }
+    /* In Links mode raise grid above links overlay backdrop but below the panel content */
+    .links-active #grid-canvas { z-index: 1845 !important; pointer-events: none; }
+    /* Background grid under HUD overlay */
+    #grid-canvas-bg { position: fixed; inset: 0; pointer-events: none; z-index: 890; }
+    /* On mobile, keep same layering as desktop: base lines above overlay */
+    @media (max-width: 767px) {
+      .hud-active #grid-canvas { z-index: 950 !important; }
+      .links-active #grid-canvas { z-index: 1845 !important; }
+      body.tour-active #grid-canvas { z-index: 2490 !important; }
+      #grid-canvas-bg { z-index: 880; }
+      /* Ensure panels remain above base lines */
+      .hud-active #hud-container,
+      .hud-active #hud-big-panel,
+      .hud-active #hud-small-panel { z-index: 1000 !important; }
+      .links-active #links-panel { z-index: 1850 !important; }
+    }
+
+    /* Force square corners globally across states */
+    button,
+    button:hover,
+    button:active,
+    button:focus,
+    .header-btn,
+    .header-btn:hover,
+    .header-btn:active,
+    .header-btn:focus,
+    a,
+    a:hover,
+    a:active,
+    a:visited,
+    input,
+    input:hover,
+    input:focus,
+    select,
+    select:hover,
+    select:focus,
+    textarea,
+    textarea:hover,
+    textarea:focus,
+    .btn,
+    .btn:hover,
+    .btn:active,
+    .btn:focus,
+    .chip,
+    .chip:hover,
+    .chip:active,
+    .chip:focus,
+    .panel,
+    .panel:hover,
+    .panel:active,
+    .panel:focus,
+    .card,
+    .card:hover,
+    .card:active,
+    .card:focus,
+    #links-panel .link-row a,
+    #links-panel .link-row a:hover,
+    #links-panel .link-row a:active,
+    #links-panel .link-row a:visited,
+    #links-panel .close-btn,
+    #links-panel .close-btn:hover,
+    #links-panel .close-btn:active,
+    #links-panel .close-btn:focus {
+      border-radius: 0 !important;
+    }
+    /* During tour, grid should be visible through the card */
+    /* Grid is below card but visible through transparent card background */
+    body.tour-active #grid-canvas { z-index: 2490 !important; pointer-events: none; }
     /* Default browser cursors in use */
     .hud-active button,
     .hud-active a,
@@ -810,7 +942,7 @@ html {
 /* === Mobile: scroll the HUD container instead of the big panel to guarantee bottom visibility === */
 @media (max-width: 479px) {
   #hud-container {
-    top: 58px !important;
+    top: 72px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 94% !important;
@@ -860,7 +992,7 @@ html {
   header#site-header .header-logo { display: none !important; }
   header#site-header .header-spacer { display: none !important; }
   #btn-demo { display: none !important; }
-  .header-btn { padding: 6px 10px !important; }
+  .header-btn { padding: 8px 12px !important; height: 36px; }
 }
 
 
@@ -868,7 +1000,7 @@ html {
 @media (max-width: 479px) {
   #btn-demo { display: inline-flex !important; }
   header#site-header { justify-content: flex-start !important; gap: 8px !important; }
-  .header-btn { padding: 6px 10px !important; }
+  .header-btn { padding: 8px 12px !important; height: 36px; }
 }
 
 
@@ -888,7 +1020,7 @@ html {
 /* === Tablet: mirror mobile behavior (container scroll, tail always reachable) === */
 @media (max-width: 767px) {
   #hud-container {
-    top: 58px !important;
+    top: 72px !important;
     bottom: 12px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
@@ -935,7 +1067,7 @@ html {
   header#site-header .header-logo { display: flex !important; align-items: center !important; }
   header#site-header .header-logo .tagline { display: none !important; } /* убрать подзаголовок */
   /* Кнопки в одну строку, компактные отступы */
-  .header-btn { padding: 8px 12px !important; }
+  .header-btn { padding: 8px 12px !important; height: 36px; }
   #btn-demo { display: inline-flex !important; } /* демо остаётся видимой */
 }
 
@@ -1052,6 +1184,13 @@ body:hover::-webkit-scrollbar-thumb {
   #hud-big-panel, #hud-container #hud-big-panel { padding-top: 16px; }
   #hud-big-panel > :first-child, #hud-container #hud-big-panel > :first-child { margin-top: 0 !important; }
 
+  /* === Tour restart icon next to theme toggle === */
+  #tour-restart-btn { display:inline-flex; align-items:center; justify-content:center; width: 44px; height: 44px; margin-left: 6px; border:1px solid var(--border); border-radius: 10px; background: transparent; color: #9AA6B2; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+  #tour-restart-btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
+  #tour-restart-btn:active { color:#CFE8FF; border-color:#4A8AE6; }
+  #tour-restart-btn:focus { outline: 2px solid #5B9CFF; outline-offset: 2px; }
+  #tour-restart-btn .icon { font-size: 18px; line-height: 1; }
+
 </style>
 </head>
 <body>
@@ -1067,6 +1206,95 @@ body:hover::-webkit-scrollbar-thumb {
     }
     #preloader-overlay.hidden { display: none !important; }
     #preloader-frame { width: 100%; height: 100%; border: 0; }
+  </style>
+</div>
+
+<!-- Guided Tour Overlay (A/B/C) -->
+<div id="tour-overlay" aria-hidden="true" class="hidden">
+  <div class="tour-backdrop"></div>
+  <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-text">
+    <div class="tour-header">
+      <h2 id="tour-title"></h2>
+      <p class="tour-sub" id="tour-sub"></p>
+    </div>
+    <div class="tour-body">
+      <p id="tour-text"></p>
+    </div>
+    <div class="tour-actions" id="tour-actions"></div>
+    <div class="tour-frame-lines" aria-hidden="true"></div>
+  </div>
+  <style>
+    #tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
+    #tour-overlay.hidden { display: none !important; }
+    #tour-overlay .tour-backdrop { position:absolute; inset:0; background: rgba(5,8,12,0.60); backdrop-filter: blur(2px) saturate(120%); z-index: 1; }
+    /* HUD-like styling: straight corners; no inner grid - grid visible through card */
+    #tour-overlay .tour-card { position: relative; width: min(720px, 92vw);
+      background: rgba(18,23,34,0.35);
+      backdrop-filter: blur(2px) saturate(140%);
+      border:1px solid #243041; border-radius: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.45); padding: 20px 20px 20px 20px; color:#E6EEF8; z-index: 2; }
+    /* Disable per-card grid to keep through-grid effect like HUD */
+    #tour-overlay .tour-frame-lines { display:none; }
+    /* Close link inside actions */
+    #tour-overlay .tour-actions .close-link { 
+      background: transparent; border: none; color:#9AA6B2; text-decoration: none; 
+      padding: 10px 14px; height: 44px; display:inline-flex; align-items:center; justify-content:center;
+      font: 400 18px/1 ui-sans-serif, system-ui; box-sizing: border-box;
+      opacity: 0.5;
+    }
+    #tour-overlay .tour-actions .close-link:hover { color:#CFE8FF; opacity: 1; }
+    @media (min-width: 480px) {
+      #tour-overlay .tour-actions .close-link { margin-left: auto; }
+    }
+    #tour-overlay .tour-header h2 { margin: 0 0 8px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color:#CFE8FF; white-space: pre-line; }
+    #tour-overlay .tour-header .tour-sub { margin: 0 0 16px 0; color:#9AA6B2; font: 400 18px/1.3 ui-sans-serif, system-ui; }
+    /* Ensure consistent spacing: sub → content (16px), content → buttons (32px) */
+    #tour-overlay .tour-body { margin-top: 0; }
+    #tour-overlay .tour-body p { margin: 0 0 32px 0; color:#B8C3CF; font: 300 18px/1.3 ui-sans-serif, system-ui; }
+    /* Tour case links styled like HUD "contacts" links */
+    #tour-overlay .tour-body .tour-list { 
+      margin: 0 0 px 0; 
+      padding: 0; 
+      list-style: none; 
+      display: flex; 
+      flex-direction: column; 
+      gap: 0; 
+      align-items: flex-start; 
+    }
+    /* When list is inside p, remove p's margin and let list handle spacing */
+    #tour-overlay .tour-body p:has(.tour-list) { margin: 0; }
+    #tour-overlay .tour-body .tour-list li { margin: 0; line-height: 1; }
+    #tour-overlay .tour-body .tour-list a {
+      display: flex; 
+      align-items: center;
+      text-decoration: none; 
+      font: 400 18px/1 ui-sans-serif, system-ui;
+      color: var(--muted) !important; 
+      background: transparent; 
+      border: none; 
+      border-radius: 0;
+    }
+    #tour-overlay .tour-body .tour-list a:hover { color: var(--accent) !important; background: rgba(91,156,255,0.08); }
+    #tour-overlay .tour-body .tour-list a:visited { color: var(--muted) !important; }
+    #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
+    #tour-overlay .tour-actions .btn { padding: 10px 14px; border-radius: 0; border:1px solid #243041; background: rgba(18,23,34,0.9); color:#9AA6B2; font: 400 18px/1 ui-sans-serif, system-ui; text-decoration: none; cursor: pointer; transition: background .2s, color .2s, border-color .2s; display:inline-flex; align-items:center; justify-content:center; height: 44px; box-sizing: border-box; }
+    #tour-overlay .tour-actions .btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
+    #tour-overlay .tour-actions .btn-primary { color:#CFE8FF; background: rgba(91,156,255,0.12); border-color:#5B9CFF; }
+    #tour-overlay .tour-actions .btn-primary:hover { background: rgba(91,156,255,0.18); }
+    @media (max-width: 479px) {
+      #tour-overlay { align-items: flex-start; padding-top: 20px; padding-bottom: 40px; }
+      /* Card fills the viewport height with 20px top and 40px bottom gutters; buttons at bottom */
+      #tour-overlay .tour-card {
+        padding: 16px;
+        margin-left: auto; margin-right: auto;
+        display: flex; flex-direction: column;
+        width: calc(100vw - 40px);
+        min-height: calc(100dvh - 60px);
+        max-height: calc(100dvh - 60px);
+      }
+      #tour-overlay .tour-body { flex: 1 1 auto; }
+      #tour-overlay .tour-actions { flex-direction: column; margin-top: auto; }
+      #tour-overlay .tour-actions .btn { width: 100%; text-align: center; }
+    }
   </style>
 </div>
 
@@ -1112,6 +1340,8 @@ body:hover::-webkit-scrollbar-thumb {
 
 <!-- HUD elements -->
 <div id="overlay"></div>
+<!-- HUD backdrop (similar to tour backdrop) -->
+<div id="hud-backdrop" class="hidden"></div>
 
 <div id="hud-object-icon"></div>
 <!-- Wrap the HUD panels inside a container so they can be centred and stacked responsively -->
@@ -1126,6 +1356,8 @@ body:hover::-webkit-scrollbar-thumb {
 
   <!-- Grid overlay (thin through-borders that form the HUD grid) -->
   <div id="grid-overlay" aria-hidden="true"></div>
+  <!-- Background grid under HUD overlay -->
+  <canvas id="grid-canvas-bg" aria-hidden="true"></canvas>
   <canvas id="grid-canvas" aria-hidden="true"></canvas>
 
 <script type="importmap">
@@ -1165,6 +1397,103 @@ async function init() {
     
     console.log('[Bootstrap] Initializing theme switcher...');
     initThemeSwitcher(engine);
+    // Inject Tour Restart icon next to theme toggle
+    try {
+      const container = document.getElementById('theme-toggle-container') || document.getElementById('site-header');
+      if (container) {
+        let btn = document.getElementById('tour-restart-btn');
+        if (!btn) {
+          btn = document.createElement('button');
+          btn.id = 'tour-restart-btn';
+          btn.className = 'header-btn';
+          btn.setAttribute('aria-label', 'Перезапустить тур');
+          btn.title = 'Перезапустить тур';
+          btn.tabIndex = 0;
+          btn.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" aria-hidden="true" />';
+          container.appendChild(btn);
+        }
+        const canShowTourRestartIcon = () => {
+          try {
+            const overlayActive = !!(document.getElementById('tour-overlay') && !document.getElementById('tour-overlay').classList.contains('hidden'));
+            return !overlayActive; // always available across scenes
+          } catch { return true; }
+        };
+        const updateVisibility = () => { btn.style.display = canShowTourRestartIcon() ? 'inline-flex' : 'none'; };
+        updateVisibility();
+        window.addEventListener('hashchange', updateVisibility);
+        window.addEventListener('storage', updateVisibility);
+        document.addEventListener('readystatechange', updateVisibility);
+        // Analytics: view when in viewport
+        try {
+          const io = new IntersectionObserver((entries)=>{
+            entries.forEach(en=>{ if (en.isIntersecting) { console.log('analytics: tour_restart_icon_view'); io.disconnect(); } });
+          });
+          io.observe(btn);
+        } catch {}
+        const tour_reset = () => {
+          try { 
+            localStorage.removeItem('tour_done'); 
+            localStorage.setItem('tour_step','1'); 
+          } catch {}
+          // Use window.tour_reset if available (properly resets to step 1)
+          if (typeof window.tour_reset === 'function') {
+            window.tour_reset();
+            return;
+          }
+          // Fallback: try to set step manually using window.setTourStep
+          try {
+            const overlay = document.getElementById('tour-overlay');
+            if (overlay) {
+              overlay.classList.remove('hidden'); 
+              overlay.setAttribute('aria-hidden','false');
+              // Try to set step to 1 using exported function
+              if (typeof window.setTourStep === 'function') {
+                window.setTourStep(1);
+              } else {
+                // Last resort: reload page to ensure clean start
+                location.reload();
+              }
+            }
+          } catch (e) {
+            console.warn('[Tour] Error resetting tour:', e);
+            // Last resort: reload page
+            try { location.reload(); } catch {}
+          }
+        };
+        const onActivate = (e) => {
+          if (e.type === 'keydown' && !(e.key === 'Enter' || e.key === ' ')) return;
+          const overlayActive = !!(document.getElementById('tour-overlay') && !document.getElementById('tour-overlay').classList.contains('hidden'));
+          if (overlayActive) return; // ignore when tour is already open
+          console.log('analytics: tour_restart_click');
+          tour_reset();
+          updateVisibility();
+          e.preventDefault();
+        };
+        btn.addEventListener('click', onActivate);
+        btn.addEventListener('keydown', onActivate);
+        // Self-healing: if theme switcher re-renders, re-insert the button
+        try {
+          const ensureBtn = () => {
+            let b = document.getElementById('tour-restart-btn');
+            if (!b) {
+              b = document.createElement('button');
+              b.id = 'tour-restart-btn';
+              b.className = 'header-btn';
+              b.setAttribute('aria-label', 'Перезапустить тур');
+              b.title = 'Перезапустить тур';
+              b.tabIndex = 0;
+              b.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" aria-hidden="true" />';
+              container.appendChild(b);
+              b.addEventListener('click', onActivate);
+              b.addEventListener('keydown', onActivate);
+              updateVisibility();
+            }
+          };
+          const mo = new MutationObserver(() => ensureBtn());
+          mo.observe(container, { childList: true, subtree: true });
+        } catch {}
+      }
+    } catch {}
     
     // Listen for theme mounted event and then initialize HUD
     let hud = null;
@@ -1204,6 +1533,192 @@ async function init() {
       try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
     }, 8000);
 
+    // ===== Guided Tour (A->B->C) =====
+    (function initGuidedTour(){
+      const params = new URLSearchParams(location.search);
+      if (params.get('tour') === 'off') return;
+      if (params.get('tour') === 'reset') {
+        try { localStorage.removeItem('tour_done'); localStorage.removeItem('tour_step'); } catch {}
+      }
+      const done = (typeof localStorage !== 'undefined') ? localStorage.getItem('tour_done') : null;
+      if (done === '1') return;
+      const overlay = document.getElementById('tour-overlay');
+      if (!overlay) return;
+      const titleEl = document.getElementById('tour-title');
+      const subEl = document.getElementById('tour-sub');
+      const textEl = document.getElementById('tour-text');
+      const actionsEl = document.getElementById('tour-actions');
+
+      const steps = {
+        1: {
+          title: `Привет! Я Владимир Костял. UX-архитектор  AI продуктов`,
+          sub: 'Помогаю компаниям строить и развивать AI-интерфейсы. Делаю искусственный интеллект понятным для пользователей и прозрачным для бизнеса.',
+          text: ` — Управляю продуктом и кросс-функциональными командами. <br>
+ — Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста. <br>
+ — Сатарюсь вынести все настройки и управление ИИ в понятный интерфейс.`,
+          actions: [
+            { type:'button', primary:true, label:'Кейсы', on:'next' },
+            { type:'link', label:'Резюме', href:'./Vladimir_Kostyal_Resume.pdf' },
+            { type:'link', label:'UX4AI (PDF гайд + ссылки)', href:'https://t.me/...' }
+          ]
+        },
+        2: {
+          title: 'Разрабатываю контролируемый AI — вместо чёрного ящика',
+          sub: 'Собираю рабочую систему: оркестрация ассистентов и агентов в одном понятном интерфейсе. Высвечиваю логику работы ИИ — что и почему он делает. Как принимает решения. Откуда берутся и куда уходят данные. Как и где хранятся. Насколько это безопасно... Стараюсь разобрать от ноля до единицы все темные уголки его искусственой души)',
+          text: '<ul class="tour-list">\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n</ul>',
+          actions: [
+            { type:'button', primary:false, label:'Назад', on:'back' },
+            { type:'button', primary:true, label:'Далее', on:'next' },
+            { type:'link', label:'Написать в ТГ', href:'https://t.me/scrumux' }
+          ]
+        },
+        3: {
+          title: 'Конец официальной части)',
+          sub: 'Люди воспринммают информацию 6-10 секунд и принимают решение по заголовку, первой строке и наличию аргументов (eye-tracking исследования NN/g , F-/Z-паттерны, «информационный запах»)',
+          text: 'Так что 2 первых экранов было  вполне достаточно для первого знакомства ;) Далее углубляемся в обзор UX проблем и решений в AI продуктах. Самых терпеливых ждёт дизайнерская пасхалка о метафорах))',
+          actions: [
+            { type:'button', primary:false, label:'Назад', on:'back' },
+            { type:'button', primary:true, label:'К обзору', on:'finish' },
+            { type:'link', label:'Написать в ТГ', href:'https://t.me/scrumux' }
+          ]
+        }
+      };
+
+      // allow only <br> in text; escape everything else; also support \n -> <br>
+      function sanitizeAllowBr(str){
+        return String(str)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/\n/g, '<br>')
+          .replace(/&lt;br\s*\/?&gt;/gi, '<br>')
+          // allow very limited HTML for links list (normalize UL to have class)
+          .replace(/&lt;ul(?:\s+class=\"tour-list\")?\s*&gt;/gi, '<ul class="tour-list">')
+          .replace(/&lt;\/ul&gt;/gi, '</ul>')
+          .replace(/&lt;li&gt;/gi, '<li>')
+          .replace(/&lt;\/li&gt;/gi, '</li>')
+          .replace(/&lt;a\s+href=\"([^\"]*)\"(?:\s+target=\"[^\"]*\")?\s*&gt;/gi, '<a href="$1" target="_blank">')
+          .replace(/&lt;\/a&gt;/gi, '</a>');
+      }
+
+      function setStep(step){
+        const s = steps[step]; if (!s) return;
+        try { localStorage.setItem('tour_step', String(step)); } catch {}
+        titleEl.textContent = s.title;
+        subEl.textContent = s.sub;
+        textEl.innerHTML = sanitizeAllowBr(s.text);
+        actionsEl.innerHTML = '';
+        s.actions.forEach(a => {
+          if (a.type === 'link') {
+            const link = document.createElement('a');
+            link.className = 'btn';
+            link.href = a.href; 
+            const isPdf = a.href.toLowerCase().endsWith('.pdf');
+            // For PDF files: open in new tab and also trigger download
+            if (isPdf) {
+              link.target = '_blank';
+              link.addEventListener('click', (e) => {
+                // Open in new tab (default behavior)
+                // Also trigger download
+                setTimeout(() => {
+                  const downloadLink = document.createElement('a');
+                  downloadLink.href = a.href;
+                  downloadLink.download = a.href.split('/').pop() || 'download.pdf';
+                  downloadLink.style.display = 'none';
+                  document.body.appendChild(downloadLink);
+                  downloadLink.click();
+                  document.body.removeChild(downloadLink);
+                }, 100);
+              });
+            } else {
+              link.target = a.href.startsWith('http') ? '_blank' : '_self';
+            }
+            link.textContent = a.label;
+            actionsEl.appendChild(link);
+          } else {
+            const btn = document.createElement('button');
+            btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
+            btn.textContent = a.label;
+            if (a.on === 'next') btn.addEventListener('click', () => setStep(Math.min(3, step+1)));
+            if (a.on === 'back') btn.addEventListener('click', () => setStep(Math.max(1, step-1)));
+            if (a.on === 'finish') btn.addEventListener('click', finishTour);
+            actionsEl.appendChild(btn);
+          }
+        });
+        // add close link as last action
+        const closeA = document.createElement('a');
+        closeA.href = '#';
+        closeA.className = 'close-link';
+        closeA.textContent = 'Закрыть';
+        closeA.addEventListener('click', (e)=>{ e.preventDefault(); dismissTour(); });
+        actionsEl.appendChild(closeA);
+        // reflect in hash (optional)
+        try { history.replaceState(null, '', `#tour/${step}`); } catch {}
+      }
+      function showTour(){ overlay.classList.remove('hidden'); overlay.setAttribute('aria-hidden','false'); document.body.classList.add('tour-active'); }
+      function hideTour(){ overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden','true'); document.body.classList.remove('tour-active'); try { const btn = document.getElementById('tour-restart-btn'); if (btn) btn.style.display = 'inline-flex'; } catch {} }
+      function finishTour(){ 
+        hideTour(); 
+        try { localStorage.setItem('tour_done','1'); } catch {} 
+        try { history.replaceState(null,'', location.pathname + location.search); } catch {}
+        // Open "Основы UX для AI" section in HUD
+        try {
+          if (window.hud && typeof window.hud.openBasicsSection === 'function') {
+            // Small delay to ensure HUD is ready
+            setTimeout(() => {
+              window.hud.openBasicsSection();
+            }, 100);
+          }
+        } catch (e) {
+          console.warn('[Tour] Failed to open basics section:', e);
+        }
+      }
+      function dismissTour(){ 
+        hideTour(); 
+        // Mark tour as completed when closed from any step
+        try { localStorage.setItem('tour_done','1'); } catch {} 
+        try { history.replaceState(null,'', location.pathname + location.search); } catch {}
+        // Open "Основы UX для AI" section in HUD
+        try {
+          if (window.hud && typeof window.hud.openBasicsSection === 'function') {
+            // Small delay to ensure HUD is ready
+            setTimeout(() => {
+              window.hud.openBasicsSection();
+            }, 100);
+          }
+        } catch (e) {
+          console.warn('[Tour] Failed to open basics section:', e);
+        }
+      }
+
+      // Expose hooks
+      try { window.canShowTourRestartIcon = function(){ try { return localStorage.getItem('tour_done')==='1' && (document.getElementById('tour-overlay')?.classList.contains('hidden')||false); } catch { return false; } }; } catch {}
+      try { window.setTourStep = setStep; } catch {}
+      try { window.tour_reset = function(){ 
+        try { 
+          localStorage.removeItem('tour_done'); 
+          localStorage.setItem('tour_step','1'); 
+        } catch {} 
+        setStep(1); 
+        showTour(); 
+      }; } catch {}
+
+      // Block interactions under overlay handled by backdrop covering entire page via CSS
+
+      // Schedule display as soon as preloader hides
+      const tryShow = () => {
+        const preHidden = !document.getElementById('preloader-overlay') || document.getElementById('preloader-overlay').classList.contains('hidden');
+        if (!preHidden) { setTimeout(tryShow, 120); return; }
+        const step = Number((typeof localStorage!=='undefined' && localStorage.getItem('tour_step')) || '1') || 1;
+        setStep(step);
+        console.log('analytics: tour_start');
+        showTour();
+      };
+      // Close (X)
+      try { const closeBtn = document.getElementById('tour-close'); if (closeBtn) { closeBtn.addEventListener('click', dismissTour); closeBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') { e.preventDefault(); dismissTour(); } }); } } catch {}
+      tryShow();
+    })();
+
     // Ensure any prior custom cursor element is removed
     try { const old = document.getElementById('custom-cursor'); if (old) old.remove(); } catch(_) {}
 
@@ -1220,17 +1735,27 @@ async function init() {
 
     // Canvas grid overlay (reliable, animated in sync with core pulse)
     const canvas = document.getElementById('grid-canvas');
+    const canvasBg = document.getElementById('grid-canvas-bg');
     canvas.style.position = 'fixed';
     canvas.style.inset = '0';
     canvas.style.pointerEvents = 'none';
     canvas.style.zIndex = '850';
-    // Grid only active in HUD mode
+    if (canvasBg) {
+      canvasBg.style.position = 'fixed';
+      canvasBg.style.inset = '0';
+      canvasBg.style.pointerEvents = 'none';
+      canvasBg.style.zIndex = '890';
+    }
+    // Grid only active in HUD mode or during tour
     function isGridActive() {
       const root = document.documentElement;
-      return root.classList.contains('hud-active') || root.classList.contains('links-active');
+      const tourOverlay = document.getElementById('tour-overlay');
+      const tourActive = tourOverlay && !tourOverlay.classList.contains('hidden');
+      return root.classList.contains('hud-active') || root.classList.contains('links-active') || tourActive;
     }
     var GRID_SIMPLE = false; // bind to Calm wireframe
     let ctx = canvas.getContext('2d');
+    let ctxBg = canvasBg ? canvasBg.getContext('2d') : null;
     // Flicker state synced to Calm intensity
     var _flicker = {
       lastI: 0,
@@ -1295,20 +1820,49 @@ async function init() {
       if (!isGridActive()) return;
       clearLines();
       const rects = [];
-      targetsSelectors.forEach(sel => {
-        const el = document.querySelector(sel);
-        if (!el) return;
-        const r = el.getBoundingClientRect();
-        if (r.width > 0 && r.height > 0) rects.push(r);
-        // также учесть прямых детей (строки/карточки внутри малого HUD)
-        if (el.id === 'hud-small-panel') {
-          el.childNodes.forEach(n => {
-            if (n.nodeType !== 1) return;
-            const rr = n.getBoundingClientRect();
-            if (rr.width > 0 && rr.height > 0) rects.push(rr);
-          });
+      // During tour, build grid for entire viewport (visible through overlays)
+      const tourOverlay = document.getElementById('tour-overlay');
+      const tourActive = tourOverlay && !tourOverlay.classList.contains('hidden');
+      if (tourActive) {
+        // For tour, create a full-screen grid with 24px spacing (like HUD mode)
+        // This will be visible through the transparent card
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+        const GRID_STEP = 24;
+        // Generate grid lines across entire viewport
+        const gridXs = new Set();
+        const gridYs = new Set();
+        for (let x = 0; x <= vw; x += GRID_STEP) {
+          gridXs.add(x);
         }
-      });
+        for (let y = 0; y <= vh; y += GRID_STEP) {
+          gridYs.add(y);
+        }
+        // Store for drawing (will be used in drawCanvasGrid)
+        cachedXs = Array.from(gridXs).sort((a,b)=>a-b);
+        cachedYs = Array.from(gridYs).sort((a,b)=>a-b);
+        // Assign random seeds for flicker
+        lineSeeds = new Map();
+        cachedXs.forEach((x,i)=> lineSeeds.set('x'+i, Math.random()));
+        cachedYs.forEach((y,i)=> lineSeeds.set('y'+i, Math.random()));
+        return; // Skip normal grid building for tour
+      } else {
+        // Normal HUD mode: build grid around specific elements
+        targetsSelectors.forEach(sel => {
+          const el = document.querySelector(sel);
+          if (!el) return;
+          const r = el.getBoundingClientRect();
+          if (r.width > 0 && r.height > 0) rects.push(r);
+          // также учесть прямых детей (строки/карточки внутри малого HUD)
+          if (el.id === 'hud-small-panel') {
+            el.childNodes.forEach(n => {
+              if (n.nodeType !== 1) return;
+              const rr = n.getBoundingClientRect();
+              if (rr.width > 0 && rr.height > 0) rects.push(rr);
+            });
+          }
+        });
+      }
       if (rects.length === 0) return;
 
       // Собираем уникальные X/Y краёв
@@ -1358,9 +1912,27 @@ async function init() {
       setTimeout(buildGrid, 50);
       setTimeout(buildGrid, 150);
     }
+    // Mobile HUD: keep 20px gap below site header
+    function updateMobileHudTop(){
+      try {
+        const isMobile = window.innerWidth <= 479;
+        const header = document.getElementById('site-header');
+        const hudContainer = document.getElementById('hud-container');
+        if (!header || !hudContainer) return;
+        if (isMobile) {
+          const h = Math.round(header.getBoundingClientRect().height || 0);
+          hudContainer.style.setProperty('top', (h + 20) + 'px', 'important');
+        } else {
+          // restore desktop top from CSS
+          hudContainer.style.removeProperty('top');
+        }
+      } catch {}
+    }
     engine.on('themeMounted', () => {
       scheduleBuildBurst();
+      updateMobileHudTop();
     });
+    try { window.addEventListener('resize', updateMobileHudTop); } catch {}
 
     // Initial draw at startup (before any theme mounts) so Calm/Matrix both show lines
     scheduleBuildBurst();
@@ -1533,14 +2105,32 @@ async function init() {
           ctx = canvas.getContext('2d');
           ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
         }
+        // Sync background canvas size
+        if (canvasBg && ctxBg) {
+          const needResizeBg = canvasBg.width !== Math.floor(vw * dpr) || canvasBg.height !== Math.floor(vh * dpr);
+          if (needResizeBg) {
+            canvasBg.width = Math.floor(vw * dpr);
+            canvasBg.height = Math.floor(vh * dpr);
+            canvasBg.style.width = vw + 'px';
+            canvasBg.style.height = vh + 'px';
+            ctxBg = canvasBg.getContext('2d');
+            ctxBg.setTransform(dpr, 0, 0, dpr, 0, 0);
+          }
+        }
         ctx.clearRect(0,0,vw,vh);
         const pc = pulseColor(t/1000);
         const nowFlash = !!pc.flashActive;
         prevFlashActive = nowFlash;
         const hudOrLinks = isGridActive();
+        const linksActive = document.documentElement.classList.contains('links-active');
+        const hudActiveFlag = document.documentElement.classList.contains('hud-active');
+        const tourOverlayEl = document.getElementById('tour-overlay');
+        const tourActive = tourOverlayEl && !tourOverlayEl.classList.contains('hidden');
+        const hudOnly = hudActiveFlag && !linksActive && !tourActive;
         // Base border color #243041 with reduced opacity
         const baseBorderColor = 'rgba(36,48,65,0.35)'; // reduced visibility
-        const flashColor = 'rgba(91,156,255,0.27)'; // very subtle flash, barely noticeable
+        // In HUD mode reduce flash visibility from 0.27 to 0.18
+        const flashColor = hudOnly ? 'rgba(91,156,255,0.18)' : 'rgba(91,156,255,0.27)';
         ctx.lineWidth = 1;
         if (hudOrLinks) {
           // Draw grid lines only in HUD/Links mode
@@ -1583,6 +2173,57 @@ async function init() {
             ctx.stroke();
           });
         }
+        // Background grid under HUD overlay: full-screen grid like tour
+        if (canvasBg && ctxBg) {
+          ctxBg.clearRect(0,0,vw,vh);
+          const isMobile = window.innerWidth <= 767;
+          if (hudOnly || linksActive || tourActive || (isMobile && (hudActiveFlag || linksActive))) {
+            // Base opacity same; flash depends on mode (tour brighter)
+            const baseBorderColor = 'rgba(36,48,65,0.35)';
+            const flashColor = tourActive ? 'rgba(91,156,255,0.27)' : 'rgba(91,156,255,0.18)';
+            const step = 24;
+            // subtle flicker synced with tour logic
+            const freq = 12;
+            const duty = 0.15;
+            const doFlicker = nowFlash;
+            // Vertical lines
+            let i = 0;
+            for (let x=0; x<=vw; x+=step, i++) {
+              let color = baseBorderColor;
+              if (doFlicker) {
+                const seed = (i*0.173)%1; // deterministic seed per line
+                const ph = (t*freq + seed*3) % 1;
+                const strobeOn = ph < duty;
+                color = strobeOn ? flashColor : baseBorderColor;
+              }
+              ctxBg.strokeStyle = color;
+              ctxBg.setLineDash([]);
+              ctxBg.beginPath();
+              ctxBg.moveTo(Math.round(x)+0.5, 0);
+              ctxBg.lineTo(Math.round(x)+0.5, vh);
+              ctxBg.stroke();
+            }
+            // Horizontal lines
+            i = 0;
+            for (let y=0; y<=vh; y+=step, i++) {
+              let color = baseBorderColor;
+              if (doFlicker) {
+                const seed = (i*0.237)%1;
+                const ph = (t*freq + seed*3.7) % 1;
+                const strobeOn = ph < duty;
+                color = strobeOn ? flashColor : baseBorderColor;
+              }
+              ctxBg.strokeStyle = color;
+              ctxBg.setLineDash([]);
+              ctxBg.beginPath();
+              ctxBg.moveTo(0, Math.round(y)+0.5);
+              ctxBg.lineTo(vw, Math.round(y)+0.5);
+              ctxBg.stroke();
+            }
+          }
+        }
+
+        // (tour grid canvas removed)
         // --- Cursor crosshair (subtle) ---
         // Fade crosshair when idle
         // (grid cursor crosshair removed)
@@ -1608,7 +2249,7 @@ async function init() {
       const mo = new MutationObserver(() => buildGrid());
       moTargets.forEach(t => mo.observe(t, { attributes: true, attributeFilter: ['style', 'class'], subtree: true }));
     }
-    // Watch for hud-active class changes on document root
+    // Watch for hud-active class changes on document root and tour overlay
     const hudObserver = new MutationObserver(() => {
       if (isGridActive()) {
         buildGrid();
@@ -1620,6 +2261,33 @@ async function init() {
         }
       }
     });
+    // Also watch tour overlay for show/hide
+    const tourOverlay = document.getElementById('tour-overlay');
+    if (tourOverlay) {
+      const tourObserver = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
+            const isHidden = tourOverlay.classList.contains('hidden');
+            if (isHidden) {
+              document.body.classList.remove('tour-active');
+            } else {
+              document.body.classList.add('tour-active');
+              buildGrid(); // rebuild grid when tour opens
+            }
+            // Trigger grid rebuild
+            if (isGridActive()) {
+              buildGrid();
+            } else {
+              if (ctx) {
+                const vw = window.innerWidth, vh = window.innerHeight;
+                ctx.clearRect(0, 0, vw, vh);
+              }
+            }
+          }
+        });
+      });
+      tourObserver.observe(tourOverlay, { attributes: true, attributeFilter: ['class'] });
+    }
     hudObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
     
     // Resize handler

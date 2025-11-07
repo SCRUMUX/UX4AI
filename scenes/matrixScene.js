@@ -544,7 +544,7 @@ export function matrixSceneFactory(config) {
       // Nodes (objects of interest)
       const objectsById = new Map();
       const nodes = [];
-      const SECTION_ORDER = ['about','basics','patterns','assistant','prompts','operations','security','marketplace'];
+      const SECTION_ORDER = ['basics','about','patterns','assistant','prompts','operations','security','marketplace'];
       
       // Создаем anchors сразу с дефолтными позициями (обновятся после загрузки GLB)
       const anchors = SECTION_ORDER.map((sectionId, idx) => ({

@@ -17,8 +17,8 @@ export function calmSceneCompleteFactory(config) {
 
   // Node definitions - равномерное распределение по 3D пространству
   const nodeDefs = [
-    { sectionId: 'about', name: SECTION_NAMES.about, theta: 0, phi: 0, radius: 3.5 },
-    { sectionId: 'basics', name: SECTION_NAMES.basics, theta: 45, phi: 30, radius: 4.0 },
+    { sectionId: 'basics', name: SECTION_NAMES.basics, theta: 0, phi: 0, radius: 3.5 },
+    { sectionId: 'about', name: SECTION_NAMES.about, theta: 45, phi: 30, radius: 4.0 },
     { sectionId: 'patterns', name: SECTION_NAMES.patterns, theta: 90, phi: -25, radius: 4.5 },
     { sectionId: 'assistant', name: SECTION_NAMES.assistant, theta: 135, phi: 35, radius: 4.0 },
     { sectionId: 'prompts', name: SECTION_NAMES.prompts, theta: 180, phi: -30, radius: 4.5 },

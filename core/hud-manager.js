@@ -33,6 +33,9 @@ export function initHUD(options) {
     btnLinksClose,
     nodes
   } = options;
+  
+  // Get HUD backdrop element
+  const hudBackdrop = document.getElementById('hud-backdrop');
 
   let activeOverlay = false;
   let currentInfo = [];
@@ -40,7 +43,11 @@ export function initHUD(options) {
   let currentNodeIndex = -1;
   let cleanupScrollRedirect = null;
 
-  const SECTION_ORDER = ['👤 Обо мне', ...Object.keys(NODES_DATA)];
+  // Ensure "Основы UX для AI" is first in the order (after "Обо мне")
+  const nodesDataKeys = Object.keys(NODES_DATA);
+  const basicsKey = nodesDataKeys.find(key => key.includes('Основы UX'));
+  const otherKeys = nodesDataKeys.filter(key => !key.includes('Основы UX'));
+  const SECTION_ORDER = ['👤 Обо мне', ...(basicsKey ? [basicsKey] : []), ...otherKeys];
 
   // Rename tab buttons
   (function() {
@@ -194,6 +201,8 @@ export function initHUD(options) {
     // Activate overlay backdrop
     overlay.classList.add('active');
     activeOverlay = true;
+    // Show HUD backdrop (similar to tour backdrop)
+    if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     // Mark HUD active to allow CSS performance optimizations
     document.documentElement.classList.add('hud-active');
     // Redirect wheel to window on desktop so world scroll never stalls
@@ -213,6 +222,8 @@ export function initHUD(options) {
     hudBigPanel.style.display = 'none';
     hudSmallPanel.style.display = 'none';
     if (hudContainer) hudContainer.style.display = 'none';
+    // Hide HUD backdrop
+    if (hudBackdrop) hudBackdrop.classList.add('hidden');
     // Remove scroll redirection if installed
     if (cleanupScrollRedirect) { cleanupScrollRedirect(); cleanupScrollRedirect = null; }
     // Remove HUD active marker
@@ -281,6 +292,8 @@ export function initHUD(options) {
     if (aboutTabs[0]) aboutTabs[0].classList.add('active-tab');
     renderAboutTab(0);
 
+    // Show HUD backdrop (similar to tour backdrop)
+    if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     // Redirect wheel to window on desktop as well
     installScrollRedirect();
     // Mark HUD active for CSS optimization
@@ -293,6 +306,8 @@ export function initHUD(options) {
       hideOverlay();
     }
     
+    // Show HUD backdrop (similar to tour backdrop)
+    if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     if (linksPanel) linksPanel.style.display = 'block';
     // Mark links-active so grid can stay visible in links mode
     document.documentElement.classList.add('links-active');
@@ -305,6 +320,8 @@ export function initHUD(options) {
 
   function closeLinksPanel() {
     if (linksPanel) linksPanel.style.display = 'none';
+    // Hide HUD backdrop if no HUD is active
+    if (!activeOverlay && hudBackdrop) hudBackdrop.classList.add('hidden');
     document.documentElement.classList.remove('links-active');
     // Remove outside-click handler
     try {
@@ -371,7 +388,26 @@ export function initHUD(options) {
   
   if (lnkTgChat) lnkTgChat.href = LINKS.tgChat;
   if (lnkTgCommunity) lnkTgCommunity.href = LINKS.tgCommunity;
-  if (lnkResume) lnkResume.href = LINKS.resume;
+  if (lnkResume) {
+    lnkResume.href = LINKS.resume;
+    // For PDF files: open in new tab and also trigger download
+    if (LINKS.resume.toLowerCase().endsWith('.pdf')) {
+      lnkResume.target = '_blank';
+      lnkResume.addEventListener('click', (e) => {
+        // Open in new tab (default behavior)
+        // Also trigger download
+        setTimeout(() => {
+          const downloadLink = document.createElement('a');
+          downloadLink.href = LINKS.resume;
+          downloadLink.download = LINKS.resume.split('/').pop() || 'resume.pdf';
+          downloadLink.style.display = 'none';
+          document.body.appendChild(downloadLink);
+          downloadLink.click();
+          document.body.removeChild(downloadLink);
+        }, 100);
+      });
+    }
+  }
 
   // Close on overlay click
   overlay.addEventListener('click', (e) => {
@@ -429,12 +465,30 @@ export function initHUD(options) {
     };
   }
 
+  function openBasicsSection() {
+    // Find and open "Основы UX для AI" section
+    const idx = nodes.findIndex(n => typeof n.name === 'string' && n.name.includes('Основы UX'));
+    if (idx >= 0) {
+      showOverlay(nodes[idx]);
+      // Hide links panel if open
+      if (linksPanel && linksPanel.style.display === 'flex') linksPanel.style.display = 'none';
+      return true;
+    }
+    // Fallback: open first node
+    if (nodes.length > 0) {
+      showOverlay(nodes[0]);
+      return true;
+    }
+    return false;
+  }
+
   return {
     showOverlay,
     hideOverlay,
     showAboutPanel,
     showLinksPanel,
-    closeLinksPanel
+    closeLinksPanel,
+    openBasicsSection
   };
 }
 

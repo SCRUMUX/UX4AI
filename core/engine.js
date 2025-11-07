@@ -317,6 +317,12 @@ export function createEngine({ canvasParent, labelsElement }) {
       btnLinksClose: document.getElementById('btn-links-close'),
       nodes: nodes || []
     });
+    // Expose HUD globally for tour integration
+    try {
+      if (typeof window !== 'undefined') {
+        window.hud = hud;
+      }
+    } catch (_) {}
   }
 
   function resize(width, height) {
