@@ -454,7 +454,7 @@ Design Leadership
 export const LINKS = {
   tgChat: 'https://t.me/scrumux',
   tgCommunity: 'https://t.me/ux4ai',
-  resume: 'https://drive.google.com/file/d/1UnKbXcd8K74KkkrdNs7aCbpog0jOo9Tx/view?usp=sharing'
+  resume: './Vladimir_Kostyal_Resume.pdf'
 };
 
 
