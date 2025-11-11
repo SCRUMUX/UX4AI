@@ -8,7 +8,7 @@ import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 
 // Map ABOUT_DATA to format expected by HUD
 const ABOUT = {
-  title: 'Обо мне',
+  title: 'Автор',
   text: ABOUT_DATA.text || '',
   skills: ABOUT_DATA.skills || '',
   contacts: ABOUT_DATA.contacts || '',
@@ -44,11 +44,11 @@ export function initHUD(options) {
   let currentNodeIndex = -1;
   let cleanupScrollRedirect = null;
 
-  // Ensure "Основы UX для AI" is first in the order (after "Обо мне")
+  // Ensure "Основы UX для AI" is first in the order (after "Автор")
   const nodesDataKeys = Object.keys(NODES_DATA);
   const basicsKey = nodesDataKeys.find(key => key.includes('Основы UX'));
   const otherKeys = nodesDataKeys.filter(key => !key.includes('Основы UX'));
-  const SECTION_ORDER = ['👤 Обо мне', ...(basicsKey ? [basicsKey] : []), ...otherKeys];
+  const SECTION_ORDER = ['👤 Автор', ...(basicsKey ? [basicsKey] : []), ...otherKeys];
 
   // Rename tab buttons
   (function() {
@@ -99,7 +99,7 @@ export function initHUD(options) {
     const summaryEl = header.querySelector('.hud-section-summary');
     if (titleEl) titleEl.textContent = name;
     
-    const summaryText = (name === '👤 Обо мне')
+    const summaryText = (name === '👤 Автор')
       ? ABOUT_DATA.summary
       : (data.summary || '');
     if (summaryEl) summaryEl.textContent = summaryText;
@@ -128,8 +128,8 @@ export function initHUD(options) {
     const nextIdx = (currentNodeIndex + delta + total) % total;
     const nextName = SECTION_ORDER[nextIdx];
     
-    // If clicking next from last node, go to "Обо мне"
-    if (nextName === '👤 Обо мне') {
+    // If clicking next from last node, go to "Автор"
+    if (nextName === '👤 Автор') {
       showAboutPanel();
     } else {
       const nodeIdx = nodes.findIndex(n => n.name === nextName);
@@ -291,7 +291,7 @@ export function initHUD(options) {
     
     overlay.classList.add('active');
     activeOverlay = true;
-    currentNodeName = '👤 Обо мне';
+    currentNodeName = '👤 Автор';
     currentNodeIndex = 0;
     
     // Hide icon
@@ -306,7 +306,7 @@ export function initHUD(options) {
     hudSmallPanel.style.display = 'flex';
     
     // Render header
-    renderHudSectionHeader('👤 Обо мне');
+    renderHudSectionHeader('👤 Автор');
     
     // Set tab names for About panel - use setTimeout to ensure it runs after any other code
     const setAboutTabNames = () => {
@@ -315,7 +315,7 @@ export function initHUD(options) {
         // Use tabs from ABOUT_DATA if available, otherwise use defaults
         const tabNames = (ABOUT_DATA && ABOUT_DATA.tabs && ABOUT_DATA.tabs.length >= 3) 
           ? ABOUT_DATA.tabs 
-          : ['Обо мне', 'Услуги', 'Деятельность'];
+          : ['Автор', 'Услуги', 'Деятельность'];
         tabs[0].textContent = tabNames[0];
         tabs[1].textContent = tabNames[1];
         tabs[2].textContent = tabNames[2];
@@ -499,7 +499,7 @@ export function initHUD(options) {
       // Create a mock node object for showOverlay
       const mockNode = { name: nodeName };
       showOverlay(mockNode);
-    } else if (sectionId === 'about' || target.textContent.trim() === '👤 Обо мне') {
+    } else if (sectionId === 'about' || target.textContent.trim() === '👤 Автор') {
       showAboutPanel();
     }
   }
@@ -509,7 +509,7 @@ export function initHUD(options) {
     labelsLayer.addEventListener('click', onLabelClick);
   }
 
-  // Add click handler for logo to open "Обо мне" section
+  // Add click handler for logo to open "Автор" section
   const headerLogo = document.querySelector('.header-logo .name');
   if (headerLogo) {
     headerLogo.style.cursor = 'pointer';
