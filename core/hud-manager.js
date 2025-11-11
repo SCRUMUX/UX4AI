@@ -3,7 +3,7 @@
  * Extracted from index.html lines 2304-2726
  */
 
-import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=4';
+import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=10';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 
 // Map ABOUT_DATA to format expected by HUD
@@ -38,17 +38,71 @@ export function initHUD(options) {
   // Get HUD backdrop element
   const hudBackdrop = document.getElementById('hud-backdrop');
 
+  // Set up event delegation for HUD panel links (once, not on every render)
+  if (hudBigPanel && !hudBigPanel._linkHandlersSetup) {
+    // Handle tab navigation links and external links
+    hudBigPanel.addEventListener('click', (e) => {
+      const tabLink = e.target.closest('.hud-tab-link');
+      if (tabLink) {
+        e.preventDefault();
+        e.stopPropagation();
+        const tabIndex = parseInt(tabLink.getAttribute('data-tab-index') || '1');
+        const hudButtons = hudSmallPanel.querySelectorAll('button[data-index]');
+        if (hudButtons && hudButtons[tabIndex]) {
+          hudButtons.forEach(b => b.classList.remove('active-tab'));
+          hudButtons[tabIndex].classList.add('active-tab');
+          // Trigger tab render by clicking the button
+          hudButtons[tabIndex].click();
+        }
+        return false;
+      }
+      
+      // Ensure external links work properly - stop propagation to prevent overlay from closing
+      const externalLink = e.target.closest('a[target="_blank"]');
+      if (externalLink && externalLink.href && externalLink.href !== '#' && !externalLink.classList.contains('hud-tab-link')) {
+        e.stopPropagation();
+      }
+    });
+    
+    // Add hover effects for tab links
+    hudBigPanel.addEventListener('mouseenter', (e) => {
+      const tabLink = e.target.closest('.hud-tab-link');
+      if (tabLink) {
+        tabLink.style.borderBottomColor = 'rgba(91,156,255,0.8)';
+        tabLink.style.color = '#5B9CFF';
+      }
+    }, true);
+    
+    hudBigPanel.addEventListener('mouseleave', (e) => {
+      const tabLink = e.target.closest('.hud-tab-link');
+      if (tabLink) {
+        tabLink.style.borderBottomColor = 'rgba(154,166,178,0.3)';
+        tabLink.style.color = '#9AA6B2';
+      }
+    }, true);
+    
+    hudBigPanel._linkHandlersSetup = true;
+  }
+
   let activeOverlay = false;
   let currentInfo = [];
   let currentNodeName = '';
   let currentNodeIndex = -1;
   let cleanupScrollRedirect = null;
 
-  // Ensure "Основы UX для AI" is first in the order (after "Автор")
+  // Build SECTION_ORDER: all content sections first, then "Автор" at the end
   const nodesDataKeys = Object.keys(NODES_DATA);
   const basicsKey = nodesDataKeys.find(key => key.includes('Основы UX'));
   const otherKeys = nodesDataKeys.filter(key => !key.includes('Основы UX'));
-  const SECTION_ORDER = ['👤 Автор', ...(basicsKey ? [basicsKey] : []), ...otherKeys];
+  // Order: Basics first, then other sections, then "Автор" at the end
+  const SECTION_ORDER = [
+    ...(basicsKey ? [basicsKey] : []), 
+    ...otherKeys,
+    '👤 Автор'  // Автор is last
+  ];
+  
+  console.log('[HUD] SECTION_ORDER initialized:', SECTION_ORDER);
+  console.log('[HUD] Total sections:', SECTION_ORDER.length);
 
   // Rename tab buttons
   (function() {
@@ -73,26 +127,72 @@ export function initHUD(options) {
       summaryEl.className = 'hud-section-summary';
       const navEl = document.createElement('div');
       navEl.className = 'hud-section-nav';
-      const prevA = document.createElement('a');
-      prevA.href = '#';
-      prevA.textContent = '← Предыдущий';
-      prevA.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateSection(-1);
-      });
-      const nextA = document.createElement('a');
-      nextA.href = '#';
-      nextA.textContent = 'Следующий →';
-      nextA.addEventListener('click', (e) => {
-        e.preventDefault();
-        navigateSection(1);
-      });
-      navEl.appendChild(prevA);
-      navEl.appendChild(nextA);
       header.appendChild(titleEl);
       header.appendChild(summaryEl);
       header.appendChild(navEl);
       hudSmallPanel.insertBefore(header, hudSmallPanel.firstChild);
+    }
+    
+    // Always recreate navigation buttons to ensure handlers are fresh
+    const navEl = header.querySelector('.hud-section-nav');
+    if (navEl) {
+      navEl.innerHTML = ''; // Clear existing buttons
+      const prevA = document.createElement('a');
+      prevA.href = '#';
+      prevA.className = 'hud-nav-link';
+      prevA.textContent = '← Предыдущий';
+      prevA.style.cursor = 'pointer';
+      prevA.style.pointerEvents = 'auto'; // Ensure it receives clicks
+      prevA.style.touchAction = 'manipulation'; // Enable touch on mobile
+      prevA.addEventListener('click', (e) => {
+        console.log('[HUD] ===== PREVIOUS BUTTON CLICKED =====');
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[HUD] Previous button clicked, currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
+        try {
+          navigateSection(-1);
+        } catch (err) {
+          console.error('[HUD] Error in navigateSection:', err);
+        }
+      }, { passive: false }); // Non-passive to allow preventDefault
+      
+      // Add touch handler for mobile
+      prevA.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[HUD] Previous button touched (mobile), currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
+        navigateSection(-1);
+      }, { passive: false });
+      
+      const nextA = document.createElement('a');
+      nextA.href = '#';
+      nextA.className = 'hud-nav-link';
+      nextA.textContent = 'Следующий →';
+      nextA.style.cursor = 'pointer';
+      nextA.style.pointerEvents = 'auto'; // Ensure it receives clicks
+      nextA.style.touchAction = 'manipulation'; // Enable touch on mobile
+      nextA.addEventListener('click', (e) => {
+        console.log('[HUD] ===== NEXT BUTTON CLICKED =====');
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[HUD] Next button clicked, currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
+        try {
+          navigateSection(1);
+        } catch (err) {
+          console.error('[HUD] Error in navigateSection:', err);
+        }
+      }, { passive: false }); // Non-passive to allow preventDefault
+      
+      // Add touch handler for mobile
+      nextA.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        console.log('[HUD] Next button touched (mobile), currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
+        navigateSection(1);
+      }, { passive: false });
+      
+      navEl.appendChild(prevA);
+      navEl.appendChild(nextA);
     }
     
     const titleEl = header.querySelector('.hud-section-title');
@@ -121,20 +221,51 @@ export function initHUD(options) {
   }
 
   function navigateSection(delta) {
-    if (currentNodeIndex < 0) {
-      currentNodeIndex = Math.max(0, SECTION_ORDER.indexOf(currentNodeName));
-    }
-    const total = SECTION_ORDER.length;
-    const nextIdx = (currentNodeIndex + delta + total) % total;
-    const nextName = SECTION_ORDER[nextIdx];
+    console.log('=== [HUD] navigateSection START ===');
+    console.log('[HUD] navigateSection called with delta:', delta);
+    console.log('[HUD] Current state - index:', currentNodeIndex, 'name:', currentNodeName);
+    console.log('[HUD] SECTION_ORDER:', SECTION_ORDER);
+    console.log('[HUD] nodes array length:', nodes ? nodes.length : 0);
     
-    // If clicking next from last node, go to "Автор"
+    // Always recalculate index from current name to ensure accuracy
+    const currentIdx = SECTION_ORDER.indexOf(currentNodeName);
+    if (currentIdx >= 0) {
+      currentNodeIndex = currentIdx;
+    } else if (currentNodeIndex < 0) {
+      currentNodeIndex = 0;
+    }
+    
+    const total = SECTION_ORDER.length;
+    let nextIdx = (currentNodeIndex + delta + total) % total;
+    let nextName = SECTION_ORDER[nextIdx];
+    
+    // Special case: if we're on "Автор" (last) and clicking "Next", go to first section
+    if (currentNodeName === '👤 Автор' && delta > 0) {
+      nextIdx = 0;
+      nextName = SECTION_ORDER[0];
+    }
+    // Special case: if we're on first section and clicking "Previous", go to "Автор" (last)
+    if (currentNodeIndex === 0 && delta < 0) {
+      nextIdx = total - 1;
+      nextName = SECTION_ORDER[nextIdx];
+    }
+    
+    console.log('[HUD] Navigating to index:', nextIdx, 'name:', nextName);
+    
+    // If target is "Автор", show About panel
     if (nextName === '👤 Автор') {
+      console.log('[HUD] Opening About panel');
       showAboutPanel();
     } else {
-      const nodeIdx = nodes.findIndex(n => n.name === nextName);
-      if (nodeIdx >= 0) {
-        showOverlay(nodes[nodeIdx]);
+      // ALWAYS use mock node from NODES_DATA to avoid mismatch with nodes array
+      // The nodes array may have different names or order than SECTION_ORDER
+      if (NODES_DATA[nextName]) {
+        console.log('[HUD] Using NODES_DATA directly (mock node) for:', nextName);
+        const mockNode = { name: nextName };
+        showOverlay(mockNode);
+      } else {
+        console.error('[HUD] Section not found in NODES_DATA:', nextName);
+        console.error('[HUD] Available sections in NODES_DATA:', Object.keys(NODES_DATA));
       }
     }
   }
@@ -159,6 +290,8 @@ export function initHUD(options) {
       hudButtons[0].textContent = 'Проблема';
       hudButtons[1].textContent = 'Исследования';
       hudButtons[2].textContent = 'Решения';
+      // Clear handler flags when switching to a new section
+      hudButtons.forEach(b => b._tabHandlerSet = false);
     }
 
     function renderTab(idx) {
@@ -193,38 +326,19 @@ export function initHUD(options) {
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
-      
-      // Add click handler and hover styles for tab links ("Исследования" and "Решения")
-      const tabLinks = hudBigPanel.querySelectorAll('.hud-tab-link');
-      tabLinks.forEach(tabLink => {
-        tabLink.addEventListener('click', (e) => {
-          e.preventDefault();
-          const tabIndex = parseInt(tabLink.getAttribute('data-tab-index') || '1');
-          if (hudButtons[tabIndex]) {
-            hudButtons.forEach(b => b.classList.remove('active-tab'));
-            hudButtons[tabIndex].classList.add('active-tab');
-            renderTab(tabIndex);
-          }
-        });
-        // Add hover effect
-        tabLink.addEventListener('mouseenter', () => {
-          tabLink.style.borderBottomColor = 'rgba(91,156,255,0.8)';
-          tabLink.style.color = '#5B9CFF';
-        });
-        tabLink.addEventListener('mouseleave', () => {
-          tabLink.style.borderBottomColor = 'rgba(154,166,178,0.3)';
-          tabLink.style.color = '#9AA6B2';
-        });
-      });
     }
 
-    hudButtons.forEach((btn, idx) => {
-      btn.onclick = () => {
-        hudButtons.forEach(b => b.classList.remove('active-tab'));
-        btn.classList.add('active-tab');
-        renderTab(idx);
-      };
-    });
+    // Set up tab button handlers (only once per overlay session, not on every render)
+    if (!hudButtons[0]._tabHandlerSet) {
+      hudButtons.forEach((btn, idx) => {
+        btn.onclick = () => {
+          hudButtons.forEach(b => b.classList.remove('active-tab'));
+          btn.classList.add('active-tab');
+          renderTab(idx);
+        };
+        btn._tabHandlerSet = true;
+      });
+    }
 
     // Show HUD elements
     if (hudObjectIcon) hudObjectIcon.style.display = 'none';
@@ -292,7 +406,8 @@ export function initHUD(options) {
     overlay.classList.add('active');
     activeOverlay = true;
     currentNodeName = '👤 Автор';
-    currentNodeIndex = 0;
+    // Автор is last in SECTION_ORDER
+    currentNodeIndex = SECTION_ORDER.length - 1;
     
     // Hide icon
     if (hudObjectIcon) {
@@ -346,14 +461,19 @@ export function initHUD(options) {
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
     }
     
-    // Attach click handlers
+    // Attach click handlers for About panel tabs
     const aboutTabs = hudSmallPanel.querySelectorAll('button[data-index]');
+    // Clear previous handlers flag to allow re-setup
+    aboutTabs.forEach(b => b._aboutTabHandlerSet = false);
     aboutTabs.forEach((b, i) => {
-      b.onclick = () => {
-        aboutTabs.forEach(bb => bb.classList.remove('active-tab'));
-        b.classList.add('active-tab');
-        renderAboutTab(i);
-      };
+      if (!b._aboutTabHandlerSet) {
+        b.onclick = () => {
+          aboutTabs.forEach(bb => bb.classList.remove('active-tab'));
+          b.classList.add('active-tab');
+          renderAboutTab(i);
+        };
+        b._aboutTabHandlerSet = true;
+      }
     });
     
     // Activate first tab
@@ -479,9 +599,14 @@ export function initHUD(options) {
     }
   }
 
-  // Close on overlay click
+  // NOTE: overlay no longer handles clicks - it has pointer-events: none in CSS
+  // Clicks are handled by individual elements (buttons, links, etc.)
+  // Keeping this for backward compatibility but it won't fire
   overlay.addEventListener('click', (e) => {
-    if (e.target === overlay) hideOverlay();
+    console.log('[HUD] Overlay clicked - but this should not fire due to pointer-events: none');
+    if (e.target === overlay) {
+      hideOverlay();
+    }
   });
 
   // Label click handler (mirror of 3D picking)
@@ -491,16 +616,59 @@ export function initHUD(options) {
     if (!target.classList.contains('label')) return;
     
     const sectionId = target.dataset.sectionId || target.textContent.trim();
+    const labelText = target.textContent.trim();
     
-    // Find corresponding node in NODES_DATA
-    const nodeName = Object.keys(NODES_DATA).find(name => name === sectionId || name === target.textContent.trim());
+    console.log('[HUD] Label clicked - sectionId:', sectionId, 'labelText:', labelText);
+    
+    // First try to find by sectionId using SECTION_NAMES mapping
+    let nodeName = null;
+    if (sectionId && SECTION_NAMES[sectionId]) {
+      const mappedName = SECTION_NAMES[sectionId];
+      // Check if this name exists in NODES_DATA (might have different emoji)
+      nodeName = Object.keys(NODES_DATA).find(name => {
+        // Remove emojis and compare text
+        const nameText = name.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim();
+        const mappedText = mappedName.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim();
+        return nameText === mappedText || name === mappedName;
+      });
+      console.log('[HUD] Found by sectionId mapping:', nodeName);
+    }
+    
+    // If not found, try exact match with label text or sectionId
+    if (!nodeName) {
+      nodeName = Object.keys(NODES_DATA).find(name => 
+        name === sectionId || 
+        name === labelText ||
+        name.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim() === labelText.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim()
+      );
+      console.log('[HUD] Found by direct match:', nodeName);
+    }
+    
+    // Try to find in nodes array
+    if (!nodeName) {
+      const node = nodes.find(n => {
+        if (!n || !n.name) return false;
+        return n.name === sectionId || 
+               n.name === labelText ||
+               (n.name.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim() === labelText.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim());
+      });
+      if (node) {
+        console.log('[HUD] Found node in array:', node.name);
+        showOverlay(node);
+        return;
+      }
+    }
     
     if (nodeName && NODES_DATA[nodeName]) {
+      console.log('[HUD] Opening with mock node:', nodeName);
       // Create a mock node object for showOverlay
       const mockNode = { name: nodeName };
       showOverlay(mockNode);
-    } else if (sectionId === 'about' || target.textContent.trim() === '👤 Автор') {
+    } else if (sectionId === 'about' || labelText === '👤 Автор' || labelText.includes('Автор')) {
+      console.log('[HUD] Opening About panel');
       showAboutPanel();
+    } else {
+      console.error('[HUD] Could not find section for:', sectionId, 'labelText:', labelText);
     }
   }
 

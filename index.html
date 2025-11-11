@@ -153,13 +153,16 @@ body {
       width: 100%;
       height: 100%;
       background: rgba(0, 0, 0, 0.45);
-      pointer-events: none;
+      pointer-events: none; /* Always none - don't block clicks */
       opacity: 0;
       transition: opacity 0.3s ease;
       z-index: 900;
     }
     /* In HUD we используем #hud-backdrop для затемнения, оставляем #overlay прозрачным для кликов */
-    .hud-active #overlay { background: transparent !important; }
+    .hud-active #overlay { 
+      background: transparent !important; 
+      pointer-events: none !important; /* Ensure overlay never blocks clicks in HUD mode */
+    }
     /* HUD backdrop (similar to tour backdrop) - shows when HUD is active */
     #hud-backdrop {
       position: fixed;
@@ -184,8 +187,12 @@ body {
       }
     }
     #overlay.active {
-      pointer-events: auto;
+      pointer-events: none; /* Changed from auto to none - overlay should not block clicks */
       opacity: 1;
+    }
+    /* HUD backdrop should NOT block clicks - it's just visual */
+    #hud-backdrop {
+      pointer-events: none !important;
     }
     /* Hide unused legacy panels by default */
     #object-icon, #big-panel, #small-panel {
@@ -519,6 +526,9 @@ body {
       border-radius: 6px;
       text-decoration: none;
       transition: background 0.2s, color 0.2s, border-color 0.2s;
+      cursor: pointer;
+      pointer-events: auto; /* Ensure links receive clicks */
+      touch-action: manipulation; /* Enable touch on mobile */
     }
     #hud-small-panel .hud-section-nav a:hover {
       color: #5B9CFF !important;  /* same hover color as links panel */
