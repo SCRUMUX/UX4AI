@@ -212,9 +212,11 @@ body {
       right: 450px;
       left: auto;
       width: 580px;
-      height: auto;                    /* desktop: show full content */
-      overflow-y: visible;             /* no inner scroll on desktop */
-      overflow-x: hidden;            /* avoid nested horizontal scroll */
+      max-height: calc(100vh - 250px) !important;  /* limit height to enable scroll */
+      height: auto !important;
+      overflow-y: auto !important;                /* enable scroll */
+      overflow-x: hidden !important;            /* avoid nested horizontal scroll */
+      overscroll-behavior: contain !important;  /* prevent scroll chaining */
       background: rgba(18, 23, 34, 0.35);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
@@ -233,6 +235,14 @@ body {
     /* Ensure all text in big panel has consistent weight */
     #hud-big-panel * {
       font-weight: 200;
+    }
+    /* Hide scrollbar but keep scrolling */
+    #hud-big-panel {
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+    #hud-big-panel::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
     }
     #hud-small-panel {
       position: fixed;
@@ -284,9 +294,11 @@ body {
       border: none;
     }
     #hud-container #hud-big-panel {
-      height: auto;                    /* desktop (container mode): no inner scroll */
-      overflow-y: visible;
-      overflow-x: hidden;            /* avoid nested horizontal scroll */
+      max-height: calc(100vh - 200px) !important;  /* limit height to enable scroll */
+      height: auto !important;
+      overflow-y: auto !important;                 /* enable scroll in container mode */
+      overflow-x: hidden !important;            /* avoid nested horizontal scroll */
+      overscroll-behavior: contain !important;  /* prevent scroll chaining */
       background: rgba(18, 23, 34, 0.35);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
@@ -298,6 +310,11 @@ body {
       box-sizing: border-box;        /* keep padding inside bounds */
       overflow-wrap: anywhere;       /* wrap long tokens */
       word-break: break-word;        /* break long words */
+      scrollbar-width: none; /* Firefox */
+      -ms-overflow-style: none; /* IE and Edge */
+    }
+    #hud-container #hud-big-panel::-webkit-scrollbar {
+      display: none; /* Chrome, Safari, Opera */
     }
     #hud-small-panel .hud-section-title {
       margin: 0 0 6px 0;
@@ -306,7 +323,7 @@ body {
       color: #CFE8FF;
     }
     #hud-small-panel .hud-section-summary {
-      margin: 0 0 8px 0;
+      margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
       
       line-height: 1.4;
       color: #9AA6B2;
@@ -317,15 +334,16 @@ body {
       gap: 8px;
     }
     #hud-small-panel .hud-section-nav a {
-      font-size: 12px;
-      color: #9AA6B2;
+      font-size: 16px;
+      font-weight: 200 !important;
+      color: #9AA6B2 !important;  /* same color as links panel */
       text-decoration: none;
       padding: 4px 6px;
       border-radius: 6px;
       transition: background 0.2s, color 0.2s;
     }
     #hud-small-panel .hud-section-nav a:hover {
-      color: var(--accent);
+      color: #5B9CFF !important;  /* same hover color as links panel */
       background: rgba(91,156,255,0.08);
     }
     #hud-small-panel button {
@@ -477,7 +495,7 @@ body {
       color: #CFE8FF;
     }
     #hud-small-panel .hud-section-summary {
-      margin: 0 0 8px 0;
+      margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
       
       line-height: 1.4;
       color: var(--muted);
@@ -493,9 +511,9 @@ body {
       align-items: center;
       justify-content: center;
       padding: 4px 8px;
-      font-size: 12px;
-      font-weight: 500;
-      color: #5B9CFF;
+      font-size: 16px;
+      font-weight: 200 !important;
+      color: #9AA6B2 !important;  /* same color as links panel */
       background: rgba(18, 23, 34, 0.80);
       border: 1px solid #243041;
       border-radius: 6px;
@@ -503,7 +521,7 @@ body {
       transition: background 0.2s, color 0.2s, border-color 0.2s;
     }
     #hud-small-panel .hud-section-nav a:hover {
-      color: #CFE8FF;
+      color: #5B9CFF !important;  /* same hover color as links panel */
       background: rgba(91,156,255,0.08);
       border-color: #5B9CFF;
     }
@@ -518,7 +536,7 @@ body {
       padding: 4px 6px;
       font-size: 16px;
       font-weight: 600;
-      color: #5B9CFF;
+      color: #9AA6B2 !important;  /* same color as links panel */
       background: rgba(18, 23, 34, 0.80);
       border: 1px solid #243041;
       border-radius: 6px;
@@ -531,8 +549,8 @@ body {
       flex: 0 0 auto;
     }
     #hud-small-panel .hud-close-btn:hover {
-      color: #CFE8FF;
-      background: rgba(91,156,255,0.10);
+      color: #5B9CFF !important;  /* same hover color as links panel */
+      background: rgba(91,156,255,0.08);
       border-color: #5B9CFF;
     }
 
@@ -553,7 +571,7 @@ body {
         font-size: 18px;
       }
       #hud-small-panel .hud-section-summary {
-        font-size: 14px;
+        font-size: 16px;
       }
       #hud-small-panel button {
         font-size: 15px;
@@ -572,7 +590,10 @@ body {
         font-size: 20px;
       }
       #hud-small-panel .hud-section-summary {
-        font-size: 15px;
+        font-size: 16px;
+      }
+      #hud-small-panel .hud-section-nav a {
+        font-size: 16px !important;  /* same size as main text */
       }
     }
     /* Removed floating tagline; tagline now integrated with header logo */
@@ -608,7 +629,7 @@ body {
       gap: 8px;
       padding: 6px 12px;
       text-decoration: none;
-      font-size: 14px;
+      font-size: 16px !important;  /* same size as main text */
       font-weight: 400;
       /* Override inherited colour from body with !important to ensure the muted tone */
       color: var(--muted) !important;
@@ -801,6 +822,12 @@ body {
     .hud-active .card {
       border-radius: 0 !important;
     }
+    /* Disable page scroll when HUD is active */
+    body.hud-active,
+    html.hud-active {
+      overflow: hidden !important;
+      height: 100% !important;
+    }
   
 /* === Strict overrides: no borders on HUD controls; mobile containment === */
 #hud-small-panel .hud-section-nav a,
@@ -868,7 +895,29 @@ body {
   flex: 0 0 auto !important;   /* don't stretch, don't wrap */
   white-space: nowrap !important;
   padding: 2px 6px !important;  /* tighter to fit in one row */
+  font-weight: 200 !important;
   line-height: 1.1 !important;
+}
+/* Ensure link in big panel has same weight as main text */
+#hud-big-panel .hud-tab-link {
+  font-weight: 200 !important;
+  color: #9AA6B2 !important;  /* same color as links panel */
+}
+#hud-big-panel .hud-tab-link:hover {
+  color: #5B9CFF !important;  /* same hover color as links panel */
+}
+/* Style links in solution text */
+#hud-big-panel a[target="_blank"]:not(.hud-tab-link) {
+  color: #9AA6B2 !important;  /* same color as links panel */
+  text-decoration: none;
+  font-weight: 200 !important;
+  font-size: inherit !important;  /* same size as main text */
+  border-bottom: 1px solid rgba(154,166,178,0.3);
+  transition: border-color 0.2s, color 0.2s;
+}
+#hud-big-panel a[target="_blank"]:not(.hud-tab-link):hover {
+  color: #5B9CFF !important;  /* same hover color as links panel */
+  border-bottom-color: rgba(91,156,255,0.8);
 }
 
 /* Mobile orbit mode toggle */
@@ -935,7 +984,7 @@ html {
 }
 
 @media (max-width: 479px) {
-  #hud-small-panel .hud-section-nav a { font-size: 12px !important; }
+  #hud-small-panel .hud-section-nav a { font-size: 16px !important; }
 }
 
 
@@ -964,7 +1013,8 @@ html {
   }
   /* Prev/Next: keep one line on very narrow devices */
   #hud-small-panel .hud-section-nav a {
-    font-size: 12px !important;
+    font-size: 16px !important;
+    font-weight: 200 !important;
     padding: 2px 6px !important;
     white-space: nowrap !important;
     flex: 0 0 auto !important;
@@ -975,7 +1025,8 @@ html {
 /* Ultra-narrow safeguard */
 @media (max-width: 360px) {
   #hud-small-panel .hud-section-nav a {
-    font-size: 11px !important;
+    font-size: 16px !important;
+    font-weight: 200 !important;
     padding: 2px 4px !important;
   }
 }
@@ -1012,7 +1063,7 @@ html {
 }
 #hud-small-panel .hud-section-summary {
   font-weight: 400 !important;
-  font-size: 14px !important;
+  font-size: 16px !important;
   color: #A5B4C3 !important;
 }
 
@@ -1057,6 +1108,7 @@ html {
     padding: 3px 8px !important;
     line-height: 1.1 !important;
     font-size: 13px !important;
+    font-weight: 200 !important;
   }
 }
 
@@ -1077,30 +1129,36 @@ html, body { scrollbar-gutter: stable; }
 
 /* Firefox */
 html, body,
-#overlay, #hud-big-panel {
+#overlay {
   scrollbar-width: thin;
   scrollbar-color: #3B4A5F transparent;
+}
+#hud-big-panel {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
 }
 
 /* Chromium/WebKit */
 html::-webkit-scrollbar,
 body::-webkit-scrollbar,
-#overlay::-webkit-scrollbar,
-#hud-big-panel::-webkit-scrollbar { width: 8px; height: 8px; }
+#overlay::-webkit-scrollbar { width: 8px; height: 8px; }
+#hud-big-panel::-webkit-scrollbar { width: 0px; height: 0px; display: none; }
 
 html::-webkit-scrollbar-track,
 body::-webkit-scrollbar-track,
-#overlay::-webkit-scrollbar-track,
-#hud-big-panel::-webkit-scrollbar-track { background: transparent; }
+#overlay::-webkit-scrollbar-track { background: transparent; }
+#hud-big-panel::-webkit-scrollbar-track { background: transparent; display: none; }
 
 html::-webkit-scrollbar-thumb,
 body::-webkit-scrollbar-thumb,
-#overlay::-webkit-scrollbar-thumb,
-#hud-big-panel::-webkit-scrollbar-thumb {
+#overlay::-webkit-scrollbar-thumb {
   background: rgba(59, 74, 95, 0.9);
   border-radius: 8px;
   border: 2px solid transparent;
   background-clip: padding-box;
+}
+#hud-big-panel::-webkit-scrollbar-thumb {
+  display: none;
 }
 
 #overlay:hover::-webkit-scrollbar-thumb,
@@ -1245,11 +1303,17 @@ body:hover::-webkit-scrollbar-thumb {
     @media (min-width: 480px) {
       #tour-overlay .tour-actions .close-link { margin-left: auto; }
     }
-    #tour-overlay .tour-header h2 { margin: 0 0 8px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color:#CFE8FF; white-space: pre-line; }
-    #tour-overlay .tour-header .tour-sub { margin: 0 0 16px 0; color:#9AA6B2; font: 400 18px/1.3 ui-sans-serif, system-ui; }
+    #tour-overlay .tour-header h2 { margin: 0 0 32px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color:#CFE8FF; white-space: pre-line; }
+    #tour-overlay .tour-header .tour-sub { margin: 0 0 32px 0; color:#9AA6B2; font: 400 18px/1.3 ui-sans-serif, system-ui; }
+    /* Reduce sub margin when followed by links list (step 2) */
+    #tour-overlay .tour-card.tour-step-2 .tour-header .tour-sub { margin-bottom: 8px !important; }
     /* Ensure consistent spacing: sub → content (16px), content → buttons (32px) */
     #tour-overlay .tour-body { margin-top: 0; }
     #tour-overlay .tour-body p { margin: 0 0 32px 0; color:#B8C3CF; font: 300 18px/1.3 ui-sans-serif, system-ui; }
+    /* Icon color matching text color - use mask to inherit text color */
+    #tour-overlay .tour-body p img { 
+      filter: brightness(0) saturate(100%) invert(72%) sepia(2%) saturate(1000%) hue-rotate(180deg);
+    }
     /* Tour case links styled like HUD "contacts" links */
     #tour-overlay .tour-body .tour-list { 
       margin: 0 0 px 0; 
@@ -1266,15 +1330,30 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay .tour-body .tour-list a {
       display: flex; 
       align-items: center;
+      gap: 8px;
       text-decoration: none; 
       font: 400 18px/1 ui-sans-serif, system-ui;
-      color: var(--muted) !important; 
+      color: #9AA6B2 !important; 
       background: transparent; 
       border: none; 
       border-radius: 0;
+      transition: color 0.2s, background 0.2s;
     }
-    #tour-overlay .tour-body .tour-list a:hover { color: var(--accent) !important; background: rgba(91,156,255,0.08); }
-    #tour-overlay .tour-body .tour-list a:visited { color: var(--muted) !important; }
+    /* Icon color matching link text color */
+    #tour-overlay .tour-body .tour-list a img {
+      filter: brightness(0) saturate(100%) invert(65%) sepia(5%) saturate(500%) hue-rotate(180deg);
+      transition: filter 0.2s;
+    }
+    #tour-overlay .tour-body .tour-list a:hover { 
+      color: #5B9CFF !important; 
+      background: rgba(91,156,255,0.08); 
+    }
+    /* Icon color on hover - match accent color */
+    #tour-overlay .tour-body .tour-list a:hover img {
+      filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(2000%) hue-rotate(200deg);
+    }
+    #tour-overlay .tour-body .tour-list a:visited { color: #9AA6B2 !important; }
+    #tour-overlay .tour-body .tour-list a:visited:hover { color: #5B9CFF !important; }
     #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
     #tour-overlay .tour-actions .btn { padding: 10px 14px; border-radius: 0; border:1px solid #243041; background: rgba(18,23,34,0.9); color:#9AA6B2; font: 400 18px/1 ui-sans-serif, system-ui; text-decoration: none; cursor: pointer; transition: background .2s, color .2s, border-color .2s; display:inline-flex; align-items:center; justify-content:center; height: 44px; box-sizing: border-box; }
     #tour-overlay .tour-actions .btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
@@ -1551,11 +1630,12 @@ async function init() {
 
       const steps = {
         1: {
-          title: `Привет! Я Владимир Костял. UX-архитектор  AI продуктов`,
-          sub: 'Помогаю компаниям строить и развивать AI-интерфейсы. Делаю искусственный интеллект понятным для пользователей и прозрачным для бизнеса.',
-          text: ` — Управляю продуктом и кросс-функциональными командами. <br>
- — Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста. <br>
- — Сатарюсь вынести все настройки и управление ИИ в понятный интерфейс.`,
+          title: `Владимир Костял. UX-архитектор. 
+          Проектировщик интерфейсов для AI-продуктов`,
+          sub: 'Проектирую понятные и масштабируемые UX-паттерны для ассистентов, агентных систем и внутренних платформ. Прозрачность ИИ, контроль стоимости и продуктивность команд — в одном дизайне.',
+          text: `<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./supervisor_account_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Управляю продуктом и кросс-функциональными командами.</span> <br>
+<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./graph_2_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста.</span> <br>
+<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./monitoring_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Настраиваю метрики и дашборды (TTFT↓, cost/request↓, ошибки↓, CSAT/конверсия↑)</span>`,
           actions: [
             { type:'button', primary:true, label:'Кейсы', on:'next' },
             { type:'link', label:'Резюме', href:'./Vladimir_Kostyal_Resume.pdf' },
@@ -1563,9 +1643,9 @@ async function init() {
           ]
         },
         2: {
-          title: 'Разрабатываю контролируемый AI — вместо чёрного ящика',
-          sub: 'Собираю рабочую систему: оркестрация ассистентов и агентов в одном понятном интерфейсе. Высвечиваю логику работы ИИ — что и почему он делает. Как принимает решения. Откуда берутся и куда уходят данные. Как и где хранятся. Насколько это безопасно... Стараюсь разобрать от ноля до единицы все темные уголки его искусственой души)',
-          text: '<ul class="tour-list">\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank">Почему так? — Live Answer Trace (Figma demo)</a></li>\n</ul>',
+          title: 'Контролируемый AI вместо «чёрного ящика»',
+          sub: 'Оркестрация ассистентов и агентов в одном интерфейсе: прозрачные решения, управляемые данные, безопасность и метрики. Рабочая система: роли и сценарии, права и бюджеты, единая панель контроля. Управление рисками: где хранятся данные, срок жизни, маскировка PII, аудит событий.',
+          text: '<ul class="tour-list">\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Orchestrator Dashboard (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Scenario Builder / Playbooks (Figma demo)</a></li>\n</ul>',
           actions: [
             { type:'button', primary:false, label:'Назад', on:'back' },
             { type:'button', primary:true, label:'Далее', on:'next' },
@@ -1574,8 +1654,8 @@ async function init() {
         },
         3: {
           title: 'Конец официальной части)',
-          sub: 'Люди воспринммают информацию 6-10 секунд и принимают решение по заголовку, первой строке и наличию аргументов (eye-tracking исследования NN/g , F-/Z-паттерны, «информационный запах»)',
-          text: 'Так что 2 первых экранов было  вполне достаточно для первого знакомства ;) Далее углубляемся в обзор UX проблем и решений в AI продуктах. Самых терпеливых ждёт дизайнерская пасхалка о метафорах))',
+          sub: 'Люди решают за 6–10 секунд — заголовок, первая строка и наличие аргументов (eye-tracking, F/Z-паттерны, «информационный запах»).',
+          text: '2 первых и третий экраны — намеренно короткие. Это часть исследования: я проверяю гипотезы по вниманию и кликам, фиксирую время на первом экране, глубину скролла и CTR по CTA. Дальше — обзор реальных UX-проблем и рабочих решений для AI-продуктов. Самых любознательных ждёт маленькая дизайнерская пасхалка про метафоры в больших данных ;)',
           actions: [
             { type:'button', primary:false, label:'Назад', on:'back' },
             { type:'button', primary:true, label:'К обзору', on:'finish' },
@@ -1597,6 +1677,10 @@ async function init() {
           .replace(/&lt;\/ul&gt;/gi, '</ul>')
           .replace(/&lt;li&gt;/gi, '<li>')
           .replace(/&lt;\/li&gt;/gi, '</li>')
+          // allow span and img tags for icons (before processing links, so img inside links works)
+          .replace(/&lt;span([^&]*)&gt;/gi, '<span$1>')
+          .replace(/&lt;\/span&gt;/gi, '</span>')
+          .replace(/&lt;img\s+([^&]*?)(?:\s*\/)?&gt;/gi, '<img $1>')
           .replace(/&lt;a\s+href=\"([^\"]*)\"(?:\s+target=\"[^\"]*\")?\s*&gt;/gi, '<a href="$1" target="_blank">')
           .replace(/&lt;\/a&gt;/gi, '</a>');
       }
@@ -1604,6 +1688,15 @@ async function init() {
       function setStep(step){
         const s = steps[step]; if (!s) return;
         try { localStorage.setItem('tour_step', String(step)); } catch {}
+        // Add class to card for step 2 (with links list) to reduce spacing
+        const card = document.querySelector('.tour-card');
+        if (card) {
+          if (step === 2) {
+            card.classList.add('tour-step-2');
+          } else {
+            card.classList.remove('tour-step-2');
+          }
+        }
         titleEl.textContent = s.title;
         subEl.textContent = s.sub;
         textEl.innerHTML = sanitizeAllowBr(s.text);

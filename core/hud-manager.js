@@ -3,7 +3,7 @@
  * Extracted from index.html lines 2304-2726
  */
 
-import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=2';
+import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=4';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 
 // Map ABOUT_DATA to format expected by HUD
@@ -11,10 +11,11 @@ const ABOUT = {
   title: 'Обо мне',
   text: ABOUT_DATA.text || '',
   skills: ABOUT_DATA.skills || '',
+  contacts: ABOUT_DATA.contacts || '',
   ctas: [
     { label: 'Написать в Telegram', href: LINKS.tgChat },
     { label: 'Перейти в сообщество', href: LINKS.tgCommunity },
-    { label: 'Открыть резюме (PDF)', href: LINKS.resume }
+    { label: 'Резюме (PDF)', href: LINKS.resume }
   ]
 };
 
@@ -54,8 +55,8 @@ export function initHUD(options) {
     const btns = hudSmallPanel.querySelectorAll('button[data-index]');
     if (btns && btns.length >= 3) {
       btns[0].textContent = 'Проблема';
-      btns[1].textContent = 'Решение';
-      btns[2].textContent = 'Интерфейс';
+      btns[1].textContent = 'Исследования';
+      btns[2].textContent = 'Решения';
     }
   })();
 
@@ -153,14 +154,33 @@ export function initHUD(options) {
       hudObjectIcon.style.display = 'none';
     }
 
+    const hudButtons = hudSmallPanel.querySelectorAll('button[data-index]');
+    if (hudButtons && hudButtons.length >= 3) {
+      hudButtons[0].textContent = 'Проблема';
+      hudButtons[1].textContent = 'Исследования';
+      hudButtons[2].textContent = 'Решения';
+    }
+
     function renderTab(idx) {
       hudBigPanel.innerHTML = '';
       
       let content = '';
       if (idx === 0) {
-        content = (data.problem || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        const problemText = (data.problem || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        // Add link to "Исследования" tab at the end
+        content = problemText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
       } else if (idx === 1) {
-        content = (data.solution || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        // Allow links in solution text - process before escaping
+        let solutionText = (data.solution || '—');
+        // First escape everything
+        solutionText = solutionText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // Then restore link tags
+        solutionText = solutionText
+          .replace(/&lt;a\s+href="([^"]*)"\s+target="[^"]*"&gt;/gi, '<a href="$1" target="_blank">')
+          .replace(/&lt;\/a&gt;/gi, '</a>')
+          .replace(/\n/g, '<br/>');
+        // Add link to "Решения" tab at the end
+        content = solutionText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
       } else {
         const html = [];
         html.push((data.ui || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'));
@@ -173,13 +193,29 @@ export function initHUD(options) {
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
-    }
-
-    const hudButtons = hudSmallPanel.querySelectorAll('button[data-index]');
-    if (hudButtons && hudButtons.length >= 3) {
-      hudButtons[0].textContent = 'Проблема';
-      hudButtons[1].textContent = 'Решение';
-      hudButtons[2].textContent = 'Интерфейс';
+      
+      // Add click handler and hover styles for tab links ("Исследования" and "Решения")
+      const tabLinks = hudBigPanel.querySelectorAll('.hud-tab-link');
+      tabLinks.forEach(tabLink => {
+        tabLink.addEventListener('click', (e) => {
+          e.preventDefault();
+          const tabIndex = parseInt(tabLink.getAttribute('data-tab-index') || '1');
+          if (hudButtons[tabIndex]) {
+            hudButtons.forEach(b => b.classList.remove('active-tab'));
+            hudButtons[tabIndex].classList.add('active-tab');
+            renderTab(tabIndex);
+          }
+        });
+        // Add hover effect
+        tabLink.addEventListener('mouseenter', () => {
+          tabLink.style.borderBottomColor = 'rgba(91,156,255,0.8)';
+          tabLink.style.color = '#5B9CFF';
+        });
+        tabLink.addEventListener('mouseleave', () => {
+          tabLink.style.borderBottomColor = 'rgba(154,166,178,0.3)';
+          tabLink.style.color = '#9AA6B2';
+        });
+      });
     }
 
     hudButtons.forEach((btn, idx) => {
@@ -196,6 +232,16 @@ export function initHUD(options) {
     if (hudContainer) hudContainer.style.display = 'flex';
     hudBigPanel.style.display = 'block';
     hudSmallPanel.style.display = 'flex';
+    // Ensure scroll works inside big panel - stop event propagation
+    const onBigPanelWheel = (e) => {
+      // Allow native scroll inside the panel
+      e.stopPropagation();
+      // Don't prevent default - let the browser handle scrolling
+    };
+    hudBigPanel.addEventListener('wheel', onBigPanelWheel, { passive: true });
+    // Store handler for cleanup
+    if (!hudBigPanel._wheelHandlers) hudBigPanel._wheelHandlers = [];
+    hudBigPanel._wheelHandlers.push({ handler: onBigPanelWheel, options: { passive: true } });
     // Render section header (title, summary, nav)
     renderHudSectionHeader(node.name);
     // Activate overlay backdrop
@@ -205,6 +251,7 @@ export function initHUD(options) {
     if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     // Mark HUD active to allow CSS performance optimizations
     document.documentElement.classList.add('hud-active');
+    document.body.classList.add('hud-active');
     // Redirect wheel to window on desktop so world scroll never stalls
     installScrollRedirect();
     // Render default tab (problem) and set active
@@ -226,8 +273,16 @@ export function initHUD(options) {
     if (hudBackdrop) hudBackdrop.classList.add('hidden');
     // Remove scroll redirection if installed
     if (cleanupScrollRedirect) { cleanupScrollRedirect(); cleanupScrollRedirect = null; }
+    // Remove big panel wheel handler
+    if (hudBigPanel && hudBigPanel._wheelHandlers) {
+      hudBigPanel._wheelHandlers.forEach(({ handler, options }) => {
+        hudBigPanel.removeEventListener('wheel', handler, options);
+      });
+      hudBigPanel._wheelHandlers = [];
+    }
     // Remove HUD active marker
     document.documentElement.classList.remove('hud-active');
+    document.body.classList.remove('hud-active');
   }
 
   function showAboutPanel() {
@@ -253,25 +308,39 @@ export function initHUD(options) {
     // Render header
     renderHudSectionHeader('👤 Обо мне');
     
-    // Set tab names for About panel
-    const tabs = hudSmallPanel.querySelectorAll('button[data-index]');
-    if (tabs.length >= 3) {
-      tabs[0].textContent = 'Обо мне';
-      tabs[1].textContent = 'Навыки';
-      tabs[2].textContent = 'Контакты';
-    }
+    // Set tab names for About panel - use setTimeout to ensure it runs after any other code
+    const setAboutTabNames = () => {
+      const tabs = hudSmallPanel.querySelectorAll('button[data-index]');
+      if (tabs.length >= 3) {
+        // Use tabs from ABOUT_DATA if available, otherwise use defaults
+        const tabNames = (ABOUT_DATA && ABOUT_DATA.tabs && ABOUT_DATA.tabs.length >= 3) 
+          ? ABOUT_DATA.tabs 
+          : ['Обо мне', 'Услуги', 'Деятельность'];
+        tabs[0].textContent = tabNames[0];
+        tabs[1].textContent = tabNames[1];
+        tabs[2].textContent = tabNames[2];
+      }
+    };
+    // Set immediately and also after a short delay to override any other code
+    setAboutTabNames();
+    setTimeout(setAboutTabNames, 0);
+    setTimeout(setAboutTabNames, 50);
     
     function renderAboutTab(idx) {
       hudBigPanel.innerHTML = '';
       
       let content = '';
+      // Prepare links row (placed at the end for all tabs)
+      const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+      const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
       if (idx === 0) {
-        content = ABOUT.text.replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        content = ABOUT.text.replace(/</g, '&lt;').replace(/\n/g, '<br/>') + linksRowWrapped;
       } else if (idx === 1) {
-        content = ABOUT.skills.replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        content = ABOUT.skills.replace(/</g, '&lt;').replace(/\n/g, '<br/>') + linksRowWrapped;
       } else {
-        // contacts
-        content = ABOUT.ctas.map(c => `<p><a href="${c.href}" target="_blank" style="color:#9cd3ff">${c.label}</a></p>`).join('');
+        // contacts tab shows contacts text + links
+        const contactsText = ABOUT.contacts.replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        content = contactsText + linksRowWrapped;
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
@@ -298,6 +367,7 @@ export function initHUD(options) {
     installScrollRedirect();
     // Mark HUD active for CSS optimization
     document.documentElement.classList.add('hud-active');
+    document.body.classList.add('hud-active');
   }
 
   function showLinksPanel() {
@@ -453,7 +523,8 @@ export function initHUD(options) {
     // Only on desktop; mobile/tablet rely on container scroll per CSS
     const isDesktop = window.innerWidth >= 768;
     if (!isDesktop) return;
-    const elements = [overlay, hudContainer, hudBigPanel, hudSmallPanel].filter(Boolean);
+    // Exclude hudContainer and hudBigPanel - they should allow internal scrolling
+    const elements = [overlay, hudSmallPanel].filter(Boolean);
     const onWheel = (e) => {
       // Forward delta to window to continue camera scroll
       e.preventDefault();
