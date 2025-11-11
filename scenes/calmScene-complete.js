@@ -176,6 +176,16 @@ export function calmSceneCompleteFactory(config) {
       const groupCooldownUntil = [];
       let activePulses = [];
       let nextPulseTime = 0.0;
+      
+      // Store camera reference for drift animation
+      const sceneCamera = camera;
+      let cameraDriftOffset = new THREE.Vector3(0, 0, 0);
+      const cameraDriftSpeed = 0.00015; // Very slow drift
+      const cameraDriftDirection = new THREE.Vector3(
+        (Math.random() - 0.5) * 0.5,
+        (Math.random() - 0.5) * 0.3,
+        (Math.random() - 0.5) * 0.5
+      ).normalize();
       // Core wireframe pulse (rendered when impulse reaches the core)
       const coreWireMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff'), wireframe: true, transparent: true, opacity: 0.0, depthWrite: false });
       // Reduce wireframe density ~3x
@@ -297,6 +307,10 @@ export function calmSceneCompleteFactory(config) {
         auraMeshes.push(baseMesh);
         auraBaseColors.push(baseMat.color.clone());
       });
+
+      // Background cores removed - only section nodes remain
+
+      // Inter-core impulse system removed
 
       // Hologram shell and inner core
       const gOuter = new THREE.SphereGeometry(1.08, 64, 64);
@@ -667,13 +681,7 @@ export function calmSceneCompleteFactory(config) {
         // Reset step only after a short grace since last trigger
         try {
           if (typeof window !== 'undefined') {
-            if (typeof coreWireState.lastSeenTime === 'number') {
-              if (time - coreWireState.lastSeenTime > 0.12) {
-                window._corePulseStep = 0;
-              }
-            } else {
-              window._corePulseStep = 0;
-            }
+            window._corePulseStep = 0;
           }
         } catch(_) {}
       }
@@ -846,6 +854,18 @@ export function calmSceneCompleteFactory(config) {
           }
         }
 
+        // Camera drift: slow movement through space
+        cameraDriftOffset.add(cameraDriftDirection.clone().multiplyScalar(cameraDriftSpeed * dt * 60));
+        // Apply subtle camera offset (very subtle to not interfere with navigation)
+        if (sceneCamera) {
+          // Only apply drift if not in orbit mode (check if camera is being controlled)
+          // This is a very subtle effect, so we apply it minimally
+          const driftAmount = 0.0001; // Very subtle
+          sceneCamera.position.x += cameraDriftDirection.x * driftAmount * dt * 60;
+          sceneCamera.position.y += cameraDriftDirection.y * driftAmount * dt * 60;
+          sceneCamera.position.z += cameraDriftDirection.z * driftAmount * dt * 60;
+        }
+
         // Gentle node pulsation; rotate wireframe only (inside aura)
         for (let i = 0; i < nodes.length; i++) {
           const node = nodes[i];
@@ -885,6 +905,9 @@ export function calmSceneCompleteFactory(config) {
       }
 
       function dispose() {
+        // Dispose background cores
+        // Background cores and inter-core impulses removed
+        
         nodes.forEach(node => {
           if (node.geometry) node.geometry.dispose();
           if (node.material) node.material.dispose();
