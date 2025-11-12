@@ -2,7 +2,7 @@
  * Calm Theme - Original calm blue aesthetic
  */
 
-import { calmSceneCompleteFactory } from '../scenes/calmScene-complete.js?v=99';
+import { calmSceneCompleteFactory } from '../scenes/calmScene-complete.js?v=101';
 import { SECTION_NAMES } from '../core/sections.js';
 
 export const calm = {

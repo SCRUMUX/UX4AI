@@ -683,7 +683,7 @@ body {
     /* Orbit mode banner */
     #mode-banner {
       position: fixed;
-      top: 56px;
+      top: 75px; /* 56px + 19px = 75px */
       left: 50%;
       transform: translateX(-50%);
       z-index: 2100;
@@ -697,6 +697,10 @@ body {
       backdrop-filter: blur(8px);
       display: none;
       pointer-events: none;
+    }
+    /* In HUD mode, banner should be below overlay (z-index 900) and hud-backdrop (z-index 940) */
+    .hud-active #mode-banner {
+      z-index: 800 !important;
     }
     /* Hide orbit banner on mobile */
     @media (max-width: 767px) {

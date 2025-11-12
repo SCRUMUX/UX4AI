@@ -18,13 +18,13 @@ export function calmSceneCompleteFactory(config) {
   // Node definitions - равномерное распределение по 3D пространству
   const nodeDefs = [
     { sectionId: 'basics', name: SECTION_NAMES.basics, theta: 0, phi: 0, radius: 3.5 },
-    { sectionId: 'about', name: SECTION_NAMES.about, theta: 45, phi: 30, radius: 4.0 },
-    { sectionId: 'patterns', name: SECTION_NAMES.patterns, theta: 90, phi: -25, radius: 4.5 },
-    { sectionId: 'assistant', name: SECTION_NAMES.assistant, theta: 135, phi: 35, radius: 4.0 },
-    { sectionId: 'prompts', name: SECTION_NAMES.prompts, theta: 180, phi: -30, radius: 4.5 },
-    { sectionId: 'operations', name: SECTION_NAMES.operations, theta: 225, phi: 25, radius: 4.0 },
-    { sectionId: 'security', name: SECTION_NAMES.security, theta: 270, phi: -20, radius: 4.5 },
-    { sectionId: 'marketplace', name: SECTION_NAMES.marketplace, theta: 315, phi: 40, radius: 4.0 }
+    { sectionId: 'patterns', name: SECTION_NAMES.patterns, theta: 45, phi: -25, radius: 4.5 },
+    { sectionId: 'assistant', name: SECTION_NAMES.assistant, theta: 90, phi: 35, radius: 4.0 },
+    { sectionId: 'prompts', name: SECTION_NAMES.prompts, theta: 135, phi: -30, radius: 4.5 },
+    { sectionId: 'operations', name: SECTION_NAMES.operations, theta: 180, phi: 25, radius: 4.0 },
+    { sectionId: 'security', name: SECTION_NAMES.security, theta: 225, phi: -20, radius: 4.5 },
+    { sectionId: 'marketplace', name: SECTION_NAMES.marketplace, theta: 270, phi: 40, radius: 4.0 },
+    { sectionId: 'about', name: SECTION_NAMES.about, theta: 315, phi: 30, radius: 4.0 }
   ];
 
   // Helper functions from index.html
@@ -166,6 +166,7 @@ export function calmSceneCompleteFactory(config) {
 
   return {
     mount(ctx) {
+      console.log('[CalmScene] 🚀 MOUNT CALLED - Starting scene initialization');
       const { scene, camera, renderer } = ctx;
       const nodes = [];
       const raycastTargets = [];
@@ -216,6 +217,7 @@ export function calmSceneCompleteFactory(config) {
       scene.add(bg);
 
       // Create nodes with energy beams
+      console.log('[CalmScene] 🎯 Creating nodes from nodeDefs, order:', nodeDefs.map(d => d.sectionId).join(', '));
       nodeDefs.forEach((def, idx) => {
         const theta = THREE.MathUtils.degToRad(def.theta);
         const phi = THREE.MathUtils.degToRad(def.phi);
@@ -290,6 +292,7 @@ export function calmSceneCompleteFactory(config) {
         scene.add(sphere);
         nodes.push(sphere);
         raycastTargets.push(sphere);
+        console.log(`[CalmScene] ✅ Created node ${idx}: ${def.sectionId} (${def.name})`);
 
         anchors.push({ name: def.sectionId, pos: pNode.clone(), sectionName: def.name });
 
@@ -980,12 +983,50 @@ export function calmSceneCompleteFactory(config) {
         return { hueDeg, flash, rgb, intensity };
       }
 
+      // Убеждаемся, что узлы и anchors в правильном порядке для скролла
+      // Правильный порядок: basics, patterns, assistant, prompts, operations, security, marketplace, about
+      const SECTION_ORDER_FOR_NODES = ['basics','patterns','assistant','prompts','operations','security','marketplace','about'];
+      
+      console.log('[CalmScene] 🔍 BEFORE reordering - nodes:', nodes.map(n => n.userData.sectionId).join(', '));
+      console.log('[CalmScene] 🔍 BEFORE reordering - anchors:', anchors.map(a => a.name).join(', '));
+      
+      // Переупорядочиваем узлы, anchors и raycastTargets в правильном порядке
+      const orderedNodes = [];
+      const orderedAnchors = [];
+      const orderedRaycastTargets = [];
+      
+      for (const sectionId of SECTION_ORDER_FOR_NODES) {
+        const nodeIndex = nodes.findIndex(n => n.userData.sectionId === sectionId);
+        if (nodeIndex >= 0) {
+          orderedNodes.push(nodes[nodeIndex]);
+          orderedAnchors.push(anchors[nodeIndex]);
+          orderedRaycastTargets.push(raycastTargets[nodeIndex]);
+          console.log(`[CalmScene] ✅ Added ${sectionId} at index ${nodeIndex}`);
+        } else {
+          console.warn(`[CalmScene] ⚠️ Node with sectionId '${sectionId}' not found!`);
+        }
+      }
+      
+      // Если какие-то узлы не найдены, добавляем их в конец
+      nodes.forEach((node, idx) => {
+        if (!orderedNodes.includes(node)) {
+          console.warn(`[CalmScene] ⚠️ Node ${node.userData.sectionId} not in SECTION_ORDER, adding to end`);
+          orderedNodes.push(node);
+          orderedAnchors.push(anchors[idx]);
+          orderedRaycastTargets.push(raycastTargets[idx]);
+        }
+      });
+      
+      console.log('[CalmScene] 📋 AFTER reordering - nodes:', orderedNodes.map(n => n.userData.sectionId).join(', '));
+      console.log('[CalmScene] 📋 AFTER reordering - anchors:', orderedAnchors.map(a => a.name).join(', '));
+      console.log('[CalmScene] 📋 Expected order:', SECTION_ORDER_FOR_NODES.join(', '));
+
       return {
-        raycastTargets,
-        nodes,
-        getLabelAnchors: () => anchors,
+        raycastTargets: orderedRaycastTargets,
+        nodes: orderedNodes,
+        getLabelAnchors: () => orderedAnchors,
         navigateTo: async (sectionId) => {
-          const node = nodes.find(n => n.userData.sectionId === sectionId);
+          const node = orderedNodes.find(n => n.userData.sectionId === sectionId);
           if (node) {
             // Navigate to node (implementation in navigation.js)
           }
