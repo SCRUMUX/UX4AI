@@ -29,7 +29,11 @@ export function resetNavigationState() {
   cycleHeight = 0;
 }
 
-function navDisabled() { return false; }
+function navDisabled() { 
+  // Disable navigation when HUD is active
+  return document.documentElement.classList.contains('hud-active') || 
+         document.body.classList.contains('hud-active');
+}
 
 const ORBIT_MIN_RADIUS = 1.6;
 const ORBIT_MAX_RADIUS = 12.0;

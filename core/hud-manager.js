@@ -3,7 +3,7 @@
  * Extracted from index.html lines 2304-2726
  */
 
-import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=10';
+import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=11';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 
 // Map ABOUT_DATA to format expected by HUD
@@ -13,8 +13,8 @@ const ABOUT = {
   skills: ABOUT_DATA.skills || '',
   contacts: ABOUT_DATA.contacts || '',
   ctas: [
-    { label: 'Написать в Telegram', href: LINKS.tgChat },
-    { label: 'Перейти в сообщество', href: LINKS.tgCommunity },
+    { label: 'Написать в TG', href: LINKS.tgChat },
+    { label: 'Сообщество', href: LINKS.tgCommunity },
     { label: 'Резюме (PDF)', href: LINKS.resume }
   ]
 };
@@ -89,6 +89,8 @@ export function initHUD(options) {
   let currentNodeName = '';
   let currentNodeIndex = -1;
   let cleanupScrollRedirect = null;
+  // Debounce timer for navigation (shared across all nav buttons)
+  let navDebounceTimer = null;
 
   // Build SECTION_ORDER: all content sections first, then "Автор" at the end
   const nodesDataKeys = Object.keys(NODES_DATA);
@@ -137,59 +139,46 @@ export function initHUD(options) {
     const navEl = header.querySelector('.hud-section-nav');
     if (navEl) {
       navEl.innerHTML = ''; // Clear existing buttons
+      
+      // Helper function to handle navigation with debounce (uses shared timer)
+      const handleNav = (delta, e) => {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        // Debounce to prevent rapid clicks/touches
+        if (navDebounceTimer) return;
+        navDebounceTimer = setTimeout(() => {
+          navDebounceTimer = null;
+        }, 300);
+        
+        try {
+          navigateSection(delta);
+        } catch (err) {
+          console.error('[HUD] Error in navigateSection:', err);
+          navDebounceTimer = null; // Reset on error
+        }
+      };
+      
       const prevA = document.createElement('a');
       prevA.href = '#';
       prevA.className = 'hud-nav-link';
       prevA.textContent = '← Предыдущий';
       prevA.style.cursor = 'pointer';
-      prevA.style.pointerEvents = 'auto'; // Ensure it receives clicks
-      prevA.style.touchAction = 'manipulation'; // Enable touch on mobile
-      prevA.addEventListener('click', (e) => {
-        console.log('[HUD] ===== PREVIOUS BUTTON CLICKED =====');
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[HUD] Previous button clicked, currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
-        try {
-          navigateSection(-1);
-        } catch (err) {
-          console.error('[HUD] Error in navigateSection:', err);
-        }
-      }, { passive: false }); // Non-passive to allow preventDefault
-      
-      // Add touch handler for mobile
-      prevA.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[HUD] Previous button touched (mobile), currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
-        navigateSection(-1);
-      }, { passive: false });
+      prevA.style.pointerEvents = 'auto';
+      prevA.style.touchAction = 'manipulation'; // Prevents double-tap zoom and allows fast tap
+      // Single handler for both click and touch (touch-action handles the rest)
+      prevA.addEventListener('click', (e) => handleNav(-1, e), { passive: false });
       
       const nextA = document.createElement('a');
       nextA.href = '#';
       nextA.className = 'hud-nav-link';
       nextA.textContent = 'Следующий →';
       nextA.style.cursor = 'pointer';
-      nextA.style.pointerEvents = 'auto'; // Ensure it receives clicks
-      nextA.style.touchAction = 'manipulation'; // Enable touch on mobile
-      nextA.addEventListener('click', (e) => {
-        console.log('[HUD] ===== NEXT BUTTON CLICKED =====');
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[HUD] Next button clicked, currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
-        try {
-          navigateSection(1);
-        } catch (err) {
-          console.error('[HUD] Error in navigateSection:', err);
-        }
-      }, { passive: false }); // Non-passive to allow preventDefault
-      
-      // Add touch handler for mobile
-      nextA.addEventListener('touchend', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        console.log('[HUD] Next button touched (mobile), currentIndex:', currentNodeIndex, 'currentName:', currentNodeName);
-        navigateSection(1);
-      }, { passive: false });
+      nextA.style.pointerEvents = 'auto';
+      nextA.style.touchAction = 'manipulation'; // Prevents double-tap zoom and allows fast tap
+      // Single handler for both click and touch (touch-action handles the rest)
+      nextA.addEventListener('click', (e) => handleNav(1, e), { passive: false });
       
       navEl.appendChild(prevA);
       navEl.appendChild(nextA);
@@ -318,9 +307,9 @@ export function initHUD(options) {
         const html = [];
         html.push((data.ui || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'));
         html.push('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">');
-        html.push(`<a target="_blank" href="${data.figma || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть макет Figma</a>`);
-        html.push(`<a target="_blank" href="${LINKS.tgChat || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в Telegram</a>`);
-        html.push(`<a target="_blank" href="${LINKS.tgCommunity || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Перейти в сообщество</a>`);
+        html.push(`<a target="_blank" href="${data.figma || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть Figma</a>`);
+        html.push(`<a target="_blank" href="${LINKS.tgChat || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в TG</a>`);
+        html.push(`<a target="_blank" href="${LINKS.tgCommunity || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Сообщество</a>`);
         html.push('</div>');
         content = html.join('');
       }
@@ -423,7 +412,7 @@ export function initHUD(options) {
     // Render header
     renderHudSectionHeader('👤 Автор');
     
-    // Set tab names for About panel - use setTimeout to ensure it runs after any other code
+    // Set tab names for About panel
     const setAboutTabNames = () => {
       const tabs = hudSmallPanel.querySelectorAll('button[data-index]');
       if (tabs.length >= 3) {
@@ -436,10 +425,8 @@ export function initHUD(options) {
         tabs[2].textContent = tabNames[2];
       }
     };
-    // Set immediately and also after a short delay to override any other code
+    // Set immediately (single call, no multiple timeouts)
     setAboutTabNames();
-    setTimeout(setAboutTabNames, 0);
-    setTimeout(setAboutTabNames, 50);
     
     function renderAboutTab(idx) {
       hudBigPanel.innerHTML = '';
@@ -599,15 +586,46 @@ export function initHUD(options) {
     }
   }
 
-  // NOTE: overlay no longer handles clicks - it has pointer-events: none in CSS
-  // Clicks are handled by individual elements (buttons, links, etc.)
-  // Keeping this for backward compatibility but it won't fire
-  overlay.addEventListener('click', (e) => {
-    console.log('[HUD] Overlay clicked - but this should not fire due to pointer-events: none');
-    if (e.target === overlay) {
-      hideOverlay();
-    }
-  });
+  // Handle clicks outside HUD panels to close HUD (desktop only)
+  function onDocumentClickOutsideHUD(e) {
+    // Only on desktop - don't interfere with mobile touch interactions
+    // Check for desktop: width >= 768px and not a touch device
+    const isDesktop = window.innerWidth >= 768 && !('ontouchstart' in window || navigator.maxTouchPoints > 0);
+    if (!isDesktop) return;
+    
+    // Only handle left mouse button clicks (button 0)
+    // Note: for click events, button might be undefined, so we check for mouse events
+    if (e.type === 'mousedown' && e.button !== undefined && e.button !== 0) return;
+    
+    // Don't close if HUD is not active
+    if (!activeOverlay) return;
+    
+    const target = e.target;
+    
+    // Don't close if click is inside HUD panels or their children
+    if (hudContainer && hudContainer.contains(target)) return;
+    if (hudSmallPanel && hudSmallPanel.contains(target)) return;
+    if (hudBigPanel && hudBigPanel.contains(target)) return;
+    if (hudObjectIcon && hudObjectIcon.contains(target)) return;
+    
+    // Don't close if click is on header buttons
+    if (btnAbout && (target === btnAbout || (target.closest && target.closest('#btn-about')))) return;
+    if (btnLinks && (target === btnLinks || (target.closest && target.closest('#btn-links')))) return;
+    if (btnDemo && (target === btnDemo || (target.closest && target.closest('#btn-demo')))) return;
+    
+    // Don't close if click is on links panel
+    if (linksPanel && linksPanel.contains(target)) return;
+    
+    // Don't close if click is on labels (they should open sections)
+    if (target.classList && target.classList.contains('label')) return;
+    if (target.closest && target.closest('.label')) return;
+    
+    // Close HUD
+    hideOverlay();
+  }
+  
+  // Add click handler for desktop only (use capture phase to catch early)
+  document.addEventListener('click', onDocumentClickOutsideHUD, true);
 
   // Label click handler (mirror of 3D picking)
   function onLabelClick(e) {
@@ -690,7 +708,18 @@ export function initHUD(options) {
   function installScrollRedirect() {
     // Only on desktop; mobile/tablet rely on container scroll per CSS
     const isDesktop = window.innerWidth >= 768;
-    if (!isDesktop) return;
+    if (!isDesktop) {
+      // Clean up any existing handlers on mobile
+      if (cleanupScrollRedirect) {
+        cleanupScrollRedirect();
+        cleanupScrollRedirect = null;
+      }
+      return;
+    }
+    // Clean up existing handlers before adding new ones
+    if (cleanupScrollRedirect) {
+      cleanupScrollRedirect();
+    }
     // Exclude hudContainer and hudBigPanel - they should allow internal scrolling
     const elements = [overlay, hudSmallPanel].filter(Boolean);
     const onWheel = (e) => {
