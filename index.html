@@ -39,7 +39,7 @@
 <meta name="google-site-verification" content="REPLACE_WITH_GOOGLE_CODE"/>
 <meta name="yandex-verification" content="REPLACE_WITH_YANDEX_CODE"/>
 
-<!-- Schema.org Person markup for better name discoverability -->
+<!-- Schema.org Person and WebSite markup -->
 <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -47,10 +47,29 @@
   "name": "Владимир Костял",
   "url": "https://ux4ai.pro/",
   "jobTitle": "UX-архитектор",
+  "description": "Проектирую UX-архитектуру и интерфейсы для AI-сервисов. Паттерны, подходы и решения для взаимодействия с ИИ.",
   "worksFor": {
     "@type": "Organization",
     "name": "UX4AI"
-  }
+  },
+  "knowsAbout": ["UX Design", "AI", "User Interface Design", "UX Architecture", "AI Products"],
+  "sameAs": [
+    "https://t.me/scrumux"
+  ]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "name": "UX4AI — UX-архитектура и интерфейсы для AI",
+  "url": "https://ux4ai.pro/",
+  "description": "Проектирование UX-архитектуры и интерфейсов для AI-сервисов. Паттерны, подходы и решения для взаимодействия с ИИ.",
+  "author": {
+    "@type": "Person",
+    "name": "Владимир Костял"
+  },
+  "inLanguage": "ru-RU"
 }
 </script>
 
@@ -73,10 +92,10 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="192x192" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="./android-chrome-512x512.png"/>
-<link rel="preload" href="./styles/variables.css" as="style"/>
-<link rel="stylesheet" href="./styles/variables.css"/>
-<!-- <link rel="preload" href="./styles/main.css" as="style"/> -->
-<!-- <link rel="stylesheet" href="./styles/main.css"/> -->
+<link rel="preload" href="./styles/tokens.css" as="style"/>
+<link rel="stylesheet" href="./styles/tokens.css"/>
+<link rel="preload" href="./styles/main.css" as="style"/>
+<link rel="stylesheet" href="./styles/main.css"/>
 <style>
     /* Scroll world: make body tall so camera flies segment-by-segment */
 html {
@@ -2273,6 +2292,25 @@ body:hover::-webkit-scrollbar-thumb {
   </style>
 </div>
 
+<!-- No-JS Fallback -->
+<noscript>
+  <div style="position: fixed; inset: 0; z-index: 9999; background: #0B0F14; color: #E6EEF8; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: ui-sans-serif, system-ui, sans-serif;">
+    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: #CFE8FF;">Интерактивные элементы требуют JavaScript</h1>
+    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0; color: #9AA6B2;">
+      Этот сайт использует 3D-интерактивы и требует включения JavaScript для полноценной работы.
+    </p>
+    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0;">
+      Вы можете ознакомиться с материалами в статическом формате:
+    </p>
+    <a href="./Vladimir_Kostyal_Resume.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background: #5B9CFF; color: #fff; text-decoration: none; font-weight: 500; margin-bottom: 12px;">
+      Скачать резюме (PDF)
+    </a>
+    <p style="font-size: 14px; color: #9AA6B2; margin-top: 24px;">
+      Или свяжитесь напрямую: <a href="https://t.me/scrumux" target="_blank" style="color: #5B9CFF; text-decoration: underline;">Telegram</a>
+    </p>
+  </div>
+</noscript>
+
 <!-- Header -->
 <header id="site-header">
   <div class="header-logo">
@@ -2296,7 +2334,7 @@ body:hover::-webkit-scrollbar-thumb {
 <!-- Mobile orbit mode toggle -->
 <div id="mobile-orbit-toggle" style="display: none;">
   <button id="toggle-orbit-btn">
-    <img id="toggle-orbit-icon" src="./camera_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Camera" />
+    <img id="toggle-orbit-icon" src="./camera_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Camera" loading="lazy" width="24" height="24" />
   </button>
 </div>
 
@@ -2384,7 +2422,7 @@ async function init() {
           btn.setAttribute('aria-label', 'Перезапустить тур');
           btn.title = 'Перезапустить тур';
           btn.tabIndex = 0;
-          btn.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" aria-hidden="true" />';
+          btn.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" loading="lazy" aria-hidden="true" />';
           container.appendChild(btn);
         }
         const canShowTourRestartIcon = () => {
@@ -2457,7 +2495,7 @@ async function init() {
               b.setAttribute('aria-label', 'Перезапустить тур');
               b.title = 'Перезапустить тур';
               b.tabIndex = 0;
-              b.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" aria-hidden="true" />';
+              b.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" loading="lazy" aria-hidden="true" />';
               container.appendChild(b);
               b.addEventListener('click', onActivate);
               b.addEventListener('keydown', onActivate);
@@ -2530,9 +2568,9 @@ async function init() {
           title: `Владимир Костял. UX-архитектор. 
           Проектировщик интерфейсов для AI-продуктов`,
           sub: 'Проектирую понятные и масштабируемые UX-паттерны для ассистентов, агентных систем и внутренних платформ. Прозрачность ИИ, контроль стоимости и продуктивность команд — в одном дизайне.',
-          text: `<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./supervisor_account_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Управляю продуктом и кросс-функциональными командами.</span> <br>
-<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./graph_2_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста.</span> <br>
-<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./monitoring_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" />  Настраиваю метрики и дашборды (TTFT↓, cost/request↓, ошибки↓, CSAT/конверсия↑)</span>`,
+          text: `<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./supervisor_account_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Управляю продуктом и кросс-функциональными командами.</span> <br>
+<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./graph_2_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста.</span> <br>
+<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./monitoring_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Настраиваю метрики и дашборды (TTFT↓, cost/request↓, ошибки↓, CSAT/конверсия↑)</span>`,
           actions: [
             { type:'button', primary:true, label:'Кейсы', on:'next' },
             { type:'link', label:'Резюме', href:'./Vladimir_Kostyal_Resume.pdf' },
@@ -2542,7 +2580,7 @@ async function init() {
         2: {
           title: 'Контролируемый AI вместо «чёрного ящика»',
           sub: 'Оркестрация ассистентов и агентов в одном интерфейсе: прозрачные решения, управляемые данные, безопасность и метрики. Рабочая система: роли и сценарии, права и бюджеты, единая панель контроля. Управление рисками: где хранятся данные, срок жизни, маскировка PII, аудит событий.',
-          text: '<ul class="tour-list">\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Orchestrator Dashboard (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" /> Scenario Builder / Playbooks (Figma demo)</a></li>\n</ul>',
+          text: '<ul class="tour-list">\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Orchestrator Dashboard (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Scenario Builder / Playbooks (Figma demo)</a></li>\n</ul>',
           actions: [
             { type:'button', primary:false, label:'Назад', on:'back' },
             { type:'button', primary:true, label:'Далее', on:'next' },
@@ -3792,6 +3830,119 @@ async function init() {
 }
 
 init();
+</script>
+<!-- Service Worker Registration -->
+<script>
+  // Service Worker registration with update notification
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js')
+        .then((registration) => {
+          console.log('[SW] Registered:', registration.scope);
+          
+          // Check for updates every 30 minutes
+          setInterval(() => {
+            registration.update();
+          }, 30 * 60 * 1000);
+          
+          // Listen for updates
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                // New version available
+                console.log('[SW] New version available');
+                showUpdateNotification(newWorker);
+              }
+            });
+          });
+        })
+        .catch((error) => {
+          console.error('[SW] Registration failed:', error);
+        });
+      
+      // Handle controller change (after skipWaiting)
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        console.log('[SW] Controller changed, reloading page');
+        window.location.reload();
+      });
+    });
+  }
+  
+  // Show update notification
+  function showUpdateNotification(worker) {
+    // Create notification banner
+    const banner = document.createElement('div');
+    banner.id = 'update-banner';
+    banner.style.cssText = `
+      position: fixed;
+      top: 56px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 3000;
+      background: rgba(91, 156, 255, 0.95);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 0;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-family: ui-sans-serif, system-ui, sans-serif;
+      font-size: 14px;
+    `;
+    
+    banner.innerHTML = `
+      <span>Доступна новая версия сайта</span>
+      <button id="update-btn" style="
+        padding: 6px 12px;
+        background: #fff;
+        color: #5B9CFF;
+        border: none;
+        font-weight: 500;
+        cursor: pointer;
+      ">Обновить</button>
+      <button id="dismiss-btn" style="
+        padding: 6px 12px;
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        font-weight: 500;
+        cursor: pointer;
+      ">Позже</button>
+    `;
+    
+    document.body.appendChild(banner);
+    
+    // Update button
+    document.getElementById('update-btn').addEventListener('click', () => {
+      worker.postMessage({ type: 'SKIP_WAITING' });
+      banner.remove();
+    });
+    
+    // Dismiss button
+    document.getElementById('dismiss-btn').addEventListener('click', () => {
+      banner.remove();
+    });
+    
+    // Analytics
+    console.log('analytics: update_notification_shown');
+  }
+  
+  // Force update function (accessible globally)
+  window.forceUpdate = async function() {
+    if ('serviceWorker' in navigator) {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (registration) {
+        registration.unregister();
+        caches.keys().then((names) => {
+          names.forEach(name => caches.delete(name));
+        });
+        window.location.reload(true);
+      }
+    }
+  };
 </script>
 </body>
 </html>

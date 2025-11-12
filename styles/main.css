@@ -1,106 +1,349 @@
-/* Base HUD and layout styles referencing CSS variables.
-   Non-breaking: not imported yet. */
+/**
+ * Main Stylesheet - UX4AI.PRO
+ * Refactored and optimized
+ * Uses Synaptik Design System tokens
+ */
 
-html { background: var(--bg); color: var(--text); }
-body { background: transparent; color: var(--text); }
+/* === Base Styles === */
+html {
+  margin: 0;
+  padding: 0;
+  background: var(--Color/Dark/Background/Primary);
+  height: 100%;
+  overflow-x: hidden;
+  font-size: var(--Font/Size/Base);
+  line-height: var(--Font/LineHeight/Base);
+  font-weight: var(--Font/Weight/Regular);
+  font-family: var(--Font/Family/Base);
+}
 
-/* Header */
+body {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  color: var(--Color/Light/Text/Primary);
+}
+
+/* Mobile orbit mode: block browser gestures */
+.orbit-active,
+.orbit-active body,
+.orbit-active #three-container {
+  touch-action: none;
+}
+
+/* === Mobile Performance Optimizations === */
+@media (max-width: 767px) {
+  /* Disable tap highlight for better performance */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize touch interactions for interactive elements */
+  button,
+  a,
+  .btn,
+  [role="button"],
+  [tabindex],
+  .tour-segment,
+  .thermometer-segment {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+    /* Remove transitions on mobile for instant feedback */
+    transition: none !important;
+  }
+
+  /* Reduce transition duration for tour buttons */
+  #tour-overlay .tour-actions .btn {
+    transition: background var(--Transition/Fast), color var(--Transition/Fast), border-color var(--Transition/Fast) !important;
+  }
+
+  /* Disable hover effects on mobile */
+  #tour-overlay .tour-actions .btn:hover {
+    background: var(--Color/Dark/Surface/Base) !important;
+    color: var(--Color/Light/Text/Tertiary) !important;
+    border-color: var(--Color/Dark/Border/Default) !important;
+  }
+
+  #tour-overlay .tour-actions .btn-primary:hover {
+    background: var(--Color/State/Selected/Background) !important;
+  }
+
+  /* Prevent text selection on interactive elements */
+  .tour-card,
+  .hud-big-panel,
+  .hud-small-panel {
+    -webkit-touch-callout: none;
+  }
+
+  /* Optimize will-change usage */
+  .grid-line {
+    will-change: auto;
+  }
+}
+
+/* === Layout Containers === */
+#three-container {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: transparent;
+  z-index: var(--ZIndex/Base);
+}
+
+#labels {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: transparent;
+  z-index: var(--ZIndex/Labels);
+  font-family: var(--Font/Family/Base);
+}
+
+/* === Labels === */
+.label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  padding: var(--Spacing/XS) var(--Spacing/M);
+  pointer-events: auto;
+  font-size: var(--Font/Size/S);
+  letter-spacing: var(--Font/LetterSpacing/Tight);
+  font-weight: var(--Font/Weight/Regular);
+  color: var(--Color/Light/Text/Primary);
+  background: var(--Color/Dark/Surface/Base);
+  border: 1px solid var(--Color/Dark/Border/Default);
+  border-radius: var(--Radius/M);
+  box-shadow: var(--Shadow/Inset), var(--Shadow/Medium);
+  white-space: nowrap;
+  opacity: 0.96;
+  transition: var(--Transition/Background), var(--Transition/Color);
+}
+
+.label:hover {
+  background: var(--Color/State/Hover/Surface);
+  border-color: var(--Color/Accent/Primary);
+  color: var(--Color/Light/Text/Secondary);
+  cursor: pointer;
+}
+
+/* === HUD Chips === */
+.hud {
+  position: fixed;
+  left: var(--Spacing/ML);
+  top: var(--Spacing/ML);
+  right: var(--Spacing/ML);
+  display: flex;
+  gap: var(--Spacing/SM);
+  flex-wrap: wrap;
+  align-items: center;
+  background: var(--Color/Dark/Background/Secondary);
+  border: 1px solid var(--Color/Dark/Border/Default);
+  border-radius: var(--Radius/L);
+  padding: var(--Spacing/SM) var(--Spacing/M);
+  backdrop-filter: var(--Backdrop/Blur/Medium);
+  z-index: 10;
+  font-size: var(--Font/Size/XS);
+}
+
+.chip {
+  padding: var(--Spacing/XS) var(--Spacing/SM);
+  border: 1px solid var(--Color/Dark/Border/Default);
+  border-radius: var(--Radius/M);
+  background: var(--Color/Dark/Background/Tertiary);
+  opacity: 0.96;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.hint {
+  opacity: 0.7;
+}
+
+/* === Overlay === */
+#overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--Color/Effect/Shadow/Medium);
+  pointer-events: none;
+  opacity: 0;
+  transition: var(--Transition/Opacity);
+  z-index: var(--ZIndex/Overlay);
+}
+
+#overlay.active {
+  pointer-events: none;
+  opacity: 1;
+}
+
+.hud-active #overlay {
+  background: transparent !important;
+  pointer-events: none !important;
+}
+
+/* Hide overlay on mobile when not active */
+@media (max-width: 479px) {
+  #overlay:not(.active) {
+    display: none !important;
+  }
+
+  body {
+    background: transparent !important;
+  }
+}
+
+/* === HUD Backdrop === */
+#hud-backdrop {
+  position: fixed;
+  inset: 0;
+  background: var(--Color/Dark/Surface/Overlay);
+  backdrop-filter: var(--Backdrop/Blur/Soft);
+  z-index: var(--ZIndex/HUD/Backdrop);
+  pointer-events: none !important;
+  opacity: 1;
+  transition: var(--Transition/Opacity);
+}
+
+#hud-backdrop.hidden {
+  display: none !important;
+}
+
+/* === Hide Legacy Panels === */
+#object-icon,
+#big-panel,
+#small-panel {
+  display: none;
+}
+
+/* === Header === */
 header#site-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 2000;
+  z-index: var(--ZIndex/Header);
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 6px 14px;
-  background: var(--panel-ghost);
-  border-bottom: 1px solid var(--border);
-  backdrop-filter: blur(20px) saturate(160%);
-  font-family: inherit;
+  gap: var(--Header/Gap);
+  padding: var(--Header/Padding/V) var(--Header/Padding/H);
+  background: var(--Color/Dark/Surface/Ghost);
+  border-bottom: 1px solid var(--Color/Dark/Border/Default);
+  backdrop-filter: var(--Backdrop/Blur/Strong);
+  font-family: var(--Font/Family/Base);
 }
-.header-logo { display: flex; align-items: center; gap: 12px; }
+
+.hud-active header#site-header {
+  backdrop-filter: var(--Backdrop/Blur/Strong);
+  background: var(--Color/Dark/Surface/Elevated);
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--Spacing/ML);
+}
+
 .header-logo .name {
-  font-weight: 600;
-  font-size: 18px;
-  letter-spacing: 0.2px;
-  color: #CFE8FF;
+  font-weight: var(--Font/Weight/Semibold);
+  font-size: var(--Font/Size/M);
+  letter-spacing: var(--Font/LetterSpacing/Tight);
+  color: var(--Color/Light/Text/Secondary);
   white-space: nowrap;
 }
+
 .header-logo .tagline {
-  margin-left: 12px;
-  font-size: 14px;
-  color: var(--muted);
-  font-weight: 400;
+  margin-left: var(--Spacing/ML);
+  font-size: var(--Font/Size/S);
+  color: var(--Color/Light/Text/Muted);
+  font-weight: var(--Font/Weight/Regular);
   white-space: nowrap;
 }
-.header-spacer { flex: 1; }
+
+.header-spacer {
+  flex: 1;
+}
+
+/* === Buttons === */
 .header-btn {
-  padding: 4px 10px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--muted);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--Button/Gap);
+  padding: var(--Button/Padding/V) var(--Button/Padding/H) !important;
+  height: var(--Button/Height);
+  line-height: 1;
+  box-sizing: border-box;
+  font-size: var(--Font/Size/S);
+  font-weight: var(--Font/Weight/Medium);
+  color: var(--Color/Light/Text/Muted);
   background: transparent;
-  border: none;
-  border-radius: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--Button/BorderRadius);
   cursor: pointer;
-  transition: background 0.2s, color 0.2s;
+  transition: var(--Transition/Background), var(--Transition/Color);
 }
+
 .header-btn:hover {
-  color: var(--accent);
-  background: rgba(91, 156, 255, 0.08);
+  color: var(--Color/Accent/Primary);
+  background: var(--Color/State/Hover/Background);
 }
+
 .header-btn:active {
-  color: #4A8AE6;
-  background: rgba(91, 156, 255, 0.15);
+  color: var(--Color/Accent/Hover);
+  background: var(--Color/State/Active/Background);
 }
 
-/* Labels */
-.label {
-  color: var(--text);
-  background: var(--panel);
-  border: 1px solid var(--border);
-  box-shadow: 0 0 0 1px rgba(36,48,65,0.4) inset, var(--shadow-soft);
-}
-.label:hover {
-  background: rgba(36,48,65,0.95);
-  border-color: var(--accent);
-  color: #CFE8FF;
+/* === Square Corners Globally === */
+button,
+button:hover,
+button:active,
+button:focus,
+.header-btn,
+.header-btn:hover,
+.header-btn:active,
+.header-btn:focus,
+a,
+a:hover,
+a:active,
+a:visited,
+input,
+input:hover,
+input:focus,
+select,
+select:hover,
+select:focus,
+textarea,
+textarea:hover,
+textarea:focus,
+.btn,
+.btn:hover,
+.btn:active,
+.btn:focus,
+.chip,
+.chip:hover,
+.chip:active,
+.chip:focus,
+.panel,
+.panel:hover,
+.panel:active,
+.panel:focus,
+.card,
+.card:hover,
+.card:active,
+.card:focus,
+#links-panel .link-row a,
+#links-panel .link-row a:hover,
+#links-panel .link-row a:active,
+#links-panel .link-row a:visited,
+#links-panel .close-btn,
+#links-panel .close-btn:hover,
+#links-panel .close-btn:active,
+#links-panel .close-btn:focus {
+  border-radius: var(--Radius/None) !important;
 }
 
-/* HUD panels */
-#hud-big-panel {
-  background: rgba(18, 23, 34, 0.60);
-  border: 1px solid var(--border);
-  color: var(--text);
-}
-#hud-small-panel .hud-section-nav a,
-#hud-small-panel .hud-close-btn {
-  color: var(--muted);
-}
-#hud-small-panel .hud-section-nav a:hover,
-#hud-small-panel .hud-close-btn:hover {
-  color: var(--accent);
-}
-
-/* Overlay */
-#overlay { background: rgba(0, 0, 0, 0.45); }
-
-
-/* HUD mode: enforce square corners everywhere */
-.hud-active #hud-container,
-.hud-active #hud-container *,
-.hud-active #hud-small-panel,
-.hud-active #hud-small-panel *,
-.hud-active #hud-big-panel,
-.hud-active #hud-big-panel *,
-.hud-active .hud,
-.hud-active .hud * {
-  border-radius: 0 !important;
-}
-
-/* Also cover generic UI controls while HUD is active */
+/* HUD mode: enforce square corners */
 .hud-active button,
 .hud-active a,
 .hud-active input,
@@ -111,8 +354,178 @@ header#site-header {
 .hud-active .link-row a,
 .hud-active .btn,
 .hud-active .panel,
-.hud-active .card {
-  border-radius: 0 !important;
+.hud-active .card,
+.hud-active #hud-container,
+.hud-active #hud-container *,
+.hud-active #hud-small-panel,
+.hud-active #hud-small-panel *,
+.hud-active #hud-big-panel,
+.hud-active #hud-big-panel * {
+  border-radius: var(--Radius/None) !important;
 }
 
+/* === Links Panel === */
+#links-panel {
+  position: fixed;
+  top: 56px;
+  right: 14px;
+  width: 280px;
+  background: var(--Color/Dark/Surface/Elevated);
+  backdrop-filter: var(--Backdrop/Blur/Soft);
+  border: 1px solid var(--Color/Dark/Border/Default);
+  border-radius: var(--Radius/None);
+  padding: var(--Spacing/XXL);
+  box-shadow: var(--Shadow/Large);
+  z-index: var(--ZIndex/Links);
+  display: none;
+  flex-direction: column;
+  gap: var(--Spacing/SM);
+}
 
+#links-panel.visible {
+  display: flex;
+}
+
+#links-panel .close-btn {
+  position: absolute;
+  top: var(--Spacing/SM);
+  right: var(--Spacing/SM);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--Color/Light/Text/Muted);
+  font-size: var(--Font/Size/M);
+  cursor: pointer;
+  transition: var(--Transition/Color);
+}
+
+#links-panel .close-btn:hover {
+  color: var(--Color/Accent/Primary);
+}
+
+#links-panel .link-row a {
+  display: block;
+  padding: var(--Spacing/M);
+  color: var(--Color/Light/Text/Muted);
+  text-decoration: none;
+  border: 1px solid var(--Color/Dark/Border/Default);
+  transition: var(--Transition/Background), var(--Transition/Color);
+}
+
+#links-panel .link-row a:hover {
+  color: var(--Color/Accent/Primary);
+  background: var(--Color/State/Hover/Background);
+  border-color: var(--Color/Accent/Primary);
+}
+
+#links-panel .link-kicker {
+  margin-top: var(--Spacing/SM);
+  font-size: var(--Font/Size/XS);
+  color: var(--Color/Light/Text/Tertiary);
+  opacity: 0.7;
+}
+
+/* === Responsive Adjustments === */
+@media (max-width: 767px) {
+  /* Prevent horizontal scroll */
+  html,
+  body {
+    overflow-x: hidden !important;
+    max-width: 100vw;
+  }
+
+  /* Hide tagline on mobile */
+  .header-logo .tagline {
+    display: none;
+  }
+
+  /* Links panel mobile adjustments */
+  #links-panel {
+    right: 8px;
+    width: calc(100% - 16px);
+    max-width: 320px;
+  }
+
+  /* Tour cards: single column on mobile */
+  .tour-card {
+    width: calc(100vw - 40px) !important;
+    max-width: 100%;
+  }
+
+  /* Ensure all CTA buttons are full width with proper touch target */
+  .tour-actions .btn,
+  .tour-cta-btn,
+  button.header-btn {
+    width: 100% !important;
+    min-height: 44px !important;
+    box-sizing: border-box;
+  }
+
+  /* Tour actions: stack buttons vertically */
+  .tour-actions {
+    flex-direction: column;
+    gap: var(--Spacing/SM);
+  }
+
+  .tour-actions .btn {
+    width: 100%;
+  }
+
+  /* Interactive widgets: full width */
+  .tour-interactives,
+  .tour-interactive,
+  .thermometer-container,
+  .ttft-widget {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* HUD panels: adapt for mobile */
+  #hud-container {
+    flex-direction: column;
+    width: calc(100% - 24px);
+    padding: 12px;
+  }
+
+  #hud-small-panel,
+  #hud-big-panel {
+    width: 100% !important;
+  }
+
+  /* Prevent text from being cut off */
+  .tour-header h2,
+  .tour-body p,
+  .hud-big-panel * {
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 479px) {
+  /* Even more compact spacing */
+  header#site-header {
+    padding: 4px 8px;
+    gap: 6px;
+  }
+
+  .header-btn {
+    padding: 6px 8px !important;
+    font-size: 13px;
+  }
+
+  /* Tour overlay: full viewport */
+  #tour-overlay {
+    align-items: flex-start;
+    padding: 12px;
+  }
+
+  #tour-overlay .tour-card {
+    width: calc(100vw - 24px) !important;
+    min-height: calc(100dvh - 80px);
+  }
+}
