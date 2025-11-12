@@ -354,7 +354,10 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
         pinchStartDist = dist;
         orbitRadius -= delta * ORBIT_ZOOM_SPEED_PINCH;
         updateCameraFromOrbit();
-        try { e.preventDefault(); } catch {}
+        // Проверяем, можно ли отменить событие перед попыткой
+        if (e.cancelable) {
+          try { e.preventDefault(); } catch {}
+        }
         return;
       }
       // One-finger rotate when already in orbit
@@ -365,6 +368,7 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
       const dy = t.clientY - lastY;
       lastX = t.clientX;
       lastY = t.clientY;
+      // Только в орбитальном режиме пытаемся отменить скролл
       if (!orbitMode || !isOrbitDragging) return;
       if (!orbitDragMoved && (Math.abs(dx) + Math.abs(dy) > 2)) {
         orbitDragMoved = true;
@@ -372,7 +376,10 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
       }
       orbitTheta -= dx * ORBIT_ROTATE_SPEED;
       orbitPhi -= dy * ORBIT_ROTATE_SPEED;
-      try { e.preventDefault(); } catch {}
+      // Проверяем, можно ли отменить событие перед попыткой
+      if (e.cancelable) {
+        try { e.preventDefault(); } catch {}
+      }
     };
     const onTouchEnd = () => {
       if (navDisabled()) return;
