@@ -15,14 +15,23 @@ import { initHUD } from './hud-manager.js';
 
 export function createEngine({ canvasParent, labelsElement }) {
   // THREE.js setup
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  // Mobile optimizations: reduce quality for better performance
+  const isMobile = window.innerWidth <= 767;
+  const renderer = new THREE.WebGLRenderer({ 
+    antialias: !isMobile, // Disable antialiasing on mobile
+    alpha: false,
+    powerPreference: isMobile ? 'low-power' : 'high-performance'
+  });
+  // Reduce pixel ratio on mobile for better performance
+  const maxPixelRatio = isMobile ? 1 : 2;
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, maxPixelRatio));
   renderer.setSize(window.innerWidth, window.innerHeight);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.9;
-  renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  // Disable shadows on mobile for better performance
+  renderer.shadowMap.enabled = !isMobile;
+  renderer.shadowMap.type = isMobile ? THREE.BasicShadowMap : THREE.PCFSoftShadowMap;
   canvasParent.appendChild(renderer.domElement);
 
   const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1200);
