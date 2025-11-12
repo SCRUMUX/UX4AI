@@ -112,6 +112,21 @@ body {
     -webkit-touch-callout: none;
     user-select: none;
     -webkit-user-select: none;
+    /* Remove transitions on mobile for instant feedback */
+    transition: none !important;
+  }
+  /* Reduce transition duration for tour buttons on mobile */
+  #tour-overlay .tour-actions .btn {
+    transition: background 0.1s, color 0.1s, border-color 0.1s !important;
+  }
+  /* Disable hover effects on mobile - they can interfere with touch */
+  #tour-overlay .tour-actions .btn:hover {
+    background: rgba(18,23,34,0.9) !important;
+    color: #9AA6B2 !important;
+    border-color: #243041 !important;
+  }
+  #tour-overlay .tour-actions .btn-primary:hover {
+    background: rgba(91,156,255,0.12) !important;
   }
   /* Prevent text selection on interactive elements */
   .tour-card, .hud-big-panel, .hud-small-panel {
@@ -254,7 +269,8 @@ body {
       background: rgba(18, 23, 34, 0.35);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
-      border-radius: 12px;
+      border-top: none; /* Remove top border */
+      border-radius: 0; /* Square corners to match tour style */
       padding: 20px;
       color: #E6EEF8;
       line-height: 1.5;
@@ -265,6 +281,47 @@ body {
       font-weight: 200;
       display: none;
       z-index: 1000;
+    }
+    @media (max-width: 767px) {
+      /* Disable backdrop-filter on mobile, but keep visual effect with gradients and shadows */
+      #hud-big-panel,
+      #hud-container #hud-big-panel {
+        backdrop-filter: none !important;
+        /* Use more transparent background for better visibility - increased transparency */
+        background: linear-gradient(135deg, rgba(18, 23, 34, 0.50) 0%, rgba(18, 23, 34, 0.65) 100%) !important;
+        /* Remove border-radius and top border to match desktop style */
+        border-radius: 0 !important;
+        border-top: none !important;
+        /* Add subtle border glow and inner highlight for glass effect - remove top border */
+        box-shadow: 
+          0 8px 32px rgba(0,0,0,0.3),
+          inset 0 -1px 0 rgba(0,0,0,0.15),
+          0 0 0 1px rgba(36,48,65,0.3),
+          0 -1px 0 transparent !important; /* Remove top border shadow */
+        position: relative;
+      }
+      /* Remove top border effect - no pseudo-element needed */
+      #hud-big-panel::before,
+      #hud-container #hud-big-panel::before {
+        display: none;
+      }
+      /* Ensure content is above pseudo-element */
+      #hud-big-panel > *,
+      #hud-container #hud-big-panel > * {
+        position: relative;
+        z-index: 1;
+      }
+      #hud-small-panel .hud-section-header {
+        backdrop-filter: none !important;
+        /* Use more transparent background for better visibility - increased transparency */
+        background: linear-gradient(135deg, rgba(18,23,34,0.50) 0%, rgba(18,23,34,0.65) 100%) !important;
+        /* Remove border-radius to match desktop style */
+        border-radius: 0 !important;
+        /* Add subtle border glow - remove top border */
+        box-shadow: 
+          0 2px 8px rgba(0,0,0,0.2),
+          0 0 0 1px rgba(36,48,65,0.3) !important;
+      }
     }
     /* Ensure all text in big panel has consistent weight, except headings */
     #hud-big-panel * {
@@ -379,7 +436,8 @@ body {
       background: rgba(18,23,34,0.35);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid var(--border);
-      border-radius: 8px;
+      border-top: none; /* Remove top border */
+      border-radius: 0; /* Square corners to match tour style */
       
     }
     /* Block B: reset positioning when panels are inside the container (desktop) */
@@ -414,7 +472,8 @@ body {
       background: rgba(18, 23, 34, 0.35);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid #243041;
-      border-radius: 12px;
+      border-top: none; /* Remove top border */
+      border-radius: 0; /* Square corners to match tour style */
       padding: 20px;
       color: #E6EEF8;
       line-height: 1.5;
@@ -1457,11 +1516,45 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
     #tour-overlay.hidden { display: none !important; }
     #tour-overlay .tour-backdrop { position:absolute; inset:0; background: rgba(5,8,12,0.60); backdrop-filter: blur(2px) saturate(120%); z-index: 1; }
+    @media (max-width: 767px) {
+      /* Disable backdrop-filter on mobile, but keep visual effect with gradients and shadows */
+      #tour-overlay .tour-backdrop { 
+        backdrop-filter: none; 
+        background: rgba(5,8,12,0.70);
+        /* Add subtle gradient for depth */
+        background-image: radial-gradient(circle at center, rgba(5,8,12,0.55) 0%, rgba(5,8,12,0.80) 100%);
+      }
+      #tour-overlay .tour-card { 
+        backdrop-filter: none !important; 
+        /* Use more transparent background for better visibility - increased transparency */
+        background: linear-gradient(135deg, rgba(18,23,34,0.50) 0%, rgba(18,23,34,0.65) 100%) !important;
+        /* Remove border-radius and top border to match desktop style */
+        border-radius: 0 !important;
+        border-top: none !important;
+        /* Add subtle border glow and inner highlight for glass effect - remove top border */
+        box-shadow: 
+          0 12px 40px rgba(0,0,0,0.45),
+          inset 0 -1px 0 rgba(0,0,0,0.2),
+          0 0 0 1px rgba(36,48,65,0.4),
+          0 -1px 0 transparent !important; /* Remove top border shadow */
+        /* Add pseudo-element for additional glass effect */
+        position: relative;
+      }
+      /* Remove top border effect - no pseudo-element needed */
+      #tour-overlay .tour-card::before {
+        display: none;
+      }
+      /* Ensure content is above pseudo-element */
+      #tour-overlay .tour-card > * {
+        position: relative;
+        z-index: 1;
+      }
+    }
     /* HUD-like styling: straight corners; no inner grid - grid visible through card */
     #tour-overlay .tour-card { position: relative; width: min(720px, 92vw);
       background: rgba(18,23,34,0.35);
       backdrop-filter: blur(2px) saturate(140%);
-      border:1px solid #243041; border-radius: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.45); padding: 20px 20px 20px 20px; color:#E6EEF8; z-index: 2; }
+      border:1px solid #243041; border-top: none; border-radius: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.45); padding: 20px 20px 20px 20px; color:#E6EEF8; z-index: 2; }
     /* Disable per-card grid to keep through-grid effect like HUD */
     #tour-overlay .tour-frame-lines { display:none; }
     /* Close link inside actions */
@@ -2689,17 +2782,40 @@ async function init() {
           });
         }
         
-        // Click handler for segments
+        // Click handler for segments - optimized for mobile
+        let lastTouchTime = 0;
+        const TOUCH_DELAY = 300; // Prevent double-tap
         segments.forEach(segment => {
           const ttft = parseInt(segment.dataset.ttft);
-          // Handle both click and touch events for iOS compatibility
-          const handleSegmentClick = (e) => {
+          let touchHandled = false;
+          
+          // Touch handler (mobile-first)
+          const handleTouch = (e) => {
+            const now = Date.now();
+            if (now - lastTouchTime < TOUCH_DELAY) return;
+            lastTouchTime = now;
+            
             e.preventDefault();
             e.stopPropagation();
+            touchHandled = true;
+            updateThermometer(ttft);
+            
+            // Prevent click from firing after touch
+            setTimeout(() => { touchHandled = false; }, 300);
+          };
+          
+          // Click handler (fallback for desktop)
+          const handleClick = (e) => {
+            if (touchHandled) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
             updateThermometer(ttft);
           };
-          segment.addEventListener('click', handleSegmentClick);
-          segment.addEventListener('touchend', handleSegmentClick);
+          
+          segment.addEventListener('touchend', handleTouch, { passive: false });
+          segment.addEventListener('click', handleClick);
         });
         
         // Keyboard support (arrow keys on container)
@@ -2830,33 +2946,44 @@ async function init() {
             const btn = document.createElement('button');
             btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
             btn.textContent = a.label;
-            // Handle both click and touch events for iOS compatibility
-            if (a.on === 'next') {
-              const handleNext = (e) => {
+            // Handle both click and touch events for iOS compatibility - optimized
+            let touchHandled = false;
+            const createHandler = (action) => {
+              return (e) => {
+                // Prevent double-firing on mobile
+                if (e.type === 'touchend') {
+                  if (touchHandled) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return;
+                  }
+                  touchHandled = true;
+                  setTimeout(() => { touchHandled = false; }, 300);
+                } else if (touchHandled) {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  return;
+                }
                 e.preventDefault();
                 e.stopPropagation();
-                setStep(Math.min(3, step+1));
+                action();
               };
-              btn.addEventListener('click', handleNext);
-              btn.addEventListener('touchend', handleNext);
+            };
+            
+            if (a.on === 'next') {
+              const handler = createHandler(() => setStep(Math.min(3, step+1)));
+              btn.addEventListener('touchend', handler, { passive: false });
+              btn.addEventListener('click', handler);
             }
             if (a.on === 'back') {
-              const handleBack = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                setStep(Math.max(1, step-1));
-              };
-              btn.addEventListener('click', handleBack);
-              btn.addEventListener('touchend', handleBack);
+              const handler = createHandler(() => setStep(Math.max(1, step-1)));
+              btn.addEventListener('touchend', handler, { passive: false });
+              btn.addEventListener('click', handler);
             }
             if (a.on === 'finish') {
-              const handleFinish = (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                finishTour();
-              };
-              btn.addEventListener('click', handleFinish);
-              btn.addEventListener('touchend', handleFinish);
+              const handler = createHandler(() => finishTour());
+              btn.addEventListener('touchend', handler, { passive: false });
+              btn.addEventListener('click', handler);
             }
             actionsEl.appendChild(btn);
           }
@@ -2871,8 +2998,17 @@ async function init() {
           planButton.textContent = 'План оптимизации';
           // Handle PDF download
           planButton.target = '_blank';
-          // Handle both click and touch events for iOS compatibility
-          const handlePlanClick = (e) => {
+          // Handle both click and touch events for iOS compatibility - optimized
+          let planTouchHandled = false;
+          const handlePlanTouch = (e) => {
+            if (planTouchHandled) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            planTouchHandled = true;
+            setTimeout(() => { planTouchHandled = false; }, 300);
+            
             e.preventDefault();
             e.stopPropagation();
             setTimeout(() => {
@@ -2886,8 +3022,16 @@ async function init() {
             }, 100);
             trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
           };
+          const handlePlanClick = (e) => {
+            if (planTouchHandled) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            handlePlanTouch(e);
+          };
+          planButton.addEventListener('touchend', handlePlanTouch, { passive: false });
           planButton.addEventListener('click', handlePlanClick);
-          planButton.addEventListener('touchend', handlePlanClick);
           actionsEl.appendChild(planButton);
         }
         // add close link as last action
@@ -2895,14 +3039,31 @@ async function init() {
         closeA.href = '#';
         closeA.className = 'close-link';
         closeA.textContent = 'Закрыть';
-        // Handle both click and touch events for iOS compatibility
-        const handleClose = (e) => {
+        // Handle both click and touch events for iOS compatibility - optimized
+        let closeTouchHandled = false;
+        const handleCloseTouch = (e) => {
+          if (closeTouchHandled) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          closeTouchHandled = true;
+          setTimeout(() => { closeTouchHandled = false; }, 300);
+          
           e.preventDefault();
           e.stopPropagation();
           dismissTour();
         };
-        closeA.addEventListener('click', handleClose);
-        closeA.addEventListener('touchend', handleClose);
+        const handleCloseClick = (e) => {
+          if (closeTouchHandled) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
+          }
+          handleCloseTouch(e);
+        };
+        closeA.addEventListener('touchend', handleCloseTouch, { passive: false });
+        closeA.addEventListener('click', handleCloseClick);
         actionsEl.appendChild(closeA);
         
         // Add interactives for step 3
@@ -2989,13 +3150,30 @@ async function init() {
       try { 
         const closeBtn = document.getElementById('tour-close'); 
         if (closeBtn) { 
-          const handleCloseBtn = (e) => {
+          let closeBtnTouchHandled = false;
+          const handleCloseBtnTouch = (e) => {
+            if (closeBtnTouchHandled) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            closeBtnTouchHandled = true;
+            setTimeout(() => { closeBtnTouchHandled = false; }, 300);
+            
             e.preventDefault();
             e.stopPropagation();
             dismissTour();
           };
-          closeBtn.addEventListener('click', handleCloseBtn);
-          closeBtn.addEventListener('touchend', handleCloseBtn);
+          const handleCloseBtnClick = (e) => {
+            if (closeBtnTouchHandled) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            handleCloseBtnTouch(e);
+          };
+          closeBtn.addEventListener('touchend', handleCloseBtnTouch, { passive: false });
+          closeBtn.addEventListener('click', handleCloseBtnClick);
           closeBtn.addEventListener('keydown', (e)=>{ 
             if(e.key==='Enter'||e.key===' ') { 
               e.preventDefault(); 
