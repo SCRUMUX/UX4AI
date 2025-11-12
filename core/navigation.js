@@ -43,6 +43,7 @@ const ORBIT_ZOOM_SPEED_PINCH = 0.004; // mobile pinch
 
 export function initNavigation(camera, nodes, modeBanner, canvas) {
   console.log('[Navigation] Initializing global navigation system');
+  console.log('[Navigation] 🔍 Received nodes order:', nodes.map(n => n.userData?.sectionId || n.name || 'unknown').join(', '));
   const listeners = [];
   function on(target, type, handler, options) {
     if (!target || !target.addEventListener) return;
@@ -52,6 +53,7 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     });
   }
   function computeTargets() {
+    console.log('[Navigation] 🔍 Computing targets from nodes order:', nodes.map(n => n.userData?.sectionId || n.name || 'unknown').join(', '));
     targets = nodes.map(node => {
       const dir = node.position.clone().normalize();
       const camOffset = dir.clone().multiplyScalar(2.0);

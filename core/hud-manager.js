@@ -91,15 +91,28 @@ export function initHUD(options) {
   let cleanupScrollRedirect = null;
   // Debounce timer for navigation (shared across all nav buttons)
   let navDebounceTimer = null;
+  // Save scroll position when opening HUD
+  let savedScrollPosition = 0;
 
-  // Build SECTION_ORDER: all content sections first, then "Автор" at the end
+  // Build SECTION_ORDER: explicit order as specified
   const nodesDataKeys = Object.keys(NODES_DATA);
   const basicsKey = nodesDataKeys.find(key => key.includes('Основы UX'));
-  const otherKeys = nodesDataKeys.filter(key => !key.includes('Основы UX'));
-  // Order: Basics first, then other sections, then "Автор" at the end
+  const patternsKey = nodesDataKeys.find(key => key.includes('Паттерны взаимодействия'));
+  const settingsKey = nodesDataKeys.find(key => key.includes('Настройки ассистента'));
+  const promptsKey = nodesDataKeys.find(key => key.includes('Промпты и Сценарии'));
+  const efficiencyKey = nodesDataKeys.find(key => key.includes('Операционная эффективность'));
+  const securityKey = nodesDataKeys.find(key => key.includes('Безопасность и соответствие'));
+  const playbooksKey = nodesDataKeys.find(key => key.includes('Плейбуки и маркетплейс'));
+  
+  // Order: Basics first, then other sections in specified order, then "Автор" at the end
   const SECTION_ORDER = [
-    ...(basicsKey ? [basicsKey] : []), 
-    ...otherKeys,
+    ...(basicsKey ? [basicsKey] : []),
+    ...(patternsKey ? [patternsKey] : []),
+    ...(settingsKey ? [settingsKey] : []),
+    ...(promptsKey ? [promptsKey] : []),
+    ...(efficiencyKey ? [efficiencyKey] : []),
+    ...(securityKey ? [securityKey] : []),
+    ...(playbooksKey ? [playbooksKey] : []),
     '👤 Автор'  // Автор is last
   ];
   
@@ -350,6 +363,9 @@ export function initHUD(options) {
     // Activate overlay backdrop
     overlay.classList.add('active');
     activeOverlay = true;
+    // Save scroll position before applying position: fixed
+    savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    
     // Show HUD backdrop (similar to tour backdrop)
     if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     // Mark HUD active to allow CSS performance optimizations
@@ -386,6 +402,12 @@ export function initHUD(options) {
     // Remove HUD active marker
     document.documentElement.classList.remove('hud-active');
     document.body.classList.remove('hud-active');
+    
+    // Restore scroll position after removing position: fixed
+    // Use requestAnimationFrame to ensure DOM has updated
+    requestAnimationFrame(() => {
+      window.scrollTo(0, savedScrollPosition);
+    });
   }
 
   function showAboutPanel() {
@@ -468,6 +490,9 @@ export function initHUD(options) {
     if (aboutTabs[0]) aboutTabs[0].classList.add('active-tab');
     renderAboutTab(0);
 
+    // Save scroll position before applying position: fixed
+    savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+    
     // Show HUD backdrop (similar to tour backdrop)
     if (hudBackdrop) hudBackdrop.classList.remove('hidden');
     // Redirect wheel to window on desktop as well
@@ -626,6 +651,26 @@ export function initHUD(options) {
   
   // Add click handler for desktop only (use capture phase to catch early)
   document.addEventListener('click', onDocumentClickOutsideHUD, true);
+
+  // Handle ESC key to close HUD or links panel
+  function onKeyDown(e) {
+    // Close HUD or links panel on ESC key
+    if (e.key === 'Escape' || e.keyCode === 27) {
+      // First check if links panel is open
+      if (linksPanel && linksPanel.style.display !== 'none' && linksPanel.style.display !== '') {
+        e.preventDefault();
+        e.stopPropagation();
+        closeLinksPanel();
+      }
+      // Then check if HUD overlay is active
+      else if (activeOverlay) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideOverlay();
+      }
+    }
+  }
+  document.addEventListener('keydown', onKeyDown, true);
 
   // Label click handler (mirror of 3D picking)
   function onLabelClick(e) {

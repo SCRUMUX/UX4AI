@@ -97,6 +97,9 @@ export function createEngine({ canvasParent, labelsElement }) {
       
       // Initialize navigation and HUD after scene is mounted
       console.log('[Engine] Calling initNavigationAndHUD with', result.nodes?.length || 0, 'nodes');
+      if (result.nodes && result.nodes.length > 0) {
+        console.log('[Engine] 🔍 Nodes order BEFORE initNavigation:', result.nodes.map(n => n.userData?.sectionId || n.name || 'unknown').join(', '));
+      }
       try {
         // Reset document body height before initializing navigation
         if (!(result?.driveOnly)) {

@@ -496,11 +496,14 @@ export function matrixSceneFactory(config) {
       scene.add(route);
 
         // Создаем узлы (маркеры) для объектов Ob1...Ob8 (используем первые точки _p1)
-        const SECTION_NAMES_ORDER = ['about', 'basics', 'patterns', 'assistant', 'prompts', 'operations', 'security', 'marketplace'];
+        // Правильный порядок: basics, patterns, assistant, prompts, operations, security, marketplace, about
+        const SECTION_ORDER_FOR_NODES = ['basics','patterns','assistant','prompts','operations','security','marketplace','about'];
         const objectMarkers = window._objectMarkers || {};
         
-        // Создаем маркеры для каждого объекта (1-8)
-        for (let objNum = 1; objNum <= NUM_NODES; objNum++) {
+        // Создаем маркеры для каждого объекта в правильном порядке
+        // Ob1 соответствует basics, Ob2 - patterns, и т.д.
+        for (let orderIdx = 0; orderIdx < SECTION_ORDER_FOR_NODES.length; orderIdx++) {
+          const objNum = orderIdx + 1; // Ob1, Ob2, ... Ob8
           const point = objectMarkers[objNum];
           
           if (point) {
@@ -508,7 +511,8 @@ export function matrixSceneFactory(config) {
               id: `Object${objNum}`,
               x: point.x,
               y: point.y,
-              z: point.z
+              z: point.z,
+              sectionId: SECTION_ORDER_FOR_NODES[orderIdx] // Сохраняем sectionId для связи
             });
             
             // Находим t для этой точки на кривой
@@ -528,11 +532,88 @@ export function matrixSceneFactory(config) {
               u: closestT
             });
             
-            console.log(`[MatrixScene] Node ${objNum}: t=${closestT.toFixed(3)}, pos=(${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})`);
+            console.log(`[MatrixScene] Node ${objNum} (${SECTION_ORDER_FOR_NODES[orderIdx]}): t=${closestT.toFixed(3)}, pos=(${point.x.toFixed(1)}, ${point.y.toFixed(1)}, ${point.z.toFixed(1)})`);
           } else {
             console.warn(`[MatrixScene] ⚠️ Missing marker for Object ${objNum} (Ob${objNum}_p1 not found)`);
           }
         }
+        
+        // Сортируем узлы и marks по позиции на кривой (u) для правильного порядка при скролле
+        // Создаем временный массив с индексами и u значениями
+        const nodesWithU = cfg.nodes.map((node, idx) => ({
+          node,
+          mark: cfg.marks[idx],
+          originalIdx: idx
+        }));
+        
+        // Сортируем по u (позиции на кривой)
+        nodesWithU.sort((a, b) => {
+          const uA = a.mark?.u || 0;
+          const uB = b.mark?.u || 0;
+          return uA - uB;
+        });
+        
+        // Переупорядочиваем cfg.nodes и cfg.marks в соответствии с правильным порядком секций
+        // И пересчитываем параметры u так, чтобы они равномерно распределялись от 0 до 1
+        // в нужном порядке секций (независимо от физического расположения на кривой)
+        const sortedNodes = [];
+        const sortedMarks = [];
+        
+        for (let i = 0; i < SECTION_ORDER_FOR_NODES.length; i++) {
+          const targetSectionId = SECTION_ORDER_FOR_NODES[i];
+          // Находим узел с нужным sectionId
+          const found = nodesWithU.find(item => item.node.sectionId === targetSectionId);
+          if (found) {
+            sortedNodes.push(found.node);
+            // Пересчитываем u для правильного порядка: равномерное распределение от 0 до 1
+            const newU = i / SECTION_ORDER_FOR_NODES.length;
+            sortedMarks.push({
+              nodeId: found.mark.nodeId,
+              u: newU
+            });
+            console.log(`[MatrixScene] Recalculated u for ${targetSectionId}: ${found.mark.u.toFixed(3)} -> ${newU.toFixed(3)}`);
+          }
+        }
+        
+        // Если какие-то узлы не найдены, добавляем их в конец
+        nodesWithU.forEach(item => {
+          if (!sortedNodes.includes(item.node)) {
+            sortedNodes.push(item.node);
+            const newU = sortedMarks.length / SECTION_ORDER_FOR_NODES.length;
+            sortedMarks.push({
+              nodeId: item.mark.nodeId,
+              u: newU
+            });
+          }
+        });
+        
+        // Перемещаем объекты в позиции, соответствующие новым u значениям
+        // Это нужно, чтобы камера проезжала мимо объектов в правильном порядке
+        for (let i = 0; i < sortedNodes.length; i++) {
+          const node = sortedNodes[i];
+          const mark = sortedMarks[i];
+          // Получаем позицию на кривой для нового u
+          const newPos = curve.getPointAt(mark.u);
+          // Обновляем позицию узла
+          node.x = newPos.x;
+          node.y = newPos.y;
+          node.z = newPos.z;
+          console.log(`[MatrixScene] Moved ${node.sectionId} to u=${mark.u.toFixed(3)}, pos=(${newPos.x.toFixed(1)}, ${newPos.y.toFixed(1)}, ${newPos.z.toFixed(1)})`);
+        }
+        
+        cfg.nodes = sortedNodes;
+        cfg.marks = sortedMarks;
+        
+        console.log('[MatrixScene] 📋 Nodes reordered by SECTION_ORDER:', cfg.nodes.map(n => n.sectionId).join(', '));
+        
+        // Создаем anchors в правильном порядке (соответствует порядку узлов)
+        anchors = cfg.nodes.map((node) => ({
+          name: node.sectionId,
+          pos: new THREE.Vector3(node.x, node.y + 10, node.z), // Метки на 10 единиц выше сфер
+          sectionName: SECTION_NAMES[node.sectionId]
+        }));
+        
+        console.log('[MatrixScene] 📋 Anchors created in order:', anchors.map(a => a.name).join(', '));
         
         // Создаем видимые маркеры узлов
         createNodeMarkers();
@@ -544,14 +625,10 @@ export function matrixSceneFactory(config) {
       // Nodes (objects of interest)
       const objectsById = new Map();
       const nodes = [];
-      const SECTION_ORDER = ['basics','about','patterns','assistant','prompts','operations','security','marketplace'];
+      const SECTION_ORDER = ['basics','patterns','assistant','prompts','operations','security','marketplace','about'];
       
-      // Создаем anchors сразу с дефолтными позициями (обновятся после загрузки GLB)
-      const anchors = SECTION_ORDER.map((sectionId, idx) => ({
-        name: sectionId,
-        pos: new THREE.Vector3(0, 10, 0), // Временная позиция
-        sectionName: SECTION_NAMES[sectionId]
-      }));
+      // Anchors будут созданы после загрузки GLB и переупорядочивания узлов
+      let anchors = [];
       
       function createNodeMarkers() {
       cfg.nodes.forEach((n, idx) => {
@@ -572,7 +649,7 @@ export function matrixSceneFactory(config) {
         objectsById.set(n.id, s);
           
           // Обновляем anchor с реальной позицией (метки над сферами)
-        const sectionId = SECTION_ORDER[Math.min(idx, SECTION_ORDER.length - 1)];
+          // Узлы и anchors теперь в одинаковом порядке
           if (anchors[idx]) {
             anchors[idx].pos.set(n.x, n.y + 10, n.z); // Метки на 10 единиц выше сфер
           }
