@@ -3,7 +3,7 @@
  * Extracted from index.html lines 2304-2726
  */
 
-import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=11';
+import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=20';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 
 // Map ABOUT_DATA to format expected by HUD
@@ -272,6 +272,110 @@ export function initHUD(options) {
     }
   }
 
+  // Universal helper function to process text with headings and subheadings
+  // Works for all sections: extracts first non-empty line as h2 heading, processes ##/### as h3/h4 subheadings
+  // Must be defined at module level to be accessible from both showOverlay and showAboutPanel
+  function processTextWithSubheadings(text, allowLinks = false) {
+      if (!text || typeof text !== 'string') {
+        return { headingHtml: '', bodyText: '' };
+      }
+      
+      const lines = text.split('\n');
+      let heading = '';
+      let bodyText = '';
+      
+      // Find first non-empty line as heading
+      let headingIndex = -1;
+      for (let i = 0; i < lines.length; i++) {
+        const trimmed = lines[i]?.trim();
+        if (trimmed) {
+          heading = trimmed;
+          headingIndex = i;
+          break;
+        }
+      }
+      
+      // If heading found, rest is body; otherwise all text is body
+      if (headingIndex >= 0) {
+        bodyText = lines.slice(headingIndex + 1).join('\n');
+      } else {
+        bodyText = text;
+      }
+      
+      // Clean up leading/trailing empty lines in body
+      bodyText = bodyText.replace(/^\n+/, '').replace(/\n+$/, '');
+      
+      // Don't return early if bodyText is empty - let it process anyway
+      // Empty bodyText is valid (e.g., if there's only a heading)
+      
+      // Process subheadings: ## for h3, ### for h4 (before escaping)
+      bodyText = bodyText.replace(/^###\s+(.+)$/gm, '<h4>$1</h4>');
+      bodyText = bodyText.replace(/^##\s+(.+)$/gm, '<h3>$1</h3>');
+      
+      if (allowLinks) {
+        // Split by heading tags to preserve them
+        const parts = bodyText.split(/(<h[34]>.*?<\/h[34]>)/g);
+        bodyText = parts.map(part => {
+          // If it's a heading tag, keep it as is
+          if (/^<h[34]>/.test(part)) {
+            return part;
+          }
+          // Otherwise, escape and process links
+          let processed = part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          // Restore link tags
+          processed = processed
+            .replace(/&lt;a\s+href="([^"]*)"\s+target="[^"]*"&gt;/gi, '<a href="$1" target="_blank">')
+            .replace(/&lt;\/a&gt;/gi, '</a>');
+          return processed;
+        }).join('');
+        bodyText = bodyText.replace(/\n/g, '<br/>');
+      } else {
+        // Split by heading tags to preserve them
+        const parts = bodyText.split(/(<h[34]>.*?<\/h[34]>)/g);
+        bodyText = parts.map(part => {
+          // If it's a heading tag, keep it as is
+          if (/^<h[34]>/.test(part)) {
+            return part;
+          }
+          // Otherwise, escape HTML
+          return part.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }).join('');
+        // Replace newlines with <br/> but preserve them in heading tags
+        bodyText = bodyText.replace(/\n/g, '<br/>');
+      }
+      
+      // Remove only the first <br/> immediately after heading tags (to eliminate spacing between heading and text)
+      // But keep other <br/> for paragraph spacing
+      bodyText = bodyText.replace(/(<\/h[34]>)<br\/>/gi, '$1');
+      
+      // Convert double <br/> to paragraph breaks (wrap each paragraph in <p>)
+      // Split by double <br/> or more
+      const parts = bodyText.split(/(<br\/>\s*){2,}/gi);
+      bodyText = parts.map(part => {
+        const trimmed = part.trim();
+        // If it's a heading tag, return as is
+        if (/^<h[34]>/.test(trimmed)) {
+          return trimmed;
+        }
+        // If empty, skip
+        if (!trimmed) {
+          return '';
+        }
+        // Replace single <br/> with spaces within paragraph, then wrap in <p>
+        const paragraphContent = trimmed.replace(/<br\/>/gi, ' ');
+        return `<p>${paragraphContent}</p>`;
+      }).filter(p => p).join('');
+      
+      // Ensure bodyText is not empty - if it is, something went wrong
+      if (!bodyText || bodyText.trim() === '') {
+        console.warn('[HUD] processTextWithSubheadings: bodyText is empty after processing', { text, heading, headingIndex });
+      }
+      
+      // Create heading HTML only if heading exists
+      const headingHtml = heading ? `<h2>${heading.replace(/</g, '&lt;').replace(/&/g, '&amp;')}</h2>` : '';
+      return { headingHtml, bodyText };
+  }
+
   function showOverlay(node) {
     if (!node || !node.name || !NODES_DATA[node.name]) return;
     
@@ -300,25 +404,23 @@ export function initHUD(options) {
       hudBigPanel.innerHTML = '';
       
       let content = '';
+      
       if (idx === 0) {
-        const problemText = (data.problem || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>');
+        let problemText = (data.problem || '—');
+        const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
         // Add link to "Исследования" tab at the end
-        content = problemText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
+        content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
       } else if (idx === 1) {
-        // Allow links in solution text - process before escaping
+        // Allow links in solution text
         let solutionText = (data.solution || '—');
-        // First escape everything
-        solutionText = solutionText.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-        // Then restore link tags
-        solutionText = solutionText
-          .replace(/&lt;a\s+href="([^"]*)"\s+target="[^"]*"&gt;/gi, '<a href="$1" target="_blank">')
-          .replace(/&lt;\/a&gt;/gi, '</a>')
-          .replace(/\n/g, '<br/>');
+        const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, true);
         // Add link to "Решения" tab at the end
-        content = solutionText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
+        content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
       } else {
         const html = [];
-        html.push((data.ui || '—').replace(/</g, '&lt;').replace(/\n/g, '<br/>'));
+        let uiText = (data.ui || '—');
+        const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
+        html.push(headingHtml + bodyText);
         html.push('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">');
         html.push(`<a target="_blank" href="${data.figma || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть Figma</a>`);
         html.push(`<a target="_blank" href="${LINKS.tgChat || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в TG</a>`);
@@ -414,6 +516,10 @@ export function initHUD(options) {
     // Close links panel if open
     closeLinksPanel();
     
+    // Mark HUD active to enable grid overlay and base lines
+    document.documentElement.classList.add('hud-active');
+    document.body.classList.add('hud-active');
+    
     overlay.classList.add('active');
     activeOverlay = true;
     currentNodeName = '👤 Автор';
@@ -457,14 +563,20 @@ export function initHUD(options) {
       // Prepare links row (placed at the end for all tabs)
       const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
       const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+      
       if (idx === 0) {
-        content = ABOUT.text.replace(/</g, '&lt;').replace(/\n/g, '<br/>') + linksRowWrapped;
+        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.text || '', false);
+        content = headingHtml + bodyText + linksRowWrapped;
+        console.log('[HUD] About tab 0:', { hasText: !!ABOUT.text, textLength: ABOUT.text?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       } else if (idx === 1) {
-        content = ABOUT.skills.replace(/</g, '&lt;').replace(/\n/g, '<br/>') + linksRowWrapped;
+        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.skills || '', false);
+        content = headingHtml + bodyText + linksRowWrapped;
+        console.log('[HUD] About tab 1:', { hasSkills: !!ABOUT.skills, skillsLength: ABOUT.skills?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       } else {
         // contacts tab shows contacts text + links
-        const contactsText = ABOUT.contacts.replace(/</g, '&lt;').replace(/\n/g, '<br/>');
-        content = contactsText + linksRowWrapped;
+        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.contacts || '', false);
+        content = headingHtml + bodyText + linksRowWrapped;
+        console.log('[HUD] About tab 2:', { hasContacts: !!ABOUT.contacts, contactsLength: ABOUT.contacts?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
@@ -495,11 +607,8 @@ export function initHUD(options) {
     
     // Show HUD backdrop (similar to tour backdrop)
     if (hudBackdrop) hudBackdrop.classList.remove('hidden');
-    // Redirect wheel to window on desktop as well
+    // Redirect wheel to window on desktop so world scroll never stalls
     installScrollRedirect();
-    // Mark HUD active for CSS optimization
-    document.documentElement.classList.add('hud-active');
-    document.body.classList.add('hud-active');
   }
 
   function showLinksPanel() {

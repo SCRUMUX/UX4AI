@@ -244,9 +244,87 @@ body {
       display: none;
       z-index: 1000;
     }
-    /* Ensure all text in big panel has consistent weight */
+    /* Ensure all text in big panel has consistent weight, except headings */
     #hud-big-panel * {
       font-weight: 200;
+    }
+    /* Override for headings */
+    #hud-big-panel h1,
+    #hud-big-panel h2,
+    #hud-big-panel h3,
+    #hud-big-panel h4,
+    #hud-big-panel h5,
+    #hud-big-panel h6 {
+      font-weight: 600 !important;
+    }
+    /* Headings in big panel main text use tour style */
+    #hud-big-panel h1,
+    #hud-big-panel h2,
+    #hud-big-panel h3,
+    #hud-big-panel h4,
+    #hud-big-panel h5,
+    #hud-big-panel h6,
+    .hud-active #hud-big-panel h1,
+    .hud-active #hud-big-panel h2,
+    .hud-active #hud-big-panel h3,
+    .hud-active #hud-big-panel h4,
+    .hud-active #hud-big-panel h5,
+    .hud-active #hud-big-panel h6 {
+      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+    }
+    /* Main heading (h2) - 10px margin bottom to paragraph */
+    #hud-big-panel h2,
+    .hud-active #hud-big-panel h2,
+    #hud-container #hud-big-panel h2,
+    .hud-active #hud-container #hud-big-panel h2 {
+      margin: 0 0 10px 0 !important;
+    }
+    /* Subheadings (h3, h4) - smaller than main heading, no margin */
+    #hud-big-panel h3,
+    .hud-active #hud-big-panel h3,
+    #hud-container #hud-big-panel h3,
+    .hud-active #hud-container #hud-big-panel h3 {
+      font: 600 18px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+    }
+    #hud-big-panel h4,
+    .hud-active #hud-big-panel h4,
+    #hud-container #hud-big-panel h4,
+    .hud-active #hud-container #hud-big-panel h4 {
+      font: 600 16px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+    }
+    /* Paragraph spacing: 20px between paragraphs */
+    #hud-big-panel p,
+    .hud-active #hud-big-panel p,
+    #hud-container #hud-big-panel p,
+    .hud-active #hud-container #hud-big-panel p {
+      margin: 0 0 20px 0;
+      line-height: 1.5;
+    }
+    #hud-big-panel p:last-child,
+    .hud-active #hud-big-panel p:last-child,
+    #hud-container #hud-big-panel p:last-child,
+    .hud-active #hud-container #hud-big-panel p:last-child {
+      margin-bottom: 0;  /* Убрать отступ у последнего абзаца */
+    }
+    /* Remove spacing after subheadings - no margin for first paragraph after h3/h4 */
+    #hud-big-panel h3 + p,
+    #hud-big-panel h4 + p,
+    .hud-active #hud-big-panel h3 + p,
+    .hud-active #hud-big-panel h4 + p,
+    #hud-container #hud-big-panel h3 + p,
+    #hud-container #hud-big-panel h4 + p,
+    .hud-active #hud-container #hud-big-panel h3 + p,
+    .hud-active #hud-container #hud-big-panel h4 + p {
+      margin-top: 0;  /* Убрать отступ у первого абзаца после подзаголовка */
     }
     /* Hide scrollbar but keep scrolling */
     #hud-big-panel {
@@ -327,6 +405,24 @@ body {
     }
     #hud-container #hud-big-panel::-webkit-scrollbar {
       display: none; /* Chrome, Safari, Opera */
+    }
+    /* Headings in container big panel main text use tour style */
+    #hud-container #hud-big-panel h1,
+    #hud-container #hud-big-panel h2,
+    #hud-container #hud-big-panel h3,
+    #hud-container #hud-big-panel h4,
+    #hud-container #hud-big-panel h5,
+    #hud-container #hud-big-panel h6,
+    .hud-active #hud-container #hud-big-panel h1,
+    .hud-active #hud-container #hud-big-panel h2,
+    .hud-active #hud-container #hud-big-panel h3,
+    .hud-active #hud-container #hud-big-panel h4,
+    .hud-active #hud-container #hud-big-panel h5,
+    .hud-active #hud-container #hud-big-panel h6 {
+      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
     }
     #hud-small-panel .hud-section-title {
       margin: 0 0 6px 0;
@@ -1316,6 +1412,15 @@ body:hover::-webkit-scrollbar-thumb {
     <div class="tour-body">
       <p id="tour-text"></p>
     </div>
+    <div class="tour-interactives" id="tour-interactives" aria-hidden="true">
+      <noscript>
+        <div class="tour-interactives-fallback">
+          <p style="color: #9AA6B2; font: 400 14px/1.3 ui-sans-serif, system-ui; text-align: center; margin: 0;">
+            Интерактивные элементы требуют JavaScript
+          </p>
+        </div>
+      </noscript>
+    </div>
     <div class="tour-actions" id="tour-actions"></div>
     <div class="tour-frame-lines" aria-hidden="true"></div>
   </div>
@@ -1407,10 +1512,641 @@ body:hover::-webkit-scrollbar-thumb {
         width: calc(100vw - 40px);
         min-height: calc(100dvh - 60px);
         max-height: calc(100dvh - 60px);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
       }
       #tour-overlay .tour-body { flex: 1 1 auto; }
       #tour-overlay .tour-actions { flex-direction: column; margin-top: auto; }
       #tour-overlay .tour-actions .btn { width: 100%; text-align: center; }
+    }
+    /* Block page scroll when tour is active, but allow scrolling inside tour card */
+    body.tour-active,
+    html.tour-active {
+      overflow: hidden !important;
+      height: 100% !important;
+      position: fixed !important;
+      width: 100% !important;
+    }
+    /* Allow scrolling inside tour card */
+    #tour-overlay .tour-card {
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      max-height: calc(100vh - 40px);
+    }
+    @media (max-width: 479px) {
+      #tour-overlay .tour-card {
+        max-height: calc(100dvh - 60px);
+      }
+    }
+    
+    /* Tour Interactives Styles */
+    #tour-overlay .tour-interactives {
+      margin-top: 32px;
+      margin-bottom: 40px;
+    }
+    
+    #tour-overlay .tour-interactives.loaded {
+      opacity: 1;
+    }
+    
+    /* Skeleton loaders */
+    #tour-overlay .tour-interactives-skeleton {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    #tour-overlay .skeleton-header,
+    #tour-overlay .skeleton-status {
+      height: 24px;
+      background: rgba(36, 48, 65, 0.5);
+      border-radius: 0;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+    
+    #tour-overlay .skeleton-header {
+      width: 60%;
+    }
+    
+    #tour-overlay .skeleton-status {
+      width: 80%;
+      height: 16px;
+    }
+    
+    #tour-overlay .skeleton-interactives {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+    
+    #tour-overlay .skeleton-item {
+      height: 200px;
+      background: rgba(36, 48, 65, 0.5);
+      border-radius: 0;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+    
+    #tour-overlay .skeleton-cta {
+      height: 44px;
+      width: 60%;
+      margin: 0 auto;
+      background: rgba(36, 48, 65, 0.5);
+      border-radius: 0;
+      animation: skeleton-pulse 1.5s ease-in-out infinite;
+    }
+    
+    @keyframes skeleton-pulse {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 0.8; }
+    }
+    
+    #tour-overlay .tour-interactives-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    
+    /* Section header */
+    #tour-overlay .tour-interactives-header {
+      margin: 0 0 20px 0;
+      font: 600 20px/1.3 ui-sans-serif, system-ui;
+      color: #CFE8FF;
+    }
+    
+    /* Status bar */
+    #tour-overlay .tour-status-bar {
+      padding: 8px 0;
+      font: 400 14px/1.3 ui-sans-serif, system-ui;
+      color: #9AA6B2;
+      border-bottom: 1px solid #243041;
+    }
+    
+    /* Interactives layout - single column */
+    
+    #tour-overlay .tour-interactive {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    /* Interactive A - left aligned, vertical layout */
+    #tour-overlay .tour-interactive-a {
+      align-items: flex-start !important;
+      display: flex !important;
+      flex-direction: column !important;
+      flex-wrap: nowrap !important;
+    }
+    
+    /* Thermometer widget container */
+    #tour-overlay .thermometer-widget-container {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      width: 100%;
+    }
+    
+    /* Thermometer widget header */
+    #tour-overlay .thermometer-widget-header {
+      margin: 0 0 12px 0;
+      font: 600 24px/1.3 ui-sans-serif, system-ui;
+      color: #CFE8FF;
+      text-align: left;
+      width: 100%;
+      flex-shrink: 0;
+      display: block;
+    }
+    
+    /* Thermometer widget description */
+    #tour-overlay .thermometer-widget-description {
+      margin: 0 0 32px 0;
+      font: 300 18px/1.3 ui-sans-serif, system-ui;
+      color: #B8C3CF;
+      text-align: left;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    
+    /* Thermometer container */
+    #tour-overlay .thermometer-container {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      align-items: flex-start;
+      width: 100%;
+      flex-shrink: 0;
+    }
+    
+    /* Override gap between segments and user feeling text */
+    #tour-overlay .thermometer-segments-container + .thermometer-user-feeling {
+      margin-top: -12px;
+    }
+    
+    #tour-overlay .thermometer-container:focus {
+      outline: 2px solid #5B9CFF;
+      outline-offset: 2px;
+    }
+    
+    /* Placeholder (top right corner) */
+    #tour-overlay .readout-placeholder {
+      position: absolute;
+      top: 0;
+      right: 0;
+      max-width: 300px;
+      width: 300px;
+      font: 300 18px/1.3 ui-sans-serif, system-ui;
+      color: #B8C3CF;
+      transition: color 0.3s ease;
+      text-align: right;
+      word-wrap: break-word;
+      white-space: pre-line;
+    }
+    
+    /* Readout (above buttons, left-aligned) */
+    #tour-overlay .thermometer-readout {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: flex-start;
+      width: 100%;
+    }
+    
+    #tour-overlay .readout-value {
+      font: 600 56px/1 ui-sans-serif, system-ui;
+      color: #CFE8FF;
+      transition: color 0.3s ease;
+    }
+    
+    #tour-overlay .readout-status {
+      font: 400 14px/1.3 ui-sans-serif, system-ui;
+      color: #9AA6B2;
+      transition: color 0.3s ease;
+    }
+    
+    /* User feeling text (under buttons) */
+    #tour-overlay .thermometer-user-feeling {
+      margin: 4px 0 0 0;
+      font: 300 18px/1.3 ui-sans-serif, system-ui;
+      color: #B8C3CF;
+      text-align: left;
+      width: 100%;
+    }
+    
+    /* Segments container (horizontal row) */
+    #tour-overlay .thermometer-segments-container {
+      display: flex;
+      flex-direction: row;
+      gap: 8px;
+      flex-wrap: nowrap;
+      width: 100%;
+    }
+    
+    /* Thermometer segments */
+    #tour-overlay .thermometer-segment {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      background: rgba(36, 48, 65, 0.6);
+      border: 1px solid #243041;
+      color: #9AA6B2;
+      font: 400 14px/1 ui-sans-serif, system-ui;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    /* Default zone colors (dim) */
+    #tour-overlay .thermometer-segment.zone-1 {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    #tour-overlay .thermometer-segment.zone-2 {
+      background: rgba(34, 197, 94, 0.08);
+      border-color: rgba(34, 197, 94, 0.3);
+    }
+    
+    #tour-overlay .thermometer-segment.zone-3 {
+      background: rgba(234, 179, 8, 0.08);
+      border-color: rgba(234, 179, 8, 0.3);
+    }
+    
+    #tour-overlay .thermometer-segment.zone-4 {
+      background: rgba(234, 179, 8, 0.08);
+      border-color: rgba(234, 179, 8, 0.3);
+    }
+    
+    #tour-overlay .thermometer-segment.zone-5 {
+      background: rgba(239, 68, 68, 0.08);
+      border-color: rgba(239, 68, 68, 0.3);
+    }
+    
+    #tour-overlay .thermometer-segment:hover {
+      opacity: 0.8;
+      transform: translateY(-1px);
+    }
+    
+    #tour-overlay .thermometer-segment:focus {
+      outline: 2px solid #5B9CFF;
+      outline-offset: 2px;
+    }
+    
+    /* Active state (bright colors) */
+    #tour-overlay .thermometer-segment.active {
+      color: #CFE8FF;
+      font-weight: 600;
+      opacity: 1;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+    
+    #tour-overlay .thermometer-segment.zone-1.active {
+      background: rgba(34, 197, 94, 0.25);
+      border-color: #22C55E;
+    }
+    
+    #tour-overlay .thermometer-segment.zone-2.active {
+      background: rgba(34, 197, 94, 0.25);
+      border-color: #22C55E;
+    }
+    
+    #tour-overlay .thermometer-segment.zone-3.active {
+      background: rgba(234, 179, 8, 0.25);
+      border-color: #EAB308;
+    }
+    
+    #tour-overlay .thermometer-segment.zone-4.active {
+      background: rgba(234, 179, 8, 0.25);
+      border-color: #EAB308;
+    }
+    
+    #tour-overlay .thermometer-segment.zone-5.active {
+      background: rgba(239, 68, 68, 0.25);
+      border-color: #EF4444;
+    }
+    
+    
+    /* CTA Container */
+    #tour-overlay .tour-cta-container {
+      grid-column: 1 / -1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+    }
+    
+    #tour-overlay .tour-cta-btn {
+      flex: 1;
+      min-width: 0;
+      padding: 12px 8px;
+      background: rgba(91, 156, 255, 0.12);
+      border: 1px solid #5B9CFF;
+      color: #CFE8FF;
+      font: 400 14px/1 ui-sans-serif, system-ui;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    
+    #tour-overlay .tour-cta-btn:hover {
+      background: rgba(91, 156, 255, 0.18);
+      border-color: #7BB3FF;
+    }
+    
+    #tour-overlay .tour-cta-btn:focus {
+      outline: 2px solid #5B9CFF;
+      outline-offset: 2px;
+    }
+    
+    #tour-overlay .tour-cta-subtext {
+      margin: 0;
+      color: #9AA6B2;
+      font: 300 12px/1.3 ui-sans-serif, system-ui;
+      text-align: center;
+    }
+    
+    /* Desktop and Tablet styles (>=768px) */
+    @media (min-width: 768px) {
+      #tour-overlay .thermometer-widget-description {
+        max-width: 100%;
+      }
+      
+      #tour-overlay .thermometer-container {
+        max-width: 100%;
+      }
+      
+      #tour-overlay .thermometer-segments-container {
+        max-width: 100%;
+      }
+      
+      #tour-overlay .thermometer-user-feeling {
+        max-width: 100%;
+      }
+      
+      #tour-overlay .readout-value {
+        font-size: 61px;
+      }
+      
+      #tour-overlay .readout-status {
+        font-size: 19px;
+      }
+      
+      #tour-overlay .readout-placeholder {
+        font-size: 18px;
+        max-width: 400px;
+        width: auto;
+      }
+    }
+    
+    /* Mobile Responsive */
+    @media (max-width: 767px) {
+      
+      #tour-overlay .thermometer-widget-header {
+        font-size: 20px;
+      }
+      
+      #tour-overlay .readout-value {
+        font-size: 42px;
+      }
+      
+      #tour-overlay .readout-placeholder {
+        font-size: 14px;
+      }
+      
+      #tour-overlay .thermometer-segments-container {
+        max-width: 352px;
+      }
+      
+      #tour-overlay .skeleton-interactives {
+        grid-template-columns: 1fr;
+      }
+    }
+    
+    @media (max-width: 479px) {
+      #tour-overlay .tour-cta-btn {
+        width: 100%;
+      }
+    }
+    
+    /* Light theme support */
+    .theme-light #tour-overlay .skeleton-header,
+    .theme-light #tour-overlay .skeleton-status,
+    .theme-light #tour-overlay .skeleton-item,
+    .theme-light #tour-overlay .skeleton-cta {
+      background: rgba(226, 232, 240, 0.5);
+    }
+    
+    .theme-light #tour-overlay .tour-interactives-header {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .tour-status-bar {
+      color: #64748B;
+      border-bottom-color: #E2E8F0;
+    }
+    
+    .theme-light #tour-overlay .thermometer-widget-header {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .thermometer-widget-description {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment {
+      background: rgba(241, 245, 249, 0.6);
+      border-color: #E2E8F0;
+      color: #64748B;
+    }
+    
+    /* Default zone colors for light theme (dim) */
+    .theme-light #tour-overlay .thermometer-segment.zone-1 {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-2 {
+      background: rgba(34, 197, 94, 0.1);
+      border-color: rgba(34, 197, 94, 0.4);
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-3 {
+      background: rgba(234, 179, 8, 0.1);
+      border-color: rgba(234, 179, 8, 0.4);
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-4 {
+      background: rgba(234, 179, 8, 0.1);
+      border-color: rgba(234, 179, 8, 0.4);
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-5 {
+      background: rgba(239, 68, 68, 0.1);
+      border-color: rgba(239, 68, 68, 0.4);
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment:hover {
+      opacity: 0.8;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.active {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-1.active {
+      background: rgba(34, 197, 94, 0.3);
+      border-color: #22C55E;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-2.active {
+      background: rgba(34, 197, 94, 0.3);
+      border-color: #22C55E;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-3.active {
+      background: rgba(234, 179, 8, 0.3);
+      border-color: #EAB308;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-4.active {
+      background: rgba(234, 179, 8, 0.3);
+      border-color: #EAB308;
+    }
+    
+    .theme-light #tour-overlay .thermometer-segment.zone-5.active {
+      background: rgba(239, 68, 68, 0.3);
+      border-color: #EF4444;
+    }
+    
+    .theme-light #tour-overlay .readout-value {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .readout-placeholder {
+      color: #64748B;
+    }
+    
+    .theme-light #tour-overlay .readout-example {
+      color: #64748B;
+    }
+    
+    .theme-light #tour-overlay .thermometer-user-feeling {
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .readout-status {
+      color: #64748B;
+    }
+    
+    .theme-light #tour-overlay .tour-cta-subtext {
+      color: #64748B;
+    }
+    
+    .theme-light #tour-overlay .tour-cta-btn {
+      background: rgba(59, 130, 246, 0.12);
+      border-color: #3B82F6;
+      color: #0F172A;
+    }
+    
+    .theme-light #tour-overlay .tour-cta-btn:hover {
+      background: rgba(59, 130, 246, 0.18);
+    }
+    
+    /* HUD big panel headings - tour style (highest priority, at end of CSS) */
+    #hud-big-panel h1,
+    #hud-big-panel h2,
+    #hud-big-panel h3,
+    #hud-big-panel h4,
+    #hud-big-panel h5,
+    #hud-big-panel h6,
+    .hud-active #hud-big-panel h1,
+    .hud-active #hud-big-panel h2,
+    .hud-active #hud-big-panel h3,
+    .hud-active #hud-big-panel h4,
+    .hud-active #hud-big-panel h5,
+    .hud-active #hud-big-panel h6,
+    #hud-container #hud-big-panel h1,
+    #hud-container #hud-big-panel h2,
+    #hud-container #hud-big-panel h3,
+    #hud-container #hud-big-panel h4,
+    #hud-container #hud-big-panel h5,
+    #hud-container #hud-big-panel h6,
+    .hud-active #hud-container #hud-big-panel h1,
+    .hud-active #hud-container #hud-big-panel h2,
+    .hud-active #hud-container #hud-big-panel h3,
+    .hud-active #hud-container #hud-big-panel h4,
+    .hud-active #hud-container #hud-big-panel h5,
+    .hud-active #hud-container #hud-big-panel h6 {
+      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+      white-space: normal !important;
+    }
+    /* Main heading (h2) - 10px margin bottom to paragraph (highest priority) */
+    #hud-big-panel h2,
+    .hud-active #hud-big-panel h2,
+    #hud-container #hud-big-panel h2,
+    .hud-active #hud-container #hud-big-panel h2 {
+      margin: 0 0 10px 0 !important;
+    }
+    /* Subheadings (h3, h4) - smaller than main heading (highest priority) */
+    #hud-big-panel h3,
+    .hud-active #hud-big-panel h3,
+    #hud-container #hud-big-panel h3,
+    .hud-active #hud-container #hud-big-panel h3 {
+      font: 600 18px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+      white-space: normal !important;
+    }
+    #hud-big-panel h4,
+    .hud-active #hud-big-panel h4,
+    #hud-container #hud-big-panel h4,
+    .hud-active #hud-container #hud-big-panel h4 {
+      font: 600 16px/1.3 ui-sans-serif, system-ui !important;
+      color: #CFE8FF !important;
+      margin: 0 0 0 0 !important;
+      font-weight: 600 !important;
+      white-space: normal !important;
+    }
+    /* Paragraph spacing: 20px between paragraphs (highest priority) */
+    #hud-big-panel p,
+    .hud-active #hud-big-panel p,
+    #hud-container #hud-big-panel p,
+    .hud-active #hud-container #hud-big-panel p {
+      margin: 0 0 20px 0 !important;
+      line-height: 1.5 !important;
+    }
+    #hud-big-panel p:last-child,
+    .hud-active #hud-big-panel p:last-child,
+    #hud-container #hud-big-panel p:last-child,
+    .hud-active #hud-container #hud-big-panel p:last-child {
+      margin-bottom: 0 !important;  /* Убрать отступ у последнего абзаца */
+    }
+    /* Remove spacing after subheadings - no margin for first paragraph after h3/h4 (highest priority) */
+    #hud-big-panel h3 + p,
+    #hud-big-panel h4 + p,
+    .hud-active #hud-big-panel h3 + p,
+    .hud-active #hud-big-panel h4 + p,
+    #hud-container #hud-big-panel h3 + p,
+    #hud-container #hud-big-panel h4 + p,
+    .hud-active #hud-container #hud-big-panel h3 + p,
+    .hud-active #hud-container #hud-big-panel h4 + p {
+      margin-top: 0 !important;  /* Убрать отступ у первого абзаца после подзаголовка */
     }
   </style>
 </div>
@@ -1500,7 +2236,7 @@ async function init() {
     console.log('[Bootstrap] Importing modules...');
     const { createEngine } = await import('./core/engine.js?v=37');
     const { initThemeSwitcher } = await import('./ui/themeSwitcher.js?v=37');
-    const { initHUD } = await import('./core/hud-manager.js?v=37');
+    const { initHUD } = await import('./core/hud-manager.js?v=46');
     
     console.log('[Bootstrap] Creating engine...');
     const engine = createEngine({
@@ -1665,6 +2401,7 @@ async function init() {
       const subEl = document.getElementById('tour-sub');
       const textEl = document.getElementById('tour-text');
       const actionsEl = document.getElementById('tour-actions');
+      const interactivesEl = document.getElementById('tour-interactives');
 
       const steps = {
         1: {
@@ -1691,9 +2428,9 @@ async function init() {
           ]
         },
         3: {
-          title: 'Конец официальной части)',
-          sub: 'Люди решают за 6–10 секунд — заголовок, первая строка и наличие аргументов (eye-tracking, F/Z-паттерны, «информационный запах»).',
-          text: '2 первых и третий экраны — намеренно короткие. Это часть исследования: я проверяю гипотезы по вниманию и кликам, фиксирую время на первом экране, глубину скролла и CTR по CTA. Дальше — обзор реальных UX-проблем и рабочих решений для AI-продуктов. Самых любознательных ждёт маленькая дизайнерская пасхалка про метафоры в больших данных ;)',
+          title: 'От знакомства к исследованиям',
+          sub: 'Люди решают за 6–10 секунд — заголовок, первая строка и наличие аргументов (исследование eye-tracking, F/Z-паттерны, «информационный запах»).',
+          text: 'Если верить исследованию, первых 2 экранов должно было хватить  для принятия решения. Если нет... ну что же, это не единственная точка входа, а метрики дадут точную картину. . Далее углубляемся непосредственно в тему UX для AI. Разбираемся в проблемах и исследуем решения ;)',
           actions: [
             { type:'button', primary:false, label:'Назад', on:'back' },
             { type:'button', primary:true, label:'К обзору', on:'finish' },
@@ -1702,6 +2439,289 @@ async function init() {
         }
       };
 
+      // Initialize tour interactives for step 3
+      function initTourInteractives(container) {
+        container.innerHTML = '';
+        container.setAttribute('aria-hidden', 'false');
+        
+        // Create skeleton loaders first
+        const skeleton = document.createElement('div');
+        skeleton.className = 'tour-interactives-skeleton';
+        skeleton.innerHTML = `
+          <div class="skeleton-header"></div>
+          <div class="skeleton-status"></div>
+          <div class="skeleton-interactives">
+            <div class="skeleton-item"></div>
+            <div class="skeleton-item"></div>
+          </div>
+          <div class="skeleton-cta"></div>
+        `;
+        container.appendChild(skeleton);
+        
+        // Create wrapper for interactives
+        const wrapper = document.createElement('div');
+        wrapper.className = 'tour-interactives-wrapper';
+        wrapper.style.display = 'none';
+        
+        // Section header
+        const sectionHeader = document.createElement('h3');
+        sectionHeader.className = 'tour-interactives-header';
+        sectionHeader.textContent = 'С чего стоит начать оптимизировать AI-продукт';
+        
+        wrapper.appendChild(sectionHeader);
+        
+        // Interactive A: TTFT → Trust Thermometer
+        const interactiveA = document.createElement('div');
+        interactiveA.className = 'tour-interactive tour-interactive-a';
+        interactiveA.setAttribute('role', 'group');
+        interactiveA.setAttribute('aria-label', 'TTFT к доверию');
+        
+        // Widget container (header + description + widget)
+        const widgetContainer = document.createElement('div');
+        widgetContainer.className = 'thermometer-widget-container';
+        
+        // Description text (replaces header)
+        const widgetDescription = document.createElement('p');
+        widgetDescription.className = 'thermometer-widget-description';
+        widgetDescription.textContent = 'TTFT формирует доверие. Проверьте сколько времени тратит пользователь продукта на ожидание появления первого токена ответа от модели на экране. Эта одна из основных метрик, которая формирует % удержания пользователей.';
+        
+        // Thermometer container
+        const thermometerContainer = document.createElement('div');
+        thermometerContainer.className = 'thermometer-container';
+        thermometerContainer.setAttribute('role', 'group');
+        thermometerContainer.setAttribute('aria-label', 'Термометр времени ответа');
+        thermometerContainer.setAttribute('tabindex', '0');
+        
+        // Readout value (above buttons, left-aligned)
+        const readout = document.createElement('div');
+        readout.className = 'thermometer-readout';
+        readout.setAttribute('aria-live', 'polite');
+        readout.setAttribute('aria-atomic', 'true');
+        
+        const readoutValue = document.createElement('div');
+        readoutValue.className = 'readout-value';
+        readoutValue.textContent = '95';
+        
+        const readoutStatus = document.createElement('div');
+        readoutStatus.className = 'readout-status';
+        readoutStatus.textContent = '% удержания';
+        
+        readout.appendChild(readoutValue);
+        readout.appendChild(readoutStatus);
+        
+        // Placeholder (top right corner of widget)
+        const readoutPlaceholder = document.createElement('div');
+        readoutPlaceholder.className = 'readout-placeholder';
+        readoutPlaceholder.textContent = '⚡ «Мгновенный контакт»\nПоток сохранён. \nЭто зона "живого отклика".';
+        
+        // Segments container (horizontal row)
+        const segmentsContainer = document.createElement('div');
+        segmentsContainer.className = 'thermometer-segments-container';
+        
+        // Create 5 clickable segments
+        const segments = [
+          { ttft: 1, label: '≤1s', zone: 'zone-1' },
+          { ttft: 2, label: '2s', zone: 'zone-2' },
+          { ttft: 3, label: '3s', zone: 'zone-3' },
+          { ttft: 5, label: '5s', zone: 'zone-4' },
+          { ttft: 7, label: '≥7s', zone: 'zone-5' }
+        ];
+        
+        segments.forEach((seg, index) => {
+          const segment = document.createElement('button');
+          segment.type = 'button';
+          segment.className = `thermometer-segment ${seg.zone}`;
+          segment.setAttribute('role', 'option');
+          segment.setAttribute('aria-selected', 'false');
+          segment.setAttribute('data-ttft', seg.ttft);
+          segment.setAttribute('aria-label', `Время ответа ${seg.label}`);
+          segment.textContent = seg.label;
+          segmentsContainer.appendChild(segment);
+        });
+        
+        thermometerContainer.appendChild(readoutPlaceholder);
+        thermometerContainer.appendChild(readout);
+        thermometerContainer.appendChild(segmentsContainer);
+        
+        // User feeling text (under buttons)
+        const userFeelingEl = document.createElement('p');
+        userFeelingEl.className = 'thermometer-user-feeling';
+        userFeelingEl.textContent = 'Взгляд пользователя в фокусе. Есть ощущение совместной работы. Диалог течёт без паузы.';
+        thermometerContainer.appendChild(userFeelingEl);
+        
+        widgetContainer.appendChild(widgetDescription);
+        widgetContainer.appendChild(thermometerContainer);
+        interactiveA.appendChild(widgetContainer);
+        
+        wrapper.appendChild(interactiveA);
+        container.appendChild(wrapper);
+        
+        // Initialize interactions
+        initThermometerInteraction(thermometerContainer, readoutValue, readoutStatus, readoutPlaceholder, userFeelingEl);
+        
+        // Lazy load: observe when container enters viewport
+        if ('IntersectionObserver' in window) {
+          const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+              if (entry.isIntersecting) {
+                // Hide skeleton, show content
+                skeleton.style.display = 'none';
+                wrapper.style.display = 'block';
+                container.classList.add('loaded');
+                // Track view metric
+                trackMetric('metric_view', { section: 'tour_card_3' });
+                observer.unobserve(entry.target);
+              }
+            });
+          }, { rootMargin: '50px', threshold: 0.1 });
+          observer.observe(container);
+        } else {
+          // Fallback: load immediately
+          skeleton.style.display = 'none';
+          wrapper.style.display = 'block';
+          container.classList.add('loaded');
+        }
+      }
+      
+      // Thermometer interaction handler
+      function initThermometerInteraction(container, readoutValue, readoutStatus, readoutPlaceholder, userFeelingEl) {
+        const segments = container.querySelectorAll('.thermometer-segment');
+        let activeIndex = 0; // Start with first segment (≤1s)
+        
+        // Data from table
+        const widgetData = {
+          1: {
+            retention: 88,
+            displayScore: 95,
+            metaphor: '⚡ «Мгновенный контакт»',
+            userFeeling: 'Пользователь в фокусе. Есть ощущение совместной работы. Диалог течёт без паузы.',
+            uxMeaning: 'Поток сохранён. \nЭто зона "живого отклика".'
+          },
+          2: {
+            retention: 76,
+            displayScore: 76,
+            metaphor: '👁️ «Внимание ещё здесь»',
+            userFeeling: 'Пользователь замечает лёгкую паузу, но ждёт — доверие остаётся.',
+            uxMeaning: 'Комфортный UX. \nМозг всё ещё "в диалоге".'
+          },
+          3: {
+            retention: 63,
+            displayScore: 63,
+            metaphor: '💭 «Начинает отвлекаться»',
+            userFeeling: 'Мысль успевает ускользнуть: человек ждёт, но уже смотрит в сторону, доверие падает.',
+            uxMeaning: 'Риск потери потока. \nНадо показать, что ответ формируется.'
+          },
+          5: {
+            retention: 40,
+            displayScore: 40,
+            metaphor: '⏳ «Сомнение»',
+            userFeeling: 'Половина пользователей решают — система зависла; ощущение контроля почти исчезает.',
+            uxMeaning: 'Критическая зона. \nНужны визуальные признаки активности.'
+          },
+          7: {
+            retention: 16,
+            displayScore: 16,
+            metaphor: '❌ «Потеря контакта»',
+            userFeeling: 'Пользователь уходит мысленно или физически. Сессия воспринимается как сбой.',
+            uxMeaning: 'UX-провал. \nПотеря доверия и вовлечённости.'
+          }
+        };
+        
+        function updateThermometer(ttft) {
+          const data = widgetData[ttft] || widgetData[1];
+          
+          // Update readout
+          readoutValue.textContent = data.displayScore;
+          readoutStatus.textContent = '% удержания';
+          
+          // Update placeholder with metaphor + UX meaning
+          readoutPlaceholder.textContent = `${data.metaphor}\n${data.uxMeaning}`;
+          
+          // Update user feeling text under buttons
+          if (userFeelingEl) {
+            userFeelingEl.textContent = data.userFeeling;
+          }
+          
+          // Update active segment
+          segments.forEach((seg, index) => {
+            const isActive = parseInt(seg.dataset.ttft) === ttft;
+            seg.classList.toggle('active', isActive);
+            seg.setAttribute('aria-selected', isActive ? 'true' : 'false');
+            if (isActive) {
+              activeIndex = index;
+            }
+          });
+          
+          // Track metric
+          trackMetric('metric_interact', { 
+            widget: 'ttft', 
+            valueSec: ttft, 
+            trustScore: data.displayScore 
+          });
+        }
+        
+        // Click handler for segments
+        segments.forEach(segment => {
+          segment.addEventListener('click', () => {
+            const ttft = parseInt(segment.dataset.ttft);
+            updateThermometer(ttft);
+          });
+        });
+        
+        // Keyboard support (arrow keys on container)
+        container.addEventListener('keydown', (e) => {
+          if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            if (activeIndex > 0) {
+              const prevSegment = segments[activeIndex - 1];
+              const ttft = parseInt(prevSegment.dataset.ttft);
+              updateThermometer(ttft);
+              prevSegment.focus();
+            }
+          } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (activeIndex < segments.length - 1) {
+              const nextSegment = segments[activeIndex + 1];
+              const ttft = parseInt(nextSegment.dataset.ttft);
+              updateThermometer(ttft);
+              nextSegment.focus();
+            }
+          } else if (e.key === 'Home') {
+            e.preventDefault();
+            const firstSegment = segments[0];
+            const ttft = parseInt(firstSegment.dataset.ttft);
+            updateThermometer(ttft);
+            firstSegment.focus();
+          } else if (e.key === 'End') {
+            e.preventDefault();
+            const lastSegment = segments[segments.length - 1];
+            const ttft = parseInt(lastSegment.dataset.ttft);
+            updateThermometer(ttft);
+            lastSegment.focus();
+          }
+        });
+        
+        // Initialize with first segment
+        updateThermometer(1);
+      }
+      
+      // CTA download handler
+      function initCTADownload(button) {
+        button.addEventListener('click', (e) => {
+          trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
+          // Default behavior (download) will handle the rest
+        });
+      }
+      
+      // Analytics/metrics tracking
+      function trackMetric(name, data) {
+        if (typeof window.analytics !== 'undefined' && typeof window.analytics.track === 'function') {
+          window.analytics.track(name, data);
+        } else {
+          console.info(`[Analytics] ${name}:`, data);
+        }
+      }
+      
       // allow only <br> in text; escape everything else; also support \n -> <br>
       function sanitizeAllowBr(str){
         return String(str)
@@ -1739,6 +2759,12 @@ async function init() {
         subEl.textContent = s.sub;
         textEl.innerHTML = sanitizeAllowBr(s.text);
         actionsEl.innerHTML = '';
+        // Clear and hide interactives by default
+        if (interactivesEl) {
+          interactivesEl.innerHTML = '';
+          interactivesEl.setAttribute('aria-hidden', 'true');
+          interactivesEl.classList.remove('loaded');
+        }
         s.actions.forEach(a => {
           if (a.type === 'link') {
             const link = document.createElement('a');
@@ -1776,6 +2802,30 @@ async function init() {
             actionsEl.appendChild(btn);
           }
         });
+        // Add "План оптимизации" button for step 3, after all actions but before close
+        if (step === 3) {
+          const planButton = document.createElement('a');
+          planButton.href = '/assets/UX4AI_90day_plan.pdf';
+          planButton.className = 'btn';
+          planButton.setAttribute('download', 'UX4AI_90day_plan.pdf');
+          planButton.setAttribute('aria-label', 'Скачать план оптимизации');
+          planButton.textContent = 'План оптимизации';
+          // Handle PDF download
+          planButton.target = '_blank';
+          planButton.addEventListener('click', (e) => {
+            setTimeout(() => {
+              const downloadLink = document.createElement('a');
+              downloadLink.href = '/assets/UX4AI_90day_plan.pdf';
+              downloadLink.download = 'UX4AI_90day_plan.pdf';
+              downloadLink.style.display = 'none';
+              document.body.appendChild(downloadLink);
+              downloadLink.click();
+              document.body.removeChild(downloadLink);
+            }, 100);
+            trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
+          });
+          actionsEl.appendChild(planButton);
+        }
         // add close link as last action
         const closeA = document.createElement('a');
         closeA.href = '#';
@@ -1783,11 +2833,28 @@ async function init() {
         closeA.textContent = 'Закрыть';
         closeA.addEventListener('click', (e)=>{ e.preventDefault(); dismissTour(); });
         actionsEl.appendChild(closeA);
+        
+        // Add interactives for step 3
+        if (step === 3 && interactivesEl) {
+          initTourInteractives(interactivesEl);
+        }
+        
         // reflect in hash (optional)
         try { history.replaceState(null, '', `#tour/${step}`); } catch {}
       }
-      function showTour(){ overlay.classList.remove('hidden'); overlay.setAttribute('aria-hidden','false'); document.body.classList.add('tour-active'); }
-      function hideTour(){ overlay.classList.add('hidden'); overlay.setAttribute('aria-hidden','true'); document.body.classList.remove('tour-active'); try { const btn = document.getElementById('tour-restart-btn'); if (btn) btn.style.display = 'inline-flex'; } catch {} }
+      function showTour(){ 
+        overlay.classList.remove('hidden'); 
+        overlay.setAttribute('aria-hidden','false'); 
+        document.body.classList.add('tour-active');
+        document.documentElement.classList.add('tour-active');
+      }
+      function hideTour(){ 
+        overlay.classList.add('hidden'); 
+        overlay.setAttribute('aria-hidden','true'); 
+        document.body.classList.remove('tour-active');
+        document.documentElement.classList.remove('tour-active');
+        try { const btn = document.getElementById('tour-restart-btn'); if (btn) btn.style.display = 'inline-flex'; } catch {} 
+      }
       function finishTour(){ 
         hideTour(); 
         try { localStorage.setItem('tour_done','1'); } catch {} 
