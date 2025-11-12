@@ -100,6 +100,28 @@ body {
 }
 /* While orbit is active on mobile, block browser gestures (pan/zoom) */
 .orbit-active, .orbit-active body, .orbit-active #three-container { touch-action: none; }
+/* Mobile performance optimizations */
+@media (max-width: 767px) {
+  /* Disable tap highlight for better performance */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* Optimize touch interactions for buttons and interactive elements */
+  button, a, .btn, [role="button"], [tabindex], .tour-segment, .thermometer-segment {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  /* Prevent text selection on interactive elements */
+  .tour-card, .hud-big-panel, .hud-small-panel {
+    -webkit-touch-callout: none;
+  }
+  /* Optimize will-change usage - only for elements that actually animate */
+  .grid-line {
+    will-change: auto; /* Remove will-change on mobile for better performance */
+  }
+}
     /* Height is set dynamically based on segments; keep minimal here */
     #three-container { 
       position:fixed; 
@@ -1305,6 +1327,7 @@ body:hover::-webkit-scrollbar-thumb {
 /* === HUD Grid hologram effect === */
 .grid-line {
   pointer-events: none;
+  will-change: opacity, filter, transform, background-position;
   /* dashed via repeating gradient; color set via --c */
   --c: var(--grid-color, rgba(92, 182, 255, 0.18));
   --dash: 10px;   /* length of visible segment */
@@ -1317,7 +1340,6 @@ body:hover::-webkit-scrollbar-thumb {
   mix-blend-mode: screen;
   opacity: var(--grid-opacity, 0.85);
   filter: hue-rotate(var(--grid-hue, 0deg)) saturate(var(--grid-sat, 1.1));
-  will-change: opacity, filter, transform, background-position;
 }
 .grid-line::after {
   content: '';
@@ -1355,6 +1377,13 @@ body:hover::-webkit-scrollbar-thumb {
   background-position: 0 var(--shimmerV, 0%);
 }
 /* Убраны CSS-анимации; значения управляются из движка через CSS-переменные */
+
+/* Mobile performance: remove will-change on mobile */
+@media (max-width: 767px) {
+  .grid-line {
+    will-change: auto; /* Remove will-change on mobile for better performance */
+  }
+}
 
 /* Final override: hide container scrollbar on mobile/tablet (Chromium/WebKit + Firefox) */
 @media (max-width: 767px) {
@@ -2430,7 +2459,7 @@ async function init() {
         3: {
           title: 'От знакомства к исследованиям',
           sub: 'Люди решают за 6–10 секунд — заголовок, первая строка и наличие аргументов (исследование eye-tracking, F/Z-паттерны, «информационный запах»).',
-          text: 'Если верить исследованию, первых 2 экранов должно было хватить  для принятия решения. Если нет... ну что же, это не единственная точка входа, а метрики дадут точную картину. . Далее углубляемся непосредственно в тему UX для AI. Разбираемся в проблемах и исследуем решения ;)',
+          text: 'Если верить исследованию, первых 2 экранов должно было хватить  для принятия решения. Если нет... ну что же, это не единственная точка входа, а метрики дадут точную картину. Далее углубляемся непосредственно в тему UX для AI. Разбираемся в проблемах и исследуем решения ;)',
           actions: [
             { type:'button', primary:false, label:'Назад', on:'back' },
             { type:'button', primary:true, label:'К обзору', on:'finish' },
@@ -3449,16 +3478,26 @@ async function init() {
     });
 
     // Отслеживаем изменения layout HUD (display/классы/inline-стили)
+    // Debounce для мобильных устройств для улучшения производительности
+    let gridBuildTimeout = null;
+    const debouncedBuildGrid = () => {
+      clearTimeout(gridBuildTimeout);
+      const isMobile = window.innerWidth <= 767;
+      const delay = isMobile ? 100 : 0; // Задержка на мобильных
+      gridBuildTimeout = setTimeout(() => {
+        buildGrid();
+      }, delay);
+    };
     const moTargets = ['#site-header', '#links-panel', '#hud-container', '#hud-small-panel', '#hud-big-panel', '#mobile-orbit-toggle']
       .map(sel => document.querySelector(sel)).filter(Boolean);
     if (moTargets.length) {
-      const mo = new MutationObserver(() => buildGrid());
+      const mo = new MutationObserver(debouncedBuildGrid);
       moTargets.forEach(t => mo.observe(t, { attributes: true, attributeFilter: ['style', 'class'], subtree: true }));
     }
     // Watch for hud-active class changes on document root and tour overlay
     const hudObserver = new MutationObserver(() => {
       if (isGridActive()) {
-        buildGrid();
+        debouncedBuildGrid();
       } else {
         // Clear grid when HUD is inactive
         if (ctx) {
@@ -3478,11 +3517,11 @@ async function init() {
               document.body.classList.remove('tour-active');
             } else {
               document.body.classList.add('tour-active');
-              buildGrid(); // rebuild grid when tour opens
+              debouncedBuildGrid(); // rebuild grid when tour opens
             }
             // Trigger grid rebuild
             if (isGridActive()) {
-              buildGrid();
+              debouncedBuildGrid();
             } else {
               if (ctx) {
                 const vw = window.innerWidth, vh = window.innerHeight;
