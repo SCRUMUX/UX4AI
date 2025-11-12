@@ -1,0 +1,182 @@
+/**
+ * Synaptik Design System - CSS Design Tokens
+ * Refactored and optimized for UX4AI.PRO
+ * Base: Calm theme
+ */
+
+:root {
+  /* === Color Tokens === */
+  
+  /* Background Colors */
+  --Color/Dark/Background/Primary: #0B0F14;
+  --Color/Dark/Background/Secondary: #121722;
+  --Color/Dark/Background/Tertiary: #0F1420;
+  
+  /* Surface Colors */
+  --Color/Dark/Surface/Base: rgba(18, 23, 34, 0.90);
+  --Color/Dark/Surface/Elevated: rgba(18, 23, 34, 0.60);
+  --Color/Dark/Surface/Ghost: rgba(18, 23, 34, 0.15);
+  --Color/Dark/Surface/Overlay: rgba(5, 8, 12, 0.60);
+  
+  /* Text Colors */
+  --Color/Light/Text/Primary: #E6EEF8;
+  --Color/Light/Text/Secondary: #CFE8FF;
+  --Color/Light/Text/Tertiary: #9AA6B2;
+  --Color/Light/Text/Muted: #9AA6B2;
+  
+  /* Accent Colors */
+  --Color/Accent/Primary: #5B9CFF;
+  --Color/Accent/Hover: #4A8AE6;
+  --Color/Accent/Active: #3B7BD6;
+  
+  /* Border Colors */
+  --Color/Dark/Border/Default: #243041;
+  --Color/Dark/Border/Subtle: rgba(36, 48, 65, 0.4);
+  --Color/Dark/Border/Accent: #5B9CFF;
+  
+  /* State Colors */
+  --Color/State/Hover/Background: rgba(91, 156, 255, 0.08);
+  --Color/State/Active/Background: rgba(91, 156, 255, 0.15);
+  --Color/State/Selected/Background: rgba(91, 156, 255, 0.12);
+  --Color/State/Hover/Surface: rgba(36, 48, 65, 0.95);
+  
+  /* Effect Colors */
+  --Color/Effect/Glow: rgba(91, 156, 255, 0.5);
+  --Color/Effect/Shadow/Soft: rgba(0, 0, 0, 0.25);
+  --Color/Effect/Shadow/Medium: rgba(0, 0, 0, 0.45);
+  
+  /* === Legacy Compatibility Tokens === */
+  --bg: var(--Color/Dark/Background/Primary);
+  --text: var(--Color/Light/Text/Primary);
+  --panel: var(--Color/Dark/Background/Tertiary);
+  --accent: var(--Color/Accent/Primary);
+  --border: var(--Color/Dark/Border/Default);
+  --muted: var(--Color/Light/Text/Muted);
+  --glow: var(--Color/Effect/Glow);
+  --panel-solid: var(--Color/Dark/Background/Secondary);
+  --panel-ghost: var(--Color/Dark/Surface/Ghost);
+  --shadow-soft: 0 2px 10px var(--Color/Effect/Shadow/Soft);
+  
+  /* === Spacing Tokens === */
+  --Spacing/XXS: 2px;
+  --Spacing/XS: 4px;
+  --Spacing/S: 6px;
+  --Spacing/SM: 8px;
+  --Spacing/M: 10px;
+  --Spacing/ML: 12px;
+  --Spacing/L: 14px;
+  --Spacing/XL: 18px;
+  --Spacing/XXL: 20px;
+  --Spacing/XXXL: 24px;
+  
+  /* === Border Radius Tokens === */
+  --Radius/None: 0;
+  --Radius/XS: 6px;
+  --Radius/S: 8px;
+  --Radius/M: 10px;
+  --Radius/L: 12px;
+  --Radius/Round: 50%;
+  
+  /* === Typography Tokens === */
+  --Font/Family/Base: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
+  
+  /* Font Sizes */
+  --Font/Size/XS: 12px;
+  --Font/Size/S: 14px;
+  --Font/Size/Base: 16px;
+  --Font/Size/M: 18px;
+  --Font/Size/L: 20px;
+  --Font/Size/XL: 24px;
+  
+  /* Font Weights */
+  --Font/Weight/Light: 200;
+  --Font/Weight/Regular: 400;
+  --Font/Weight/Medium: 500;
+  --Font/Weight/Semibold: 600;
+  --Font/Weight/Bold: 700;
+  
+  /* Line Heights */
+  --Font/LineHeight/Tight: 1.3;
+  --Font/LineHeight/Normal: 1.4;
+  --Font/LineHeight/Base: 1.5;
+  --Font/LineHeight/Relaxed: 1.6;
+  
+  /* Letter Spacing */
+  --Font/LetterSpacing/Tight: 0.2px;
+  --Font/LetterSpacing/Normal: 0;
+  
+  /* === Shadow Tokens === */
+  --Shadow/Small: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --Shadow/Medium: 0 2px 10px rgba(0, 0, 0, 0.25);
+  --Shadow/Large: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --Shadow/XLarge: 0 12px 40px rgba(0, 0, 0, 0.45);
+  --Shadow/Inset: 0 0 0 1px rgba(36, 48, 65, 0.4) inset;
+  
+  /* === Backdrop Filter Tokens === */
+  --Backdrop/Blur/Soft: blur(2px) saturate(120%);
+  --Backdrop/Blur/Medium: blur(6px) saturate(140%);
+  --Backdrop/Blur/Strong: blur(20px) saturate(160%);
+  
+  /* === Z-Index Tokens === */
+  --ZIndex/Base: 1;
+  --ZIndex/Labels: 900;
+  --ZIndex/Overlay: 900;
+  --ZIndex/HUD/Backdrop: 940;
+  --ZIndex/HUD/Panel: 1000;
+  --ZIndex/Links: 1850;
+  --ZIndex/Header: 2000;
+  --ZIndex/Grid: 2490;
+  --ZIndex/Tour: 2500;
+  
+  /* === Transition Tokens === */
+  --Transition/Fast: 0.1s;
+  --Transition/Base: 0.2s;
+  --Transition/Slow: 0.3s;
+  --Transition/Default: all var(--Transition/Base) ease;
+  --Transition/Background: background var(--Transition/Base) ease;
+  --Transition/Color: color var(--Transition/Base) ease;
+  --Transition/Opacity: opacity var(--Transition/Slow) ease;
+  
+  /* === Component-Specific Tokens === */
+  
+  /* Button */
+  --Button/Padding/H: var(--Spacing/ML);
+  --Button/Padding/V: var(--Spacing/SM);
+  --Button/Height: 36px;
+  --Button/BorderRadius: var(--Radius/None);
+  --Button/Gap: var(--Spacing/SM);
+  
+  /* Panel */
+  --Panel/Padding: var(--Spacing/XXL);
+  --Panel/BorderRadius: var(--Radius/None);
+  --Panel/BorderWidth: 1px;
+  
+  /* Header */
+  --Header/Height: auto;
+  --Header/Padding/H: 14px;
+  --Header/Padding/V: 6px;
+  --Header/Gap: var(--Spacing/ML);
+}
+
+/* === Theme Overrides === */
+
+/* Matrix Theme */
+:root.theme-matrix,
+body.theme-matrix {
+  --Color/Dark/Background/Primary: #000A0A;
+  --Color/Dark/Background/Secondary: #001A1A;
+  --Color/Dark/Background/Tertiary: #001A1A;
+  
+  --Color/Light/Text/Primary: #D9FFD9;
+  --Color/Light/Text/Secondary: #D9FFD9;
+  --Color/Light/Text/Tertiary: #88FF99;
+  --Color/Light/Text/Muted: #88FF99;
+  
+  --Color/Accent/Primary: #00FF66;
+  --Color/Accent/Hover: #00E65C;
+  --Color/Accent/Active: #00CC52;
+  
+  --Color/Dark/Border/Default: #004444;
+  --Color/Effect/Glow: rgba(0, 255, 102, 0.5);
+}
+
