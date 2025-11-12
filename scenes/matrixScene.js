@@ -863,6 +863,11 @@ export function matrixSceneFactory(config) {
 
       const onMouseDown = (e) => {
         if (e.button !== 0) return; // Only left button
+        // Don't activate orbit mode when HUD is active
+        if (document.documentElement.classList.contains('hud-active') || 
+            document.body.classList.contains('hud-active')) {
+          return;
+        }
         console.log('[MatrixScene] mousedown detected, localOrbit:', localOrbit);
         
         isMouseDown = true;
@@ -874,6 +879,11 @@ export function matrixSceneFactory(config) {
         
         clearTimeout(orbitPressTimer);
         orbitPressTimer = setTimeout(() => {
+          // Check again if HUD is still active before entering orbit mode
+          if (document.documentElement.classList.contains('hud-active') || 
+              document.body.classList.contains('hud-active')) {
+            return;
+          }
           if (isMouseDown && orbitPending) {
             console.log('[MatrixScene] Entering orbit mode (timer)');
             enterLocalOrbit(e);
@@ -883,6 +893,11 @@ export function matrixSceneFactory(config) {
       
       const onMouseMove = (e) => {
         if (!isMouseDown) return;
+        // Don't activate orbit mode when HUD is active
+        if (document.documentElement.classList.contains('hud-active') || 
+            document.body.classList.contains('hud-active')) {
+          return;
+        }
         
         const dx = e.clientX - lastX;
         const dy = e.clientY - lastY;
