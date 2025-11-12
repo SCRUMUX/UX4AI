@@ -2,7 +2,46 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1" name="viewport"/>
+<!-- Критический CSS - предотвращает белый экран при загрузке -->
+<style>
+  /* Базовые стили для мгновенного применения - предотвращают FOUC */
+  html {
+    background: #0B0F14 !important;
+    color: #E6EEF8 !important;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    overflow-x: hidden;
+  }
+  body {
+    background: transparent !important;
+    color: #E6EEF8 !important;
+    margin: 0;
+    padding: 0;
+  }
+  /* Хедер - светлый текст на темном фоне */
+  header#site-header {
+    background: rgba(18, 23, 34, 0.15) !important;
+    color: #E6EEF8 !important;
+  }
+  .header-logo .name {
+    color: #CFE8FF !important;
+  }
+  .header-logo .tagline {
+    color: #9AA6B2 !important;
+  }
+  .header-btn {
+    color: #9AA6B2 !important;
+    background: transparent !important;
+  }
+</style>
+<meta content="width=device-width, initial-scale=1, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" name="viewport"/>
+<!-- iOS Safari: темная status bar -->
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<!-- Android Chrome: темная theme color -->
+<meta name="theme-color" content="#0B0F14"/>
+<meta name="msapplication-navbutton-color" content="#0B0F14"/>
 <title>Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI</title>
 <meta name="description" content="Владимир Костял — проектирую UX-архитектуру и интерфейсы для AI‑сервисов. UX4AI: паттерны, подходы и решения для взаимодействия с ИИ."/>
 <meta name="keywords" content="UX, AI, UX архитектура, интерфейсы, проектирование, взаимодействие с ИИ, UX4AI"/>
@@ -92,9 +131,7 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="192x192" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="./android-chrome-512x512.png"/>
-<link rel="preload" href="./styles/tokens.css" as="style"/>
 <link rel="stylesheet" href="./styles/tokens.css"/>
-<link rel="preload" href="./styles/main.css" as="style"/>
 <link rel="stylesheet" href="./styles/main.css"/>
 <style>
     /* Scroll world: make body tall so camera flies segment-by-segment */
@@ -121,6 +158,29 @@ body {
 .orbit-active, .orbit-active body, .orbit-active #three-container { touch-action: none; }
 /* Mobile performance optimizations */
 @media (max-width: 767px) {
+  /* Предотвращение проблем с масштабированием при перезагрузке */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  body {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    /* Убрал transform: scale - он ломает скролл */
+    width: 100% !important;
+    max-width: 100vw !important;
+    /* Разрешить скролл в обычном режиме */
+    overflow-x: hidden !important;
+    /* Убрал !important из overflow-y - navigation.js управляет скроллом */
+    overflow-y: auto;
+    position: relative !important;
+    /* Убрал touch-action: pan-y - он конфликтует с navigation.js */
+    /* Скролл управляется через navigation.js */
+  }
+  
   /* Disable tap highlight for better performance */
   * {
     -webkit-tap-highlight-color: transparent;
@@ -133,6 +193,11 @@ body {
     -webkit-user-select: none;
     /* Remove transitions on mobile for instant feedback */
     transition: none !important;
+    /* Предотвращение залипаний - оптимизация отклика */
+    -webkit-tap-highlight-color: rgba(91, 156, 255, 0.1);
+    /* Улучшение производительности */
+    will-change: auto;
+    transform: translateZ(0); /* GPU acceleration */
   }
   /* Reduce transition duration for tour buttons on mobile */
   #tour-overlay .tour-actions .btn {
@@ -1639,26 +1704,83 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay .tour-body .tour-list a:visited { color: #9AA6B2 !important; }
     #tour-overlay .tour-body .tour-list a:visited:hover { color: #5B9CFF !important; }
     #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
-    #tour-overlay .tour-actions .btn { padding: 10px 14px; border-radius: 0; border:1px solid #243041; background: rgba(18,23,34,0.9); color:#9AA6B2; font: 400 18px/1 ui-sans-serif, system-ui; text-decoration: none; cursor: pointer; transition: background .2s, color .2s, border-color .2s; display:inline-flex; align-items:center; justify-content:center; height: 44px; box-sizing: border-box; }
+    #tour-overlay .tour-actions .btn { 
+      padding: 10px 14px; 
+      border-radius: 0; 
+      border:1px solid #243041; 
+      background: rgba(18,23,34,0.9); 
+      color:#9AA6B2; 
+      font: 400 18px/1 ui-sans-serif, system-ui; 
+      text-decoration: none; 
+      cursor: pointer; 
+      transition: background .2s, color .2s, border-color .2s; 
+      display:inline-flex; 
+      align-items:center; 
+      justify-content:center; 
+      height: 44px; 
+      box-sizing: border-box;
+      /* Критично для мобильных - улучшение отклика */
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
+      pointer-events: auto !important;
+      position: relative;
+      z-index: 2503;
+    }
     #tour-overlay .tour-actions .btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
     #tour-overlay .tour-actions .btn-primary { color:#CFE8FF; background: rgba(91,156,255,0.12); border-color:#5B9CFF; }
     #tour-overlay .tour-actions .btn-primary:hover { background: rgba(91,156,255,0.18); }
     @media (max-width: 479px) {
-      #tour-overlay { align-items: flex-start; padding-top: 20px; padding-bottom: 40px; }
+      #tour-overlay { 
+        align-items: flex-start; 
+        padding-top: 20px; 
+        padding-bottom: 40px;
+        /* Исправление проблем с зависанием */
+        position: fixed !important;
+        z-index: 2500 !important;
+      }
       /* Card fills the viewport height with 20px top and 40px bottom gutters; buttons at bottom */
       #tour-overlay .tour-card {
         padding: 16px;
-        margin-left: auto; margin-right: auto;
-        display: flex; flex-direction: column;
+        margin-left: auto; 
+        margin-right: auto;
+        display: flex; 
+        flex-direction: column;
         width: calc(100vw - 40px);
         min-height: calc(100dvh - 60px);
         max-height: calc(100dvh - 60px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
+        /* Исправление проблем с откликом */
+        position: relative;
+        z-index: 2501;
+        /* Предотвращение проблем с масштабированием */
+        transform: scale(1) !important;
+        transform-origin: top center;
       }
-      #tour-overlay .tour-body { flex: 1 1 auto; }
-      #tour-overlay .tour-actions { flex-direction: column; margin-top: auto; }
-      #tour-overlay .tour-actions .btn { width: 100%; text-align: center; }
+      #tour-overlay .tour-body { 
+        flex: 1 1 auto; 
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      #tour-overlay .tour-actions { 
+        flex-direction: column; 
+        margin-top: auto;
+        /* Улучшение отклика кнопок */
+        position: relative;
+        z-index: 2502;
+      }
+      #tour-overlay .tour-actions .btn { 
+        width: 100%; 
+        text-align: center;
+        /* Критично для мобильных - улучшение отклика */
+        min-height: 44px !important;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
+        /* Предотвращение проблем с кликами */
+        pointer-events: auto !important;
+        position: relative;
+        z-index: 2503;
+      }
     }
     /* Block page scroll when tour is active, but allow scrolling inside tour card */
     body.tour-active,
@@ -1667,6 +1789,34 @@ body:hover::-webkit-scrollbar-thumb {
       height: 100% !important;
       position: fixed !important;
       width: 100% !important;
+      /* Предотвращение проблем с масштабированием на мобильных */
+      touch-action: none;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+    /* Разрешить скролл только внутри карточки тура */
+    body.tour-active #tour-overlay .tour-card,
+    body.tour-active #tour-overlay .tour-body {
+      touch-action: pan-y;
+      -webkit-overflow-scrolling: touch;
+    }
+    /* В обычном режиме (не тур, не HUD) - разрешить скролл для 3D-сцены */
+    @media (max-width: 767px) {
+      html:not(.tour-active):not(.hud-active):not(.orbit-active) {
+        overflow-x: hidden !important;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      body:not(.tour-active):not(.hud-active):not(.orbit-active) {
+        overflow-x: hidden !important;
+        /* Убрал !important - navigation.js управляет скроллом */
+        overflow-y: auto;
+        position: relative !important;
+        /* Убрал touch-action - скролл управляется через navigation.js */
+        -webkit-overflow-scrolling: touch;
+        /* НЕ устанавливаем height - navigation.js устанавливает высоту динамически */
+      }
+      /* Не блокируем touch-action для #three-container - navigation.js управляет этим */
     }
     /* Allow scrolling inside tour card */
     #tour-overlay .tour-card {
