@@ -1431,7 +1431,7 @@ body:hover::-webkit-scrollbar-thumb {
 </div>
 
 <!-- Guided Tour Overlay (A/B/C) -->
-<div id="tour-overlay" aria-hidden="true" class="hidden">
+<div id="tour-overlay" aria-hidden="true" class="hidden" inert>
   <div class="tour-backdrop"></div>
   <div class="tour-card" role="dialog" aria-modal="true" aria-labelledby="tour-title" aria-describedby="tour-text">
     <div class="tour-header">
@@ -2691,10 +2691,15 @@ async function init() {
         
         // Click handler for segments
         segments.forEach(segment => {
-          segment.addEventListener('click', () => {
-            const ttft = parseInt(segment.dataset.ttft);
+          const ttft = parseInt(segment.dataset.ttft);
+          // Handle both click and touch events for iOS compatibility
+          const handleSegmentClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             updateThermometer(ttft);
-          });
+          };
+          segment.addEventListener('click', handleSegmentClick);
+          segment.addEventListener('touchend', handleSegmentClick);
         });
         
         // Keyboard support (arrow keys on container)
@@ -2825,9 +2830,34 @@ async function init() {
             const btn = document.createElement('button');
             btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
             btn.textContent = a.label;
-            if (a.on === 'next') btn.addEventListener('click', () => setStep(Math.min(3, step+1)));
-            if (a.on === 'back') btn.addEventListener('click', () => setStep(Math.max(1, step-1)));
-            if (a.on === 'finish') btn.addEventListener('click', finishTour);
+            // Handle both click and touch events for iOS compatibility
+            if (a.on === 'next') {
+              const handleNext = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setStep(Math.min(3, step+1));
+              };
+              btn.addEventListener('click', handleNext);
+              btn.addEventListener('touchend', handleNext);
+            }
+            if (a.on === 'back') {
+              const handleBack = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setStep(Math.max(1, step-1));
+              };
+              btn.addEventListener('click', handleBack);
+              btn.addEventListener('touchend', handleBack);
+            }
+            if (a.on === 'finish') {
+              const handleFinish = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                finishTour();
+              };
+              btn.addEventListener('click', handleFinish);
+              btn.addEventListener('touchend', handleFinish);
+            }
             actionsEl.appendChild(btn);
           }
         });
@@ -2841,7 +2871,10 @@ async function init() {
           planButton.textContent = 'План оптимизации';
           // Handle PDF download
           planButton.target = '_blank';
-          planButton.addEventListener('click', (e) => {
+          // Handle both click and touch events for iOS compatibility
+          const handlePlanClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setTimeout(() => {
               const downloadLink = document.createElement('a');
               downloadLink.href = '/assets/UX4AI_90day_plan.pdf';
@@ -2852,7 +2885,9 @@ async function init() {
               document.body.removeChild(downloadLink);
             }, 100);
             trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
-          });
+          };
+          planButton.addEventListener('click', handlePlanClick);
+          planButton.addEventListener('touchend', handlePlanClick);
           actionsEl.appendChild(planButton);
         }
         // add close link as last action
@@ -2860,7 +2895,14 @@ async function init() {
         closeA.href = '#';
         closeA.className = 'close-link';
         closeA.textContent = 'Закрыть';
-        closeA.addEventListener('click', (e)=>{ e.preventDefault(); dismissTour(); });
+        // Handle both click and touch events for iOS compatibility
+        const handleClose = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dismissTour();
+        };
+        closeA.addEventListener('click', handleClose);
+        closeA.addEventListener('touchend', handleClose);
         actionsEl.appendChild(closeA);
         
         // Add interactives for step 3
@@ -2873,13 +2915,15 @@ async function init() {
       }
       function showTour(){ 
         overlay.classList.remove('hidden'); 
-        overlay.setAttribute('aria-hidden','false'); 
+        overlay.setAttribute('aria-hidden','false');
+        overlay.removeAttribute('inert'); // Remove inert to enable interactions on iOS
         document.body.classList.add('tour-active');
         document.documentElement.classList.add('tour-active');
       }
       function hideTour(){ 
         overlay.classList.add('hidden'); 
-        overlay.setAttribute('aria-hidden','true'); 
+        overlay.setAttribute('aria-hidden','true');
+        overlay.setAttribute('inert', ''); // Add inert when hidden to prevent focus issues 
         document.body.classList.remove('tour-active');
         document.documentElement.classList.remove('tour-active');
         try { const btn = document.getElementById('tour-restart-btn'); if (btn) btn.style.display = 'inline-flex'; } catch {} 
@@ -2942,7 +2986,24 @@ async function init() {
         showTour();
       };
       // Close (X)
-      try { const closeBtn = document.getElementById('tour-close'); if (closeBtn) { closeBtn.addEventListener('click', dismissTour); closeBtn.addEventListener('keydown', (e)=>{ if(e.key==='Enter'||e.key===' ') { e.preventDefault(); dismissTour(); } }); } } catch {}
+      try { 
+        const closeBtn = document.getElementById('tour-close'); 
+        if (closeBtn) { 
+          const handleCloseBtn = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dismissTour();
+          };
+          closeBtn.addEventListener('click', handleCloseBtn);
+          closeBtn.addEventListener('touchend', handleCloseBtn);
+          closeBtn.addEventListener('keydown', (e)=>{ 
+            if(e.key==='Enter'||e.key===' ') { 
+              e.preventDefault(); 
+              dismissTour(); 
+            } 
+          }); 
+        } 
+      } catch {}
       tryShow();
     })();
 
