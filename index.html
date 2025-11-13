@@ -199,9 +199,9 @@ body {
     will-change: auto;
     transform: translateZ(0); /* GPU acceleration */
   }
-  /* Reduce transition duration for tour buttons on mobile */
+  /* Remove transitions for tour buttons on mobile for instant response */
   #tour-overlay .tour-actions .btn {
-    transition: background 0.1s, color 0.1s, border-color 0.1s !important;
+    transition: none !important;
   }
   /* Disable hover effects on mobile - they can interfere with touch */
   #tour-overlay .tour-actions .btn:hover {
@@ -1280,7 +1280,7 @@ html {
 /* === Mobile: scroll the HUD container instead of the big panel to guarantee bottom visibility === */
 @media (max-width: 479px) {
   #hud-container {
-    top: 72px !important;
+    top: 64px !important;
     left: 50% !important;
     transform: translateX(-50%) !important;
     width: 94% !important;
@@ -1704,7 +1704,7 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay .tour-body .tour-list a:visited { color: #9AA6B2 !important; }
     #tour-overlay .tour-body .tour-list a:visited:hover { color: #5B9CFF !important; }
     #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
-    #tour-overlay .tour-actions .btn { 
+      #tour-overlay .tour-actions .btn { 
       padding: 10px 14px; 
       border-radius: 0; 
       border:1px solid #243041; 
@@ -1725,6 +1725,9 @@ body:hover::-webkit-scrollbar-thumb {
       pointer-events: auto !important;
       position: relative;
       z-index: 2503;
+      /* GPU acceleration for better performance */
+      will-change: background-color, color;
+      transform: translateZ(0);
     }
     #tour-overlay .tour-actions .btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
     #tour-overlay .tour-actions .btn-primary { color:#CFE8FF; background: rgba(91,156,255,0.12); border-color:#5B9CFF; }
@@ -1737,6 +1740,9 @@ body:hover::-webkit-scrollbar-thumb {
         /* Исправление проблем с зависанием */
         position: fixed !important;
         z-index: 2500 !important;
+        /* Optimize for mobile performance */
+        will-change: contents;
+        transform: translateZ(0);
       }
       /* Card fills the viewport height with 20px top and 40px bottom gutters; buttons at bottom */
       #tour-overlay .tour-card {
@@ -1746,21 +1752,22 @@ body:hover::-webkit-scrollbar-thumb {
         display: flex; 
         flex-direction: column;
         width: calc(100vw - 40px);
-        min-height: calc(100dvh - 60px);
         max-height: calc(100dvh - 60px);
         overflow-y: auto;
         -webkit-overflow-scrolling: touch;
         /* Исправление проблем с откликом */
         position: relative;
         z-index: 2501;
-        /* Предотвращение проблем с масштабированием */
-        transform: scale(1) !important;
+        /* Предотвращение проблем с масштабированием и GPU acceleration */
+        transform: scale(1) translateZ(0) !important;
         transform-origin: top center;
+        /* GPU acceleration for smooth scrolling */
+        will-change: scroll-position;
       }
       #tour-overlay .tour-body { 
-        flex: 1 1 auto; 
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        flex: 0 0 auto; 
+        overflow-y: visible;
+        -webkit-overflow-scrolling: auto;
       }
       #tour-overlay .tour-actions { 
         flex-direction: column; 
@@ -1780,6 +1787,14 @@ body:hover::-webkit-scrollbar-thumb {
         pointer-events: auto !important;
         position: relative;
         z-index: 2503;
+        /* Remove transitions on mobile for instant feedback */
+        transition: none !important;
+        /* GPU acceleration for better performance */
+        will-change: background-color;
+        transform: translateZ(0);
+        /* Prevent text selection during touch */
+        -webkit-user-select: none;
+        user-select: none;
       }
     }
     /* Block page scroll when tour is active, but allow scrolling inside tour card */
@@ -3134,43 +3149,42 @@ async function init() {
             const btn = document.createElement('button');
             btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
             btn.textContent = a.label;
-            // Handle both click and touch events for iOS compatibility - optimized
-            let touchHandled = false;
+            // Optimized touch/click handler for mobile performance
+            let isProcessing = false;
             const createHandler = (action) => {
               return (e) => {
-                // Prevent double-firing on mobile
-                if (e.type === 'touchend') {
-                  if (touchHandled) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return;
-                  }
-                  touchHandled = true;
-                  setTimeout(() => { touchHandled = false; }, 300);
-                } else if (touchHandled) {
+                // Prevent double-firing and ensure instant response
+                if (isProcessing) {
                   e.preventDefault();
                   e.stopPropagation();
                   return;
                 }
+                isProcessing = true;
                 e.preventDefault();
                 e.stopPropagation();
-                action();
+                // Use requestAnimationFrame for immediate visual feedback
+                requestAnimationFrame(() => {
+                  action();
+                  // Reset flag after a short delay
+                  setTimeout(() => { isProcessing = false; }, 150);
+                });
               };
             };
             
             if (a.on === 'next') {
               const handler = createHandler(() => setStep(Math.min(3, step+1)));
-              btn.addEventListener('touchend', handler, { passive: false });
+              // Use touchstart for faster response on mobile
+              btn.addEventListener('touchstart', handler, { passive: false });
               btn.addEventListener('click', handler);
             }
             if (a.on === 'back') {
               const handler = createHandler(() => setStep(Math.max(1, step-1)));
-              btn.addEventListener('touchend', handler, { passive: false });
+              btn.addEventListener('touchstart', handler, { passive: false });
               btn.addEventListener('click', handler);
             }
             if (a.on === 'finish') {
               const handler = createHandler(() => finishTour());
-              btn.addEventListener('touchend', handler, { passive: false });
+              btn.addEventListener('touchstart', handler, { passive: false });
               btn.addEventListener('click', handler);
             }
             actionsEl.appendChild(btn);
@@ -3186,20 +3200,19 @@ async function init() {
           planButton.textContent = 'План оптимизации';
           // Handle PDF download
           planButton.target = '_blank';
-          // Handle both click and touch events for iOS compatibility - optimized
-          let planTouchHandled = false;
-          const handlePlanTouch = (e) => {
-            if (planTouchHandled) {
+          // Optimized touch/click handler for mobile performance
+          let planProcessing = false;
+          const handlePlanAction = (e) => {
+            if (planProcessing) {
               e.preventDefault();
               e.stopPropagation();
               return;
             }
-            planTouchHandled = true;
-            setTimeout(() => { planTouchHandled = false; }, 300);
-            
+            planProcessing = true;
             e.preventDefault();
             e.stopPropagation();
-            setTimeout(() => {
+            // Use requestAnimationFrame for immediate response
+            requestAnimationFrame(() => {
               const downloadLink = document.createElement('a');
               downloadLink.href = '/assets/UX4AI_90day_plan.pdf';
               downloadLink.download = 'UX4AI_90day_plan.pdf';
@@ -3207,19 +3220,12 @@ async function init() {
               document.body.appendChild(downloadLink);
               downloadLink.click();
               document.body.removeChild(downloadLink);
-            }, 100);
-            trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
+              trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
+              setTimeout(() => { planProcessing = false; }, 150);
+            });
           };
-          const handlePlanClick = (e) => {
-            if (planTouchHandled) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-            handlePlanTouch(e);
-          };
-          planButton.addEventListener('touchend', handlePlanTouch, { passive: false });
-          planButton.addEventListener('click', handlePlanClick);
+          planButton.addEventListener('touchstart', handlePlanAction, { passive: false });
+          planButton.addEventListener('click', handlePlanAction);
           actionsEl.appendChild(planButton);
         }
         // add close link as last action
@@ -3227,31 +3233,25 @@ async function init() {
         closeA.href = '#';
         closeA.className = 'close-link';
         closeA.textContent = 'Закрыть';
-        // Handle both click and touch events for iOS compatibility - optimized
-        let closeTouchHandled = false;
-        const handleCloseTouch = (e) => {
-          if (closeTouchHandled) {
+        // Optimized touch/click handler for mobile performance
+        let closeProcessing = false;
+        const handleCloseAction = (e) => {
+          if (closeProcessing) {
             e.preventDefault();
             e.stopPropagation();
             return;
           }
-          closeTouchHandled = true;
-          setTimeout(() => { closeTouchHandled = false; }, 300);
-          
+          closeProcessing = true;
           e.preventDefault();
           e.stopPropagation();
-          dismissTour();
+          // Use requestAnimationFrame for immediate response
+          requestAnimationFrame(() => {
+            dismissTour();
+            setTimeout(() => { closeProcessing = false; }, 150);
+          });
         };
-        const handleCloseClick = (e) => {
-          if (closeTouchHandled) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-          handleCloseTouch(e);
-        };
-        closeA.addEventListener('touchend', handleCloseTouch, { passive: false });
-        closeA.addEventListener('click', handleCloseClick);
+        closeA.addEventListener('touchstart', handleCloseAction, { passive: false });
+        closeA.addEventListener('click', handleCloseAction);
         actionsEl.appendChild(closeA);
         
         // Add interactives for step 3
@@ -3338,30 +3338,24 @@ async function init() {
       try { 
         const closeBtn = document.getElementById('tour-close'); 
         if (closeBtn) { 
-          let closeBtnTouchHandled = false;
-          const handleCloseBtnTouch = (e) => {
-            if (closeBtnTouchHandled) {
+          let closeBtnProcessing = false;
+          const handleCloseBtnAction = (e) => {
+            if (closeBtnProcessing) {
               e.preventDefault();
               e.stopPropagation();
               return;
             }
-            closeBtnTouchHandled = true;
-            setTimeout(() => { closeBtnTouchHandled = false; }, 300);
-            
+            closeBtnProcessing = true;
             e.preventDefault();
             e.stopPropagation();
-            dismissTour();
+            // Use requestAnimationFrame for immediate response
+            requestAnimationFrame(() => {
+              dismissTour();
+              setTimeout(() => { closeBtnProcessing = false; }, 150);
+            });
           };
-          const handleCloseBtnClick = (e) => {
-            if (closeBtnTouchHandled) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-            handleCloseBtnTouch(e);
-          };
-          closeBtn.addEventListener('touchend', handleCloseBtnTouch, { passive: false });
-          closeBtn.addEventListener('click', handleCloseBtnClick);
+          closeBtn.addEventListener('touchstart', handleCloseBtnAction, { passive: false });
+          closeBtn.addEventListener('click', handleCloseBtnAction);
           closeBtn.addEventListener('keydown', (e)=>{ 
             if(e.key==='Enter'||e.key===' ') { 
               e.preventDefault(); 
@@ -3566,7 +3560,7 @@ async function init() {
       setTimeout(buildGrid, 50);
       setTimeout(buildGrid, 150);
     }
-    // Mobile HUD: keep 20px gap below site header
+    // Mobile HUD: keep 12px gap below site header
     function updateMobileHudTop(){
       try {
         const isMobile = window.innerWidth <= 479;
@@ -3575,7 +3569,7 @@ async function init() {
         if (!header || !hudContainer) return;
         if (isMobile) {
           const h = Math.round(header.getBoundingClientRect().height || 0);
-          hudContainer.style.setProperty('top', (h + 20) + 'px', 'important');
+          hudContainer.style.setProperty('top', (h + 12) + 'px', 'important');
         } else {
           // restore desktop top from CSS
           hudContainer.style.removeProperty('top');
