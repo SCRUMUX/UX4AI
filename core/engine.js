@@ -142,6 +142,18 @@ export function createEngine({ canvasParent, labelsElement }) {
     function animate() {
       animationFrameId = requestAnimationFrame(animate);
 
+      // Pause 3D rendering only when tour is active on mobile devices
+      // This improves mobile performance while keeping desktop and HUD functionality intact
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+      const tourActive = typeof document !== 'undefined' && 
+        (document.body.classList.contains('tour-active') || 
+         document.documentElement.classList.contains('tour-active'));
+      
+      // Only pause rendering on mobile when tour is active
+      // Desktop: always render (even in tour/HUD)
+      // Mobile: pause only in tour mode, continue in HUD and normal mode
+      const shouldRender = !(isMobile && tourActive);
+
       const now = performance.now();
       const t = now / 1000;
       const dt = (now - lastTime) / 1000;
@@ -245,29 +257,32 @@ export function createEngine({ canvasParent, labelsElement }) {
         }
       } catch (_) {}
 
-      // Update camera navigation (skip for Matrix/other drive-only scenes)
-      if (navigation && !(currentPlugin?.driveOnly)) {
-        navigation.updateCameraFromScroll();
-        if (navigation.orbitMode) {
-          navigation.updateCameraFromOrbit();
+      // Skip 3D updates and rendering when tour is active on mobile to improve performance
+      if (shouldRender) {
+        // Update camera navigation (skip for Matrix/other drive-only scenes)
+        if (navigation && !(currentPlugin?.driveOnly)) {
+          navigation.updateCameraFromScroll();
+          if (navigation.orbitMode) {
+            navigation.updateCameraFromOrbit();
+          }
         }
+
+        // Update scene plugin
+        if (currentPlugin && currentPlugin.update) {
+          currentPlugin.update(t, dt);
+        }
+
+        // Determine active camera (scene may provide its own)
+        const activeCamera = (currentPlugin && typeof currentPlugin.getActiveCamera === 'function')
+          ? currentPlugin.getActiveCamera() || camera
+          : camera;
+
+        // Update label positions with active camera
+        updatePositions(activeCamera, renderer);
+
+        // Render
+        renderer.render(scene, activeCamera);
       }
-
-      // Update scene plugin
-      if (currentPlugin && currentPlugin.update) {
-        currentPlugin.update(t, dt);
-      }
-
-      // Determine active camera (scene may provide its own)
-      const activeCamera = (currentPlugin && typeof currentPlugin.getActiveCamera === 'function')
-        ? currentPlugin.getActiveCamera() || camera
-        : camera;
-
-      // Update label positions with active camera
-      updatePositions(activeCamera, renderer);
-
-      // Render
-      renderer.render(scene, activeCamera);
     }
 
     lastTime = performance.now();

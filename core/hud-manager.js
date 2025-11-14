@@ -53,6 +53,15 @@ export function initHUD(options) {
           hudButtons[tabIndex].classList.add('active-tab');
           // Trigger tab render by clicking the button
           hudButtons[tabIndex].click();
+          
+          // Scroll to top when clicking tab links (Исследования →, Решения →)
+          // This ensures the new tab content appears from the top on mobile
+          const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+          if (isMobile && hudContainer) {
+            requestAnimationFrame(() => {
+              hudContainer.scrollTop = 0;
+            });
+          }
         }
         return false;
       }
