@@ -24,7 +24,7 @@ export function calmSceneCompleteFactory(config) {
     { sectionId: 'operations', name: SECTION_NAMES.operations, theta: 180, phi: 25, radius: 4.0 },
     { sectionId: 'security', name: SECTION_NAMES.security, theta: 225, phi: -20, radius: 4.5 },
     { sectionId: 'marketplace', name: SECTION_NAMES.marketplace, theta: 270, phi: 40, radius: 4.0 },
-    { sectionId: 'about', name: SECTION_NAMES.about, theta: 315, phi: 30, radius: 4.0 }
+    { sectionId: 'about', name: SECTION_NAMES.about, theta: 300, phi: 15, radius: 4.0 }
   ];
 
   // Helper functions from index.html

@@ -3277,6 +3277,14 @@ async function init() {
         
         // reflect in hash (optional)
         try { history.replaceState(null, '', `#tour/${step}`); } catch {}
+
+        // Scroll tour card to top when switching steps (mobile and desktop)
+        const tourCard = document.querySelector('.tour-card');
+        if (tourCard) {
+          requestAnimationFrame(() => {
+            tourCard.scrollTop = 0;
+          });
+        }
       }
       function showTour(){ 
         overlay.classList.remove('hidden'); 
@@ -3284,6 +3292,14 @@ async function init() {
         overlay.removeAttribute('inert'); // Remove inert to enable interactions on iOS
         document.body.classList.add('tour-active');
         document.documentElement.classList.add('tour-active');
+        
+        // Scroll tour card to top when opening tour (mobile and desktop)
+        const tourCard = document.querySelector('.tour-card');
+        if (tourCard) {
+          requestAnimationFrame(() => {
+            tourCard.scrollTop = 0;
+          });
+        }
       }
       function hideTour(){ 
         overlay.classList.add('hidden'); 
