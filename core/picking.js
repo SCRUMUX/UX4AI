@@ -33,8 +33,17 @@ function onClick(event) {
   if (intersects.length > 0) {
     const obj = intersects[0].object;
     const name = obj.userData?.sectionId || obj.userData?.name;
+    console.log('[Picking] Click detected on object:', {
+      sectionId: obj.userData?.sectionId,
+      name: obj.userData?.name,
+      resolvedName: name,
+      userData: obj.userData
+    });
     if (name) {
       emit('nodeSelected', { name, object: obj });
+      console.log('[Picking] Emitted nodeSelected event:', name);
+    } else {
+      console.warn('[Picking] No name found for clicked object:', obj);
     }
   }
 }

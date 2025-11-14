@@ -5,6 +5,7 @@
 
 import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=20';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
+import { on } from './state.js';
 
 // Map ABOUT_DATA to format expected by HUD
 const ABOUT = {
@@ -55,13 +56,24 @@ export function initHUD(options) {
           hudButtons[tabIndex].click();
           
           // Scroll to top when clicking tab links (Исследования →, Решения →)
-          // This ensures the new tab content appears from the top on mobile
-          const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
-          if (isMobile && hudContainer) {
+          // This ensures the new tab content appears from the top on all devices
+          // Use triple RAF to ensure content is fully rendered and layout is complete
+          requestAnimationFrame(() => {
             requestAnimationFrame(() => {
-              hudContainer.scrollTop = 0;
+              requestAnimationFrame(() => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+                if (isMobile && hudContainer) {
+                  hudContainer.scrollTop = 0;
+                } else if (hudBigPanel) {
+                  // On desktop: use both scrollTop and scrollTo for maximum reliability
+                  if (hudBigPanel.scrollHeight > hudBigPanel.clientHeight) {
+                    hudBigPanel.scrollTop = 0;
+                  }
+                  hudBigPanel.scrollTo({ top: 0, behavior: 'auto' });
+                }
+              });
             });
-          }
+          });
         }
         return false;
       }
@@ -210,9 +222,7 @@ export function initHUD(options) {
     const summaryEl = header.querySelector('.hud-section-summary');
     if (titleEl) titleEl.textContent = name;
     
-    const summaryText = (name === '👤 Автор')
-      ? ABOUT_DATA.summary
-      : (data.summary || '');
+    const summaryText = data.summary || '';
     if (summaryEl) summaryEl.textContent = summaryText;
 
     // Close button
@@ -263,21 +273,15 @@ export function initHUD(options) {
     
     console.log('[HUD] Navigating to index:', nextIdx, 'name:', nextName);
     
-    // If target is "Автор", show About panel
-    if (nextName === '👤 Автор') {
-      console.log('[HUD] Opening About panel');
-      showAboutPanel();
+    // ALWAYS use mock node from NODES_DATA to avoid mismatch with nodes array
+    // The nodes array may have different names or order than SECTION_ORDER
+    if (NODES_DATA[nextName]) {
+      console.log('[HUD] Using NODES_DATA directly (mock node) for:', nextName);
+      const mockNode = { name: nextName };
+      showOverlay(mockNode);
     } else {
-      // ALWAYS use mock node from NODES_DATA to avoid mismatch with nodes array
-      // The nodes array may have different names or order than SECTION_ORDER
-      if (NODES_DATA[nextName]) {
-        console.log('[HUD] Using NODES_DATA directly (mock node) for:', nextName);
-        const mockNode = { name: nextName };
-        showOverlay(mockNode);
-      } else {
-        console.error('[HUD] Section not found in NODES_DATA:', nextName);
-        console.error('[HUD] Available sections in NODES_DATA:', Object.keys(NODES_DATA));
-      }
+      console.error('[HUD] Section not found in NODES_DATA:', nextName);
+      console.error('[HUD] Available sections in NODES_DATA:', Object.keys(NODES_DATA));
     }
   }
 
@@ -402,9 +406,16 @@ export function initHUD(options) {
 
     const hudButtons = hudSmallPanel.querySelectorAll('button[data-index]');
     if (hudButtons && hudButtons.length >= 3) {
-      hudButtons[0].textContent = 'Проблема';
-      hudButtons[1].textContent = 'Исследования';
-      hudButtons[2].textContent = 'Решения';
+      // Use custom tabs if available (for "Автор" node), otherwise use default tabs
+      if (data.customTabs && Array.isArray(data.customTabs) && data.customTabs.length >= 3) {
+        hudButtons[0].textContent = data.customTabs[0];
+        hudButtons[1].textContent = data.customTabs[1];
+        hudButtons[2].textContent = data.customTabs[2];
+      } else {
+        hudButtons[0].textContent = 'Проблема';
+        hudButtons[1].textContent = 'Исследования';
+        hudButtons[2].textContent = 'Решения';
+      }
       // Clear handler flags when switching to a new section
       hudButtons.forEach(b => b._tabHandlerSet = false);
     }
@@ -414,31 +425,83 @@ export function initHUD(options) {
       
       let content = '';
       
-      if (idx === 0) {
-        let problemText = (data.problem || '—');
-        const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
-        // Add link to "Исследования" tab at the end
-        content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
-      } else if (idx === 1) {
-        // Allow links in solution text
-        let solutionText = (data.solution || '—');
-        const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, true);
-        // Add link to "Решения" tab at the end
-        content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
+      // Check if this is the "Автор" node with custom tabs
+      const isAboutNode = data.customTabs && Array.isArray(data.customTabs) && data.customTabs.length >= 3;
+      
+      if (isAboutNode) {
+        // Special rendering for "Автор" node
+        if (idx === 0) {
+          let problemText = (data.problem || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
+          // Prepare links row (placed at the end for all tabs)
+          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          content = headingHtml + bodyText + linksRowWrapped;
+        } else if (idx === 1) {
+          let solutionText = (data.solution || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, false);
+          // Prepare links row
+          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          content = headingHtml + bodyText + linksRowWrapped;
+        } else {
+          let uiText = (data.ui || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
+          // Prepare links row
+          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          content = headingHtml + bodyText + linksRowWrapped;
+        }
       } else {
-        const html = [];
-        let uiText = (data.ui || '—');
-        const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
-        html.push(headingHtml + bodyText);
-        html.push('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">');
-        html.push(`<a target="_blank" href="${data.figma || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть Figma</a>`);
-        html.push(`<a target="_blank" href="${LINKS.tgChat || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в TG</a>`);
-        html.push(`<a target="_blank" href="${LINKS.tgCommunity || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Сообщество</a>`);
-        html.push('</div>');
-        content = html.join('');
+        // Standard rendering for other nodes
+        if (idx === 0) {
+          let problemText = (data.problem || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
+          // Add link to "Исследования" tab at the end
+          content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
+        } else if (idx === 1) {
+          // Allow links in solution text
+          let solutionText = (data.solution || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, true);
+          // Add link to "Решения" tab at the end
+          content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
+        } else {
+          const html = [];
+          let uiText = (data.ui || '—');
+          const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
+          html.push(headingHtml + bodyText);
+          html.push('<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">');
+          html.push(`<a target="_blank" href="${data.figma || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Открыть Figma</a>`);
+          html.push(`<a target="_blank" href="${LINKS.tgChat || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Написать в TG</a>`);
+          html.push(`<a target="_blank" href="${LINKS.tgCommunity || '#'}" class="header-btn" style="text-decoration:none; display:inline-block;">Сообщество</a>`);
+          html.push('</div>');
+          content = html.join('');
+        }
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
+
+      // Scroll to top when switching tabs (mobile, tablet, and desktop)
+      // Use triple RAF to ensure content is fully rendered and layout is complete
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => {
+            const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+            if (isMobile && hudContainer) {
+              // On mobile/tablet: scroll container
+              hudContainer.scrollTop = 0;
+            } else if (hudBigPanel) {
+              // On desktop: use both scrollTop and scrollTo for maximum reliability
+              // Check if element has scrollable content
+              if (hudBigPanel.scrollHeight > hudBigPanel.clientHeight) {
+                hudBigPanel.scrollTop = 0;
+              }
+              // Also use scrollTo as fallback
+              hudBigPanel.scrollTo({ top: 0, behavior: 'auto' });
+            }
+          });
+        });
+      });
     }
 
     // Set up tab button handlers (only once per overlay session, not on every render)
@@ -448,6 +511,25 @@ export function initHUD(options) {
           hudButtons.forEach(b => b.classList.remove('active-tab'));
           btn.classList.add('active-tab');
           renderTab(idx);
+          
+          // Ensure scroll happens after render (triple RAF for maximum reliability)
+          // This ensures buttons (Проблема, Исследования, Решения) always scroll to top
+          requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+              requestAnimationFrame(() => {
+                const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+                if (isMobile && hudContainer) {
+                  hudContainer.scrollTop = 0;
+                } else if (hudBigPanel) {
+                  // On desktop: use both scrollTop and scrollTo for maximum reliability
+                  if (hudBigPanel.scrollHeight > hudBigPanel.clientHeight) {
+                    hudBigPanel.scrollTop = 0;
+                  }
+                  hudBigPanel.scrollTo({ top: 0, behavior: 'auto' });
+                }
+              });
+            });
+          });
         };
         btn._tabHandlerSet = true;
       });
@@ -488,6 +570,18 @@ export function initHUD(options) {
     hudButtons.forEach(b => b.classList.remove('active-tab'));
     if (hudButtons[0]) hudButtons[0].classList.add('active-tab');
     renderTab(0);
+
+    // Scroll to top when opening overlay (mobile and desktop)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+    if (isMobile && hudContainer) {
+      requestAnimationFrame(() => {
+        hudContainer.scrollTop = 0;
+      });
+    } else if (!isMobile && hudBigPanel) {
+      requestAnimationFrame(() => {
+        hudBigPanel.scrollTop = 0;
+      });
+    }
   }
 
   function hideOverlay() {
@@ -589,6 +683,18 @@ export function initHUD(options) {
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
+      
+      // Scroll to top when switching About tabs (mobile and desktop)
+      const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+      if (isMobile && hudContainer) {
+        requestAnimationFrame(() => {
+          hudContainer.scrollTop = 0;
+        });
+      } else if (!isMobile && hudBigPanel) {
+        requestAnimationFrame(() => {
+          hudBigPanel.scrollTop = 0;
+        });
+      }
     }
     
     // Attach click handlers for About panel tabs
@@ -610,6 +716,18 @@ export function initHUD(options) {
     aboutTabs.forEach(bb => bb.classList.remove('active-tab'));
     if (aboutTabs[0]) aboutTabs[0].classList.add('active-tab');
     renderAboutTab(0);
+
+    // Scroll to top when opening About panel (mobile and desktop)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
+    if (isMobile && hudContainer) {
+      requestAnimationFrame(() => {
+        hudContainer.scrollTop = 0;
+      });
+    } else if (!isMobile && hudBigPanel) {
+      requestAnimationFrame(() => {
+        hudBigPanel.scrollTop = 0;
+      });
+    }
 
     // Save scroll position before applying position: fixed
     savedScrollPosition = window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
@@ -840,16 +958,24 @@ export function initHUD(options) {
       }
     }
     
-    if (nodeName && NODES_DATA[nodeName]) {
-      console.log('[HUD] Opening with mock node:', nodeName);
+    // Try to find node name in NODES_DATA
+    // First try direct match, then try by sectionId mapping
+    let foundNodeName = nodeName;
+    if (!foundNodeName || !NODES_DATA[foundNodeName]) {
+      // Try to find by sectionId
+      if (sectionId && SECTION_NAMES[sectionId]) {
+        const mappedName = SECTION_NAMES[sectionId];
+        foundNodeName = Object.keys(NODES_DATA).find(n => n === mappedName);
+      }
+    }
+    
+    if (foundNodeName && NODES_DATA[foundNodeName]) {
+      console.log('[HUD] Opening with mock node:', foundNodeName);
       // Create a mock node object for showOverlay
-      const mockNode = { name: nodeName };
+      const mockNode = { name: foundNodeName };
       showOverlay(mockNode);
-    } else if (sectionId === 'about' || labelText === '👤 Автор' || labelText.includes('Автор')) {
-      console.log('[HUD] Opening About panel');
-      showAboutPanel();
     } else {
-      console.error('[HUD] Could not find section for:', sectionId, 'labelText:', labelText);
+      console.error('[HUD] Could not find section for:', sectionId, 'labelText:', labelText, 'nodeName:', nodeName);
     }
   }
 
@@ -866,6 +992,61 @@ export function initHUD(options) {
       showAboutPanel();
     });
   }
+
+  // Handle 3D node selection events (from picking.js)
+  on('nodeSelected', ({ name, object }) => {
+    console.log('[HUD] Node selected from 3D scene:', name, 'object:', object);
+    console.log('[HUD] Object userData:', object?.userData);
+    
+    // Get sectionId and nodeName from object for more reliable checking
+    const sectionId = object?.userData?.sectionId;
+    const objectNodeName = object?.userData?.name;
+    
+    // Try to find node by sectionId mapping
+    let foundNodeName = null;
+    const searchName = sectionId || name;
+    if (SECTION_NAMES[searchName]) {
+      const mappedName = SECTION_NAMES[searchName];
+      foundNodeName = Object.keys(NODES_DATA).find(n => {
+        const nameText = n.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim();
+        const mappedText = mappedName.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim();
+        return nameText === mappedText || n === mappedName;
+      });
+    }
+    
+    // If not found, try direct match
+    if (!foundNodeName) {
+      foundNodeName = Object.keys(NODES_DATA).find(n => 
+        n === name || 
+        n === sectionId ||
+        n.replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim() === (name || '').replace(/[▶️👤🧩⚙️📋📊🛡️🧭🤝]/g, '').trim()
+      );
+    }
+    
+    // Try to find in nodes array
+    if (!foundNodeName && object) {
+      const node = nodes.find(n => {
+        if (!n || !n.name) return false;
+        return n.name === name || 
+               n.name === sectionId ||
+               (n.userData && (n.userData.sectionId === name || n.userData.sectionId === sectionId || n.userData.name === name));
+      });
+      if (node) {
+        console.log('[HUD] Found node in array:', node.name);
+        showOverlay(node);
+        return;
+      }
+    }
+    
+    // Open overlay if found
+    if (foundNodeName && NODES_DATA[foundNodeName]) {
+      console.log('[HUD] Opening with mock node:', foundNodeName);
+      const mockNode = { name: foundNodeName };
+      showOverlay(mockNode);
+    } else {
+      console.warn('[HUD] Could not find section for node:', name, 'sectionId:', sectionId, 'objectNodeName:', objectNodeName);
+    }
+  });
 
   // Ensure desktop wheel on HUD forwards to window scroll to keep camera moving
   function installScrollRedirect() {
