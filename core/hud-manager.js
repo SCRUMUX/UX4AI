@@ -6,19 +6,23 @@
 import { NODES_DATA, ABOUT_DATA, LINKS } from '../data/nodes-data-complete.js?v=20';
 import { SECTION_NAMES, getSectionId } from './sections.js?v=2';
 import { on } from './state.js';
+// PHASE C2: Import theme-colors for fallback values
+import { getThemeColors } from './theme-colors.js';
 
-// Map ABOUT_DATA to format expected by HUD
-const ABOUT = {
-  title: 'Автор',
-  text: ABOUT_DATA.text || '',
-  skills: ABOUT_DATA.skills || '',
-  contacts: ABOUT_DATA.contacts || '',
-  ctas: [
-    { label: 'Написать в TG', href: LINKS.tgChat },
-    { label: 'Сообщество', href: LINKS.tgCommunity },
-    { label: 'Резюме (PDF)', href: LINKS.resume }
-  ]
-};
+// Map ABOUT_DATA to format expected by HUD - lazy initialization to ensure ABOUT_DATA and LINKS are loaded
+function getABOUT() {
+  return {
+    title: 'Автор',
+    text: ABOUT_DATA?.text || '',
+    skills: ABOUT_DATA?.skills || '',
+    contacts: ABOUT_DATA?.contacts || '',
+    ctas: [
+      { label: 'Написать в TG', href: LINKS?.tgChat || '#' },
+      { label: 'Сообщество', href: LINKS?.tgCommunity || '#' },
+      { label: 'Резюме (PDF)', href: LINKS?.resume || '#' }
+    ]
+  };
+}
 
 export function initHUD(options) {
   const {
@@ -33,7 +37,7 @@ export function initHUD(options) {
     btnDemo,
     linksPanel,
     btnLinksClose,
-    nodes
+    nodes = [] // Default to empty array if not provided
   } = options;
   
   // Get HUD backdrop element
@@ -85,20 +89,33 @@ export function initHUD(options) {
       }
     });
     
-    // Add hover effects for tab links
+    // PHASE C2: Add hover effects for tab links (using CSS variables with theme-colors fallback)
     hudBigPanel.addEventListener('mouseenter', (e) => {
       const tabLink = e.target.closest('.hud-tab-link');
       if (tabLink) {
-        tabLink.style.borderBottomColor = 'rgba(91,156,255,0.8)';
-        tabLink.style.color = '#5B9CFF';
+        // PHASE C2: Get colors from CSS variables, fallback to theme-colors.js (not hardcoded hex)
+        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || 
+                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Primary').trim();
+        const accentHover = getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Hover').trim() || accentColor;
+        // PHASE C2: Fallback to theme-colors.js if CSS variables not available
+        const themeColors = getThemeColors();
+        tabLink.style.borderBottomColor = accentHover || themeColors.accentPrimaryHover || themeColors.accentPrimary;
+        tabLink.style.color = accentColor || themeColors.accentPrimary;
       }
     }, true);
     
     hudBigPanel.addEventListener('mouseleave', (e) => {
       const tabLink = e.target.closest('.hud-tab-link');
       if (tabLink) {
-        tabLink.style.borderBottomColor = 'rgba(154,166,178,0.3)';
-        tabLink.style.color = '#9AA6B2';
+        // PHASE C2: Get colors from CSS variables, fallback to theme-colors.js (not hardcoded hex)
+        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
+                          getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim();
+        const borderSubtle = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Subtle').trim() ||
+                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim();
+        // PHASE C2: Fallback to theme-colors.js if CSS variables not available
+        const themeColors = getThemeColors();
+        tabLink.style.borderBottomColor = borderSubtle || themeColors.borderSubtle || themeColors.borderBase;
+        tabLink.style.color = mutedColor || themeColors.textMuted;
       }
     }, true);
     
@@ -434,21 +451,21 @@ export function initHUD(options) {
           let problemText = (data.problem || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
           // Prepare links row (placed at the end for all tabs)
-          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
           const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         } else if (idx === 1) {
           let solutionText = (data.solution || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, false);
           // Prepare links row
-          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
           const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         } else {
           let uiText = (data.ui || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
           // Prepare links row
-          const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
           const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         }
@@ -457,14 +474,28 @@ export function initHUD(options) {
         if (idx === 0) {
           let problemText = (data.problem || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
-          // Add link to "Исследования" tab at the end
-          content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: #5B9CFF; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(91,156,255,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>';
+          // PHASE C2: Add link to "Исследования" tab at the end
+          // Use CSS variables with theme-colors fallback (not hardcoded hex)
+          const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() ||
+                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Primary').trim() ||
+                             getThemeColors().accentPrimary;
+          const accentBorder = getComputedStyle(document.documentElement).getPropertyValue('--Color/State/Hover/Background').trim() ||
+                              getThemeColors().stateHoverBackground;
+          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: ${accentColor}; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid ${accentBorder}; transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>`;
         } else if (idx === 1) {
           // Allow links in solution text
           let solutionText = (data.solution || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, true);
           // Add link to "Решения" tab at the end
-          content = headingHtml + bodyText + '<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: #9AA6B2; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid rgba(154,166,178,0.3); transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>';
+          // Use CSS variables for theme support
+          // PHASE C2: Use CSS variables with theme-colors fallback (not hardcoded hex)
+          const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
+                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim() ||
+                            getThemeColors().textMuted;
+          const borderSubtle = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Subtle').trim() ||
+                              getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim() ||
+                              getThemeColors().borderSubtle || getThemeColors().borderBase;
+          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: ${mutedColor}; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid ${borderSubtle}; transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>`;
         } else {
           const html = [];
           let uiText = (data.ui || '—');
@@ -664,22 +695,23 @@ export function initHUD(options) {
       
       let content = '';
       // Prepare links row (placed at the end for all tabs)
-      const linksRow = ABOUT.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
+      const about = getABOUT();
+      const linksRow = about.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
       const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
       
       if (idx === 0) {
-        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.text || '', false);
+        const { headingHtml, bodyText } = processTextWithSubheadings(about.text || '', false);
         content = headingHtml + bodyText + linksRowWrapped;
-        console.log('[HUD] About tab 0:', { hasText: !!ABOUT.text, textLength: ABOUT.text?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
+        console.log('[HUD] About tab 0:', { hasText: !!about.text, textLength: about.text?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       } else if (idx === 1) {
-        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.skills || '', false);
+        const { headingHtml, bodyText } = processTextWithSubheadings(about.skills || '', false);
         content = headingHtml + bodyText + linksRowWrapped;
-        console.log('[HUD] About tab 1:', { hasSkills: !!ABOUT.skills, skillsLength: ABOUT.skills?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
+        console.log('[HUD] About tab 1:', { hasSkills: !!about.skills, skillsLength: about.skills?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       } else {
         // contacts tab shows contacts text + links
-        const { headingHtml, bodyText } = processTextWithSubheadings(ABOUT.contacts || '', false);
+        const { headingHtml, bodyText } = processTextWithSubheadings(about.contacts || '', false);
         content = headingHtml + bodyText + linksRowWrapped;
-        console.log('[HUD] About tab 2:', { hasContacts: !!ABOUT.contacts, contactsLength: ABOUT.contacts?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
+        console.log('[HUD] About tab 2:', { hasContacts: !!about.contacts, contactsLength: about.contacts?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       }
       
       hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
@@ -802,21 +834,446 @@ export function initHUD(options) {
     });
   }
 
+  // PHASE 3B: Setup Demo button handler with protection against tour interference
   if (btnDemo) {
-    btnDemo.addEventListener('click', () => {
+    // Mark button to prevent tour from modifying it
+    btnDemo.setAttribute('data-protected', 'true');
+    btnDemo.setAttribute('data-button-type', 'demo');
+    
+    // Remove any existing handlers to prevent duplicates
+    // Store reference to our handler so we can check if it's still attached
+    const demoClickHandler = () => {
+      // Get nodes from engine if available (scene may not be mounted yet)
+      let availableNodes = nodes;
+      if ((!availableNodes || availableNodes.length === 0) && typeof window !== 'undefined' && window._engine) {
+        try {
+          // Try to get nodes from engine's current plugin
+          const plugin = window._engine.currentPlugin || window._calmPlugin;
+          if (plugin && plugin.nodes) {
+            availableNodes = plugin.nodes;
+            console.log('[HUD] Got nodes from engine plugin:', availableNodes.length);
+          }
+        } catch (e) {
+          console.warn('[HUD] Could not get nodes from engine:', e);
+        }
+      }
+      
       // Find and open "Основы UX для AI" section
-      const idx = nodes.findIndex(n => typeof n.name === 'string' && n.name.includes('Основы UX'));
-      if (idx >= 0) {
-        showOverlay(nodes[idx]);
-        // Hide links panel if open
-        if (linksPanel && linksPanel.style.display === 'flex') linksPanel.style.display = 'none';
+      if (availableNodes && availableNodes.length > 0) {
+        const idx = availableNodes.findIndex(n => {
+          const name = n.userData?.name || n.name || '';
+          return typeof name === 'string' && name.includes('Основы UX');
+        });
+        if (idx >= 0) {
+          showOverlay(availableNodes[idx]);
+          // Hide links panel if open
+          if (linksPanel && linksPanel.style.display === 'flex') linksPanel.style.display = 'none';
+          return;
+        }
+        // Fallback: open first node
+        showOverlay(availableNodes[0]);
+      } else {
+        console.warn('[HUD] No nodes available for Demo button');
+      }
+    };
+    
+    // Remove any existing onclick handlers
+    btnDemo.onclick = null;
+    
+    // Add our handler
+    btnDemo.addEventListener('click', demoClickHandler, { capture: false, once: false });
+    
+    // Store handler reference for verification
+    btnDemo._demoClickHandler = demoClickHandler;
+    
+    // PHASE 3B: Protect button from tour interference
+    // Verify handler is still attached after delays (in case tour removes it)
+    [500, 1000, 2000].forEach(delay => {
+      setTimeout(() => {
+        const btn = document.getElementById('btn-demo');
+        if (btn && !btn._demoClickHandler) {
+          console.warn('[HUD] Demo button handler was removed, reattaching...');
+          btn.addEventListener('click', demoClickHandler, { capture: false, once: false });
+          btn._demoClickHandler = demoClickHandler;
+        }
+      }, delay);
+    });
+  }
+  
+  // ===== ФАЗА B: Theme Toggle Button - ЖЁСТКИЙ КОНТРАКТ ВЛАДЕНИЯ =====
+  // OWNER: HUD Manager (core/hud-manager.js) - ЕДИНСТВЕННЫЙ владелец #theme-toggle-btn
+  // КОНТРАКТ:
+  //   - Создаётся ТОЛЬКО здесь (createThemeToggleButton)
+  //   - Управляется ТОЛЬКО через ensureThemeButton() и setupThemeToggleButton()
+  //   - Живёт в #theme-toggle-container или #site-header (по единому правилу)
+  //   - Вся логика тем (toggle, title, состояние) идёт через HUD → ThemeSwitcher → ThemeController
+  //
+  // ЖЁСТКИЕ ЗАПРЕТЫ ДЛЯ ДРУГИХ МОДУЛЕЙ:
+  //   - Bootstrap НЕ может искать #theme-toggle-btn через getElementById/querySelector
+  //   - Bootstrap НЕ может менять display/visibility/opacity/pointer-events напрямую
+  //   - Bootstrap НЕ может перемещать или удалять кнопку
+  //   - Тур НЕ может искать #theme-toggle-btn в любом месте кода
+  //   - Тур НЕ может менять ей стили или перемещать
+  //
+  // РАЗРЕШЁННОЕ ВЗАИМОДЕЙСТВИЕ:
+  //   - Bootstrap и тур могут вызывать window.hud.ensureThemeButton() для стабилизации
+  //   - Это единственный способ "self-healing" после каких-то сценариев
+  //
+  // РЕЗУЛЬТАТ: Больше нет ситуации, когда три модуля одновременно "чинят" одну и ту же кнопку.
+  const createThemeToggleButton = () => {
+    // PHASE TT1: Check if button already exists (idempotent creation)
+    let themeToggleBtn = document.getElementById('theme-toggle-btn');
+    if (themeToggleBtn) {
+      console.log('[HUD] Theme toggle button already exists (PHASE TT1: isolated check)');
+      return themeToggleBtn;
+    }
+    
+    // ФАЗА A: Логирование создания кнопки
+    const parentId = (document.getElementById('theme-toggle-container') || document.getElementById('site-header'))?.id || 'unknown';
+    console.log('[HUD][ThemeButton] created', { parent: parentId, time: Date.now() });
+    
+    console.log('[HUD] Creating theme toggle button (PHASE TT1: isolated creation)...');
+    themeToggleBtn = document.createElement('button');
+    themeToggleBtn.id = 'theme-toggle-btn';
+    themeToggleBtn.className = 'header-btn';
+    themeToggleBtn.textContent = 'Тема';
+    themeToggleBtn.type = 'button'; // Prevent form submission
+    themeToggleBtn.setAttribute('aria-label', 'Переключить тему (временно отключено)');
+    themeToggleBtn.title = 'Тема (временно отключено в dev baseline)';
+    themeToggleBtn.style.cursor = 'pointer';
+    themeToggleBtn.style.pointerEvents = 'auto';
+    themeToggleBtn.style.zIndex = '2001';
+    themeToggleBtn.style.position = 'relative';
+    
+    // PHASE TT1: Insert theme toggle button into theme-toggle-container
+    // CRITICAL: This button must NEVER be removed by other code (tour, bootstrap, etc.)
+    // CRITICAL: Does NOT touch #tour-restart-btn or any other children
+    const themeToggleContainer = document.getElementById('theme-toggle-container');
+    if (themeToggleContainer) {
+      // PHASE TT1: Check if button already exists in container
+      const existingBtn = document.getElementById('theme-toggle-btn');
+      if (existingBtn && existingBtn.parentNode === themeToggleContainer) {
+        console.log('[HUD] Theme toggle button already in container (PHASE TT1: isolated check)');
+        // Ensure it's visible and has handlers
+        existingBtn.style.display = 'inline-flex';
+        existingBtn.style.visibility = 'visible';
+        existingBtn.style.opacity = '1';
+        existingBtn.style.pointerEvents = 'auto';
+        return existingBtn;
+      }
+      // PHASE TT1: Only remove from old location if it's NOT in theme-toggle-container
+      // CRITICAL: Only touches theme-toggle-btn, never touches tour-restart-btn or other children
+      if (existingBtn && existingBtn.parentNode && existingBtn.parentNode !== themeToggleContainer) {
+        console.log('[HUD] Moving theme toggle button from', existingBtn.parentNode.id || 'unknown', 'to container (PHASE TT1: isolated move)');
+        existingBtn.parentNode.removeChild(existingBtn);
+      }
+      // PHASE TT1: Append ONLY theme-toggle-btn to container
+      // CRITICAL: Does NOT remove, clear, or touch other children (e.g., tour-restart-btn)
+      themeToggleContainer.appendChild(themeToggleBtn);
+      themeToggleBtn.style.display = 'inline-flex';
+      themeToggleBtn.style.visibility = 'visible';
+      themeToggleBtn.style.opacity = '1';
+      themeToggleBtn.style.pointerEvents = 'auto';
+      // Mark button as protected from removal
+      themeToggleBtn.setAttribute('data-protected', 'true');
+      console.log('[HUD] Theme toggle button created and added to container (PHASE TT1: isolated creation)');
+    } else {
+      console.warn('[HUD] theme-toggle-container not found, appending to header');
+      const header = document.getElementById('site-header');
+      if (header) {
+        // PHASE TT1: Check if button already exists in header
+        const existingBtn = document.getElementById('theme-toggle-btn');
+        if (existingBtn && existingBtn.parentNode === header) {
+          console.log('[HUD] Theme toggle button already in header (PHASE TT1: isolated check)');
+          // Ensure it's visible
+          existingBtn.style.display = 'inline-flex';
+          existingBtn.style.visibility = 'visible';
+          existingBtn.style.opacity = '1';
+          existingBtn.style.pointerEvents = 'auto';
+          return existingBtn;
+        }
+        // PHASE TT1: Only remove from old location if it's NOT in header
+        // CRITICAL: Only touches theme-toggle-btn, never touches tour-restart-btn
+        if (existingBtn && existingBtn.parentNode && existingBtn.parentNode !== header) {
+          console.log('[HUD] Moving theme toggle button from', existingBtn.parentNode.id || 'unknown', 'to header (PHASE TT1: isolated move)');
+          existingBtn.parentNode.removeChild(existingBtn);
+        }
+        header.appendChild(themeToggleBtn);
+        themeToggleBtn.style.display = 'inline-flex';
+        themeToggleBtn.style.visibility = 'visible';
+        themeToggleBtn.style.opacity = '1';
+        themeToggleBtn.style.pointerEvents = 'auto';
+        // Mark button as protected from removal
+        themeToggleBtn.setAttribute('data-protected', 'true');
+        console.log('[HUD] Theme toggle button added to header (PHASE TT1: isolated creation)');
+      } else {
+        console.error('[HUD] Neither theme-toggle-container nor site-header found!');
+        return null;
+      }
+    }
+    
+    return themeToggleBtn;
+  };
+  
+  // PHASE H1: Setup function for button - declared as function declaration for hoisting
+  // This ensures it's available when called from setTimeout callbacks and other async contexts
+  // Function declaration is hoisted, so it's available throughout the entire initHUD scope
+  function setupThemeToggleButton(btn) {
+  
+    // PHASE B: Update button title using global getCurrentThemeId (NO dynamic imports)
+    const updateButtonTitle = () => {
+      try {
+        // Use global getCurrentThemeId function (exposed by bootstrap in index.html)
+        // NO dynamic imports - only use window.getCurrentThemeId
+        if (typeof window.getCurrentThemeId === 'function') {
+          const currentThemeId = window.getCurrentThemeId();
+          if (currentThemeId === 'light') {
+            btn.title = 'Тема: Light (нажмите для Dark)';
+          } else {
+            btn.title = 'Тема: Dark (нажмите для Light)';
+          }
+        } else {
+          console.warn('[HUD] window.getCurrentThemeId function not found (should be exposed by bootstrap)');
+          btn.title = 'Тема';
+        }
+      } catch (e) {
+        console.warn('[HUD] Could not get current theme for button title:', e);
+        btn.title = 'Тема';
+      }
+    };
+    
+    // Set initial title - use global function (NO dynamic imports)
+    // Retry if function not yet available (bootstrap may still be loading)
+    updateButtonTitle();
+    if (typeof window.getCurrentThemeId !== 'function') {
+      setTimeout(() => {
+        updateButtonTitle();
+        if (typeof window.getCurrentThemeId !== 'function') {
+          console.warn('[HUD] window.getCurrentThemeId not available after retry');
+        }
+      }, 500);
+    }
+    
+    // Function to toggle theme - Uses global window.toggleTheme (NO dynamic imports)
+    const toggleTheme = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      
+      // Prevent double-click
+      if (btn._toggling) {
+        console.log('[HUD] Theme toggle already in progress, ignoring');
         return;
       }
-      // Fallback: open first node
-      if (nodes.length > 0) {
-        showOverlay(nodes[0]);
+      btn._toggling = true;
+      
+      // Use global toggleTheme function (exposed by bootstrap in index.html)
+      // NO dynamic imports - only use window.toggleTheme
+      if (typeof window.toggleTheme === 'function') {
+        try {
+          window.toggleTheme();
+          
+          // Update button title after theme change
+          setTimeout(() => {
+            updateButtonTitle();
+            btn._toggling = false;
+          }, 100);
+        } catch (err) {
+          console.error('[HUD] Error calling window.toggleTheme:', err);
+          btn._toggling = false;
+        }
+      } else {
+        // Function not available - retry once after a short delay
+        console.warn('[HUD] window.toggleTheme not yet available, retrying in 100ms...');
+        setTimeout(() => {
+          if (typeof window.toggleTheme === 'function') {
+            try {
+              window.toggleTheme();
+              setTimeout(() => {
+                updateButtonTitle();
+                btn._toggling = false;
+              }, 100);
+            } catch (err) {
+              console.error('[HUD] Error calling window.toggleTheme after retry:', err);
+              btn._toggling = false;
+            }
+          } else {
+            console.error('[HUD] window.toggleTheme function not found after retry. Bootstrap may have failed to load theme modules.');
+            btn._toggling = false;
+          }
+        }, 100);
       }
+    };
+  
+    // Remove all existing event listeners by removing and re-adding them
+    // Don't clone - just remove old listeners and add new ones
+    const oldOnClick = btn.onclick;
+    const oldClickListeners = btn._clickListeners || [];
+    oldClickListeners.forEach(listener => {
+      btn.removeEventListener('click', listener);
     });
+    btn.onclick = null;
+    
+    // Clear any existing flag
+    btn._themeToggleSetup = true;
+    
+    // Add click handler (primary)
+    const clickHandler = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      toggleTheme(e);
+    };
+    btn.onclick = clickHandler;
+    btn.addEventListener('click', clickHandler, { capture: false, once: false });
+    
+    // Store reference for cleanup
+    btn._clickListeners = [clickHandler];
+    
+    // PHASE T2: Subscribe to theme changes to update button title
+    // Note: 'on' is already imported at the top of the file
+    try {
+      const unsubscribeThemeChanged = on('themeChanged', () => {
+        // Update button title when theme changes (from any source)
+        updateButtonTitle();
+      });
+      // Store unsubscribe function for cleanup (if needed in future)
+      btn._themeChangedUnsubscribe = unsubscribeThemeChanged;
+    } catch (e) {
+      console.warn('[HUD] Could not subscribe to theme changes:', e);
+    }
+    
+    // Also handle mousedown for immediate feedback (but don't trigger toggle twice)
+    let mousedownHandled = false;
+    btn.addEventListener('mousedown', (e) => {
+      e.stopPropagation();
+      if (e.button === 0 && !mousedownHandled) { // Left mouse button only
+        mousedownHandled = true;
+        setTimeout(() => { mousedownHandled = false; }, 100);
+        // Don't call toggleTheme here - let click handle it
+      }
+    }, { capture: false });
+    
+    // Touch support for mobile
+    let touchStartTime = 0;
+    let touchStartPos = null;
+    btn.addEventListener('touchstart', (e) => {
+      e.stopPropagation();
+      touchStartTime = Date.now();
+      touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    }, { capture: false, passive: true });
+    
+    btn.addEventListener('touchend', (e) => {
+      e.stopPropagation();
+      const touchDuration = Date.now() - touchStartTime;
+      const touchEndPos = e.changedTouches[0];
+      const touchDistance = touchStartPos ? 
+        Math.sqrt(Math.pow(touchEndPos.clientX - touchStartPos.x, 2) + Math.pow(touchEndPos.clientY - touchStartPos.y, 2)) : 0;
+      
+      if (touchDuration < 300 && touchDistance < 10) { // Quick tap, not a swipe
+        e.preventDefault();
+        toggleTheme(e);
+      }
+    }, { capture: false });
+    
+    // Ensure button is always visible and clickable
+    // CRITICAL: These styles must be set to prevent button from disappearing
+    btn.style.display = 'inline-flex';
+    btn.style.visibility = 'visible';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    btn.style.cursor = 'pointer';
+    btn.style.zIndex = '2001';
+    btn.style.position = 'relative';
+    
+    // Mark button as protected - other code should not remove it
+    btn.setAttribute('data-protected', 'true');
+    btn.setAttribute('data-button-type', 'theme-toggle');
+    
+    // PHASE B2: No MutationObserver - button is owned by hud-manager only
+    // Other modules should not remove this button. If they do, it's a bug that should be fixed.
+    // We trust that the button will remain in the DOM once created.
+    
+    console.log('[HUD] Theme toggle button setup complete');
+    
+    // Debug: verify button is clickable
+    setTimeout(() => {
+      const btn = document.getElementById('theme-toggle-btn');
+      if (btn) {
+        console.log('[HUD] Theme button verification:', {
+          exists: !!btn,
+          visible: btn.offsetParent !== null,
+          display: getComputedStyle(btn).display,
+          pointerEvents: getComputedStyle(btn).pointerEvents,
+          zIndex: getComputedStyle(btn).zIndex
+        });
+      } else {
+        console.error('[HUD] Theme button not found after setup!');
+      }
+    }, 500);
+  }
+  
+  // PHASE B2: Simplified button lifecycle - create once, setup handlers idempotently
+  // Button is owned by hud-manager only, no recreation, no MutationObserver
+  
+  // Idempotent function to ensure button exists and has handlers
+  function ensureThemeButton() {
+    let btn = document.getElementById('theme-toggle-btn');
+    
+    // Create button if it doesn't exist
+    if (!btn) {
+      btn = createThemeToggleButton();
+      if (!btn) {
+        console.error('[HUD] Failed to create theme toggle button');
+        return null;
+      }
+    }
+    
+    // Ensure button is in correct container
+    const container = document.getElementById('theme-toggle-container') || document.getElementById('site-header');
+    if (container && btn.parentNode !== container) {
+      // Move to correct container if needed
+      if (btn.parentNode) {
+        btn.parentNode.removeChild(btn);
+      }
+      container.appendChild(btn);
+    }
+    
+    // Ensure visibility
+    btn.style.display = 'inline-flex';
+    btn.style.visibility = 'visible';
+    btn.style.opacity = '1';
+    btn.style.pointerEvents = 'auto';
+    
+    // Setup handlers idempotently (only if not already set up)
+    if (!btn._themeToggleSetup) {
+      setupThemeToggleButton(btn);
+    }
+    
+    // ФАЗА A: Логирование результата ensureThemeButton
+    console.log('[HUD][ThemeButton] ensureThemeButton result', {
+      exists: !!btn,
+      parent: btn && btn.parentNode && btn.parentNode.id,
+      display: btn && btn.style.display,
+      visibility: btn && btn.style.visibility
+    });
+    
+    return btn;
+  }
+  
+  // Create/setup button once
+  let themeToggleBtn = ensureThemeButton();
+  
+  // If container wasn't ready, retry once after a short delay
+  if (!themeToggleBtn && document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        themeToggleBtn = ensureThemeButton();
+        if (themeToggleBtn) {
+          console.log('[HUD] Theme toggle button created after DOMContentLoaded');
+        }
+      }, 100);
+    }, { once: true });
   }
 
   // Links
@@ -1100,7 +1557,9 @@ export function initHUD(options) {
     showAboutPanel,
     showLinksPanel,
     closeLinksPanel,
-    openBasicsSection
+    openBasicsSection,
+    // ФАЗА B: Экспорт ensureThemeButton для стабилизации кнопки темы
+    ensureThemeButton
   };
 }
 

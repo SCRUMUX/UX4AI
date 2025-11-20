@@ -7,55 +7,138 @@
 :root {
   /* === Color Tokens === */
   
-  /* Background Colors */
-  --Color/Dark/Background/Primary: #0B0F14;
-  --Color/Dark/Background/Secondary: #121722;
-  --Color/Dark/Background/Tertiary: #0F1420;
+  /* Header variables - default (dark theme) */
+  --header-bg: var(--Color/Dark/Surface/Ghost);
+  --header-bg-hud: var(--Color/Dark/Surface/Elevated);
+  --header-border: var(--Color/Dark/Border/Default);
   
-  /* Surface Colors */
-  --Color/Dark/Surface/Base: rgba(18, 23, 34, 0.90);
-  --Color/Dark/Surface/Elevated: rgba(18, 23, 34, 0.60);
-  --Color/Dark/Surface/Ghost: rgba(18, 23, 34, 0.15);
-  --Color/Dark/Surface/Overlay: rgba(5, 8, 12, 0.60);
+  /* Background Colors - Dark Theme (default) */
+  /* PHASE C3: Tuned for better visual harmony - slightly softer, less harsh */
+  --Color/Dark/Background/Primary: #0D1117;
+  --Color/Dark/Background/Secondary: #161B22;
+  --Color/Dark/Background/Tertiary: #0F1419;
   
-  /* Text Colors */
-  --Color/Light/Text/Primary: #E6EEF8;
-  --Color/Light/Text/Secondary: #CFE8FF;
-  --Color/Light/Text/Tertiary: #9AA6B2;
-  --Color/Light/Text/Muted: #9AA6B2;
+  /* Background Colors - Light Theme */
+  /* PHASE C3: Softer, less eye-straining whites */
+  --Color/Light/Background/Base: #FAFBFC;
+  --Color/Light/Background/Muted: #F6F8FA;
+  --Color/Light/Surface/1: #FFFFFF;
+  --Color/Light/Surface/2: #F6F8FA;
+  --Color/Light/Surface/3: #F0F3F6;
+  /* Additional surface tokens for panels with transparency */
+  /* PHASE C3.2: Reduced opacity for better balance in light theme */
+  --Color/Light/Surface/Panel: rgba(255, 255, 255, 0.88);
+  --Color/Light/Surface/PanelMobile: rgba(247, 248, 250, 0.90);
   
-  /* Accent Colors */
-  --Color/Accent/Primary: #5B9CFF;
-  --Color/Accent/Hover: #4A8AE6;
-  --Color/Accent/Active: #3B7BD6;
+  /* Surface Colors - Dark Theme */
+  /* PHASE C3: Tuned for better contrast and visual hierarchy */
+  --Color/Dark/Surface/Base: rgba(22, 27, 34, 0.92);
+  --Color/Dark/Surface/Elevated: rgba(22, 27, 34, 0.65);
+  --Color/Dark/Surface/Ghost: rgba(22, 27, 34, 0.18);
+  --Color/Dark/Surface/Overlay: rgba(7, 10, 15, 0.65);
+  /* Additional surface tokens for panels with correct transparency */
+  /* PHASE C3.2: Increased opacity for better visibility in dark theme */
+  --Color/Dark/Surface/Panel: rgba(22, 27, 34, 0.96);
+  --Color/Dark/Surface/PanelMobile: rgba(22, 27, 34, 0.98);
   
-  /* Border Colors */
-  --Color/Dark/Border/Default: #243041;
-  --Color/Dark/Border/Subtle: rgba(36, 48, 65, 0.4);
-  --Color/Dark/Border/Accent: #5B9CFF;
+  /* Text Colors - Dark Theme (light text on dark bg) */
+  /* PHASE C3: Enhanced contrast for better readability */
+  --Color/Light/Text/Primary: #F0F6FC;
+  --Color/Light/Text/Secondary: #D4E4F7;
+  --Color/Light/Text/Tertiary: #A5B4C6;
+  --Color/Light/Text/Muted: #8B98A5;
+  
+  /* Text Colors - Light Theme (dark text on light bg) */
+  /* PHASE C3: Better contrast, softer dark for readability */
+  /* NOTE: These are separate tokens for light theme to avoid conflicts */
+  --Color/LightTheme/Text/Base: #1F2328;
+  --Color/LightTheme/Text/Muted: #656D76;
+  --Color/Light/Text/OnBrand: #FFFFFF;
+  
+  /* Accent Colors - Dark Theme */
+  /* PHASE C3: Softer, less "burning" accent colors */
+  --Color/Accent/Primary: #58A6FF;
+  --Color/Accent/Hover: #4493E6;
+  --Color/Accent/Active: #3582D4;
+  
+  /* Brand Colors - Light Theme */
+  /* PHASE C3: Consistent with dark theme accent */
+  --Color/Light/Brand/Primary: #58A6FF;
+  --Color/Light/Brand/Primary/Hover: #4493E6;
+  --Color/Light/Brand/Primary/Pressed: #3582D4;
+  
+  /* Border Colors - Dark Theme */
+  /* PHASE C3: Better visibility without being too harsh */
+  --Color/Dark/Border/Default: #30363D;
+  --Color/Dark/Border/Subtle: rgba(48, 54, 61, 0.5);
+  --Color/Dark/Border/Accent: #58A6FF;
+  
+  /* Border Colors - Light Theme */
+  /* PHASE C3: Better visibility */
+  --Color/Light/Border/Base: #D8DEE4;
   
   /* State Colors */
-  --Color/State/Hover/Background: rgba(91, 156, 255, 0.08);
-  --Color/State/Active/Background: rgba(91, 156, 255, 0.15);
-  --Color/State/Selected/Background: rgba(91, 156, 255, 0.12);
-  --Color/State/Hover/Surface: rgba(36, 48, 65, 0.95);
+  /* PHASE C3: Better visual feedback, more noticeable but not overwhelming */
+  --Color/State/Hover/Background: rgba(88, 166, 255, 0.10);
+  --Color/State/Active/Background: rgba(88, 166, 255, 0.18);
+  --Color/State/Selected/Background: rgba(88, 166, 255, 0.14);
+  --Color/State/Hover/Surface: rgba(48, 54, 61, 0.95);
+  
+  /* Status Colors - for thermometer and status indicators */
+  --Color/State/Success/Border: #22C55E;
+  --Color/State/Success/Background: rgba(34, 197, 94, 0.08);
+  --Color/State/Success/BackgroundActive: rgba(34, 197, 94, 0.25);
+  --Color/State/Warning/Border: #EAB308;
+  --Color/State/Warning/Background: rgba(234, 179, 8, 0.08);
+  --Color/State/Warning/BackgroundActive: rgba(234, 179, 8, 0.25);
+  --Color/State/Error/Border: #EF4444;
+  --Color/State/Error/Background: rgba(239, 68, 68, 0.08);
+  --Color/State/Error/BackgroundActive: rgba(239, 68, 68, 0.25);
   
   /* Effect Colors */
-  --Color/Effect/Glow: rgba(91, 156, 255, 0.5);
-  --Color/Effect/Shadow/Soft: rgba(0, 0, 0, 0.25);
-  --Color/Effect/Shadow/Medium: rgba(0, 0, 0, 0.45);
+  /* PHASE C3: Softer glow, better shadows */
+  --Color/Effect/Glow: rgba(88, 166, 255, 0.45);
+  --Color/Effect/Shadow/Soft: rgba(0, 0, 0, 0.28);
+  --Color/Effect/Shadow/Medium: rgba(0, 0, 0, 0.48);
   
-  /* === Legacy Compatibility Tokens === */
+  /* === Legacy Compatibility Tokens (Dark Theme by default) === */
   --bg: var(--Color/Dark/Background/Primary);
-  --text: var(--Color/Light/Text/Primary);
+  --text: var(--Color/Light/Text/Primary); /* #F0F6FC - светлый базовый текст */
   --panel: var(--Color/Dark/Background/Tertiary);
   --accent: var(--Color/Accent/Primary);
   --border: var(--Color/Dark/Border/Default);
-  --muted: var(--Color/Light/Text/Muted);
+  --muted: var(--Color/Light/Text/Tertiary); /* #A5B4C6 - мягкий светлый мьютед */
   --glow: var(--Color/Effect/Glow);
   --panel-solid: var(--Color/Dark/Background/Secondary);
   --panel-ghost: var(--Color/Dark/Surface/Ghost);
   --shadow-soft: 0 2px 10px var(--Color/Effect/Shadow/Soft);
+  
+  /* === Component-Specific Theme Tokens === */
+  /* Tour overlay - DARK THEME */
+  --tour-backdrop: var(--Color/Dark/Surface/Overlay);
+  /* PHASE C3.3: Unified tokens - use semantic HUD tokens as source of truth */
+  --tour-card-bg: var(--HUD/Panel/Bg);
+  --tour-card-bg-mobile: var(--Color/Dark/Surface/PanelMobile);
+  --tour-text: var(--Color/Light/Text/Primary); /* #F0F6FC */
+  --tour-text-secondary: var(--Color/Light/Text/Secondary); /* #D4E4F7 */
+  --tour-text-muted: var(--Color/Light/Text/Tertiary); /* #A5B4C6 */
+  --tour-text-body: var(--Color/Light/Text/Tertiary); /* #A5B4C6 */
+  
+  /* HUD panels - DARK THEME */
+  /* PHASE C3.3: Unified tokens - use semantic HUD tokens as source of truth */
+  --hud-backdrop: var(--Color/Dark/Surface/Overlay);
+  --hud-panel-bg: var(--HUD/Panel/Bg);
+  --hud-panel-bg-mobile: var(--Color/Dark/Surface/PanelMobile);
+  --hud-text: var(--HUD/Text/Base);
+  --hud-text-secondary: var(--Color/Light/Text/Secondary); /* #D4E4F7 */
+  --hud-text-muted: var(--HUD/Text/Muted);
+  
+  /* 3D scene */
+  --scene-bg: var(--Color/Dark/Background/Primary);
+  
+  /* Grid / Baseline - DARK THEME */
+  --grid-color: rgba(92, 182, 255, 0.22);
+  --grid-opacity: 0.85;
   
   /* === Spacing Tokens === */
   --Spacing/XXS: 2px;
@@ -156,27 +239,138 @@
   --Header/Padding/H: 14px;
   --Header/Padding/V: 6px;
   --Header/Gap: var(--Spacing/ML);
+  
+  /* === Semantic Tokens - DARK THEME (default) === */
+  
+  /* Header - DARK THEME */
+  --Header/Logo/Name: var(--Color/Light/Text/Primary); /* #F0F6FC */
+  --Header/Logo/Tagline: var(--Color/Light/Text/Tertiary); /* #A5B4C6 */
+  --Header/Button/Text: var(--Color/Light/Text/Tertiary); /* #A5B4C6 */
+  --Header/Button/HoverBg: var(--Color/Dark/Surface/Base);
+  --Header/Button/HoverBorder: var(--Color/Dark/Border/Subtle);
+  --Header/Button/HoverText: var(--Color/Light/Text/Primary);
+  
+  /* HUD / Tour - DARK THEME */
+  --HUD/Panel/Bg: var(--Color/Dark/Surface/Panel);
+  --HUD/Panel/Border: var(--Color/Dark/Border/Subtle);
+  --HUD/Text/Base: var(--Color/Light/Text/Primary); /* #F0F6FC */
+  --HUD/Text/Muted: var(--Color/Light/Text/Tertiary); /* #A5B4C6 */
+  --HUD/Link/Base: var(--Color/Accent/Primary);
+  --HUD/Link/HoverBg: var(--Color/State/Hover/Background);
+  --HUD/Link/HoverText: var(--Color/Accent/Primary);
+  
+  /* General Links - DARK THEME */
+  --Link/Base: var(--Color/Accent/Primary);
+  --Link/HoverBg: var(--Color/State/Hover/Background);
+  --Link/HoverText: var(--Color/Accent/Primary);
 }
 
 /* === Theme Overrides === */
 
-/* Matrix Theme */
-:root.theme-matrix,
-body.theme-matrix {
-  --Color/Dark/Background/Primary: #000A0A;
-  --Color/Dark/Background/Secondary: #001A1A;
-  --Color/Dark/Background/Tertiary: #001A1A;
+/* Light Theme */
+:root.theme-light,
+body.theme-light {
+  /* Header variables - ensure header looks the same in both themes */
+  --header-bg: var(--Color/Light/Surface/3);
+  --header-bg-hud: var(--Color/Light/Surface/2);
+  --header-border: var(--Color/Light/Border/Base);
+  /* Background Colors */
+  --bg: var(--Color/Light/Background/Base);
+  --panel: var(--Color/Light/Surface/1);
+  --panel-solid: var(--Color/Light/Surface/2);
+  --panel-ghost: var(--Color/Light/Surface/3);
   
-  --Color/Light/Text/Primary: #D9FFD9;
-  --Color/Light/Text/Secondary: #D9FFD9;
-  --Color/Light/Text/Tertiary: #88FF99;
-  --Color/Light/Text/Muted: #88FF99;
+  /* Override direct token references used in main.css */
+  --Color/Dark/Background/Primary: var(--Color/Light/Background/Base);
+  --Color/Dark/Background/Secondary: var(--Color/Light/Surface/2);
+  --Color/Dark/Background/Tertiary: var(--Color/Light/Surface/1);
+  --Color/Dark/Surface/Base: var(--Color/Light/Surface/1);
+  --Color/Dark/Surface/Elevated: var(--Color/Light/Surface/2);
+  --Color/Dark/Surface/Ghost: var(--Color/Light/Surface/3);
+  --Color/Dark/Surface/Overlay: rgba(0, 0, 0, 0.25); /* Более мягкое затемнение для светлой темы */
   
-  --Color/Accent/Primary: #00FF66;
-  --Color/Accent/Hover: #00E65C;
-  --Color/Accent/Active: #00CC52;
+  /* Text Colors - LIGHT THEME */
+  --text: var(--Color/LightTheme/Text/Base);
+  --muted: var(--Color/LightTheme/Text/Muted);
   
-  --Color/Dark/Border/Default: #004444;
-  --Color/Effect/Glow: rgba(0, 255, 102, 0.5);
+  /* === Semantic Tokens - LIGHT THEME === */
+  
+  /* Header - LIGHT THEME */
+  --Header/Logo/Name: var(--Color/LightTheme/Text/Base);
+  --Header/Logo/Tagline: var(--Color/LightTheme/Text/Muted);
+  --Header/Button/Text: var(--Color/LightTheme/Text/Muted);
+  --Header/Button/HoverBg: var(--Color/Light/Surface/2);
+  --Header/Button/HoverBorder: var(--Color/Light/Border/Base);
+  --Header/Button/HoverText: var(--Color/LightTheme/Text/Base);
+  
+  /* HUD / Tour - LIGHT THEME */
+  /* PHASE C3.2: Use transparent panel token instead of solid color */
+  --HUD/Panel/Bg: var(--Color/Light/Surface/Panel);
+  --HUD/Panel/Border: var(--Color/Light/Border/Base);
+  --HUD/Text/Base: var(--Color/LightTheme/Text/Base);
+  --HUD/Text/Muted: var(--Color/LightTheme/Text/Muted);
+  --HUD/Link/Base: var(--Color/Accent/Primary);
+  --HUD/Link/HoverBg: var(--Color/State/Hover/Background);
+  --HUD/Link/HoverText: var(--Color/Accent/Primary);
+  
+  /* General Links - LIGHT THEME */
+  --Link/Base: var(--Color/Accent/Primary);
+  --Link/HoverBg: var(--Color/State/Hover/Background);
+  --Link/HoverText: var(--Color/Accent/Primary);
+  
+  /* NOTE: We do NOT override --Color/Light/Text/Primary, --Color/Light/Text/Secondary here
+     to avoid breaking dark theme. Use semantic tokens (--Header/..., --HUD/..., --Link/...) instead. */
+  
+  /* Accent Colors */
+  --accent: var(--Color/Light/Brand/Primary);
+  --Color/Accent/Primary: var(--Color/Light/Brand/Primary);
+  --Color/Accent/Hover: var(--Color/Light/Brand/Primary/Hover);
+  --Color/Accent/Active: var(--Color/Light/Brand/Primary/Pressed);
+  
+  /* Border Colors */
+  --border: var(--Color/Light/Border/Base);
+  --Color/Dark/Border/Default: var(--Color/Light/Border/Base);
+  --Color/Dark/Border/Subtle: rgba(216, 222, 228, 0.6);
+  
+  /* State Colors - adjusted for light theme */
+  /* PHASE C3: Better visibility in light theme */
+  --Color/State/Hover/Background: rgba(88, 166, 255, 0.10);
+  --Color/State/Active/Background: rgba(88, 166, 255, 0.15);
+  --Color/State/Selected/Background: rgba(88, 166, 255, 0.12);
+  --Color/State/Hover/Surface: rgba(246, 248, 250, 0.95);
+  
+  /* Effect Colors */
+  /* PHASE C3: Softer shadows for light theme */
+  --Color/Effect/Shadow/Soft: rgba(0, 0, 0, 0.10);
+  --Color/Effect/Shadow/Medium: rgba(0, 0, 0, 0.15);
+  --shadow-soft: 0 2px 10px var(--Color/Effect/Shadow/Soft);
+  
+  /* === Component-Specific Theme Tokens (Light Theme) === */
+  /* Tour overlay - LIGHT THEME */
+  /* PHASE C3.3: Unified tokens - use semantic HUD tokens as source of truth */
+  --tour-backdrop: rgba(0, 0, 0, 0.25);
+  --tour-card-bg: var(--HUD/Panel/Bg);
+  --tour-card-bg-mobile: rgba(247, 248, 250, 0.90);
+  --tour-text: var(--HUD/Text/Base);
+  --tour-text-secondary: var(--Color/LightTheme/Text/Base);
+  --tour-text-muted: var(--HUD/Text/Muted);
+  --tour-text-body: var(--HUD/Text/Muted);
+  
+  /* HUD panels - LIGHT THEME */
+  /* PHASE C3.3: Unified tokens - use semantic HUD tokens as source of truth */
+  --hud-backdrop: rgba(0, 0, 0, 0.25);
+  --hud-panel-bg: var(--HUD/Panel/Bg);
+  --hud-panel-bg-mobile: rgba(247, 248, 250, 0.90);
+  --hud-text: var(--HUD/Text/Base);
+  --hud-text-secondary: var(--Color/LightTheme/Text/Base);
+  --hud-text-muted: var(--HUD/Text/Muted);
+  
+  /* 3D scene - use light theme background */
+  --scene-bg: var(--Color/Light/Background/Muted);
+  
+  /* Grid / Baseline - LIGHT THEME */
+  /* PHASE C3.2: Softer grid for better visibility without overwhelming */
+  --grid-color: rgba(15, 23, 42, 0.10);
+  --grid-opacity: 0.45;
 }
 

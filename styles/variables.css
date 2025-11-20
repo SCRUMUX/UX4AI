@@ -1,17 +1,41 @@
+/* 
+ * PHASE C2: LEGACY FILE - This file is considered legacy/adaptor
+ * 
+ * Status: Legacy (candidate for removal after migration)
+ * Purpose: Minimal set of variables for backward compatibility
+ * 
+ * Migration path: All usages should be migrated to styles/tokens.css tokens
+ * These variables are aliases that map to tokens in styles/tokens.css
+ * See docs/COLOR_MAP.md for current color token structure
+ */
+/* 
+ * PHASE C4: LEGACY FILE - Thin alias layer for backward compatibility
+ * 
+ * Status: Legacy (candidate for removal after full migration)
+ * Purpose: Minimal set of variables for backward compatibility
+ * 
+ * Migration path: All usages should be migrated to styles/tokens.css tokens
+ * These variables are thin aliases that map directly to tokens in styles/tokens.css
+ * See docs/COLOR_MAP.md for current color token structure
+ * 
+ * IMPORTANT: New components/screens (HUD/scene/tour) MUST use tokens directly,
+ * NOT these legacy aliases.
+ */
 :root {
-  /* Core theme tokens (defaults: Calm) */
-  --bg: #0B0F14;
-  --text: #E6EEF8;
-  --panel: #0F1420E6;
-  --accent: #5B9CFF;
-  --border: #243041;
-  --muted: #9AA6B2;
-  --glow: rgba(91, 156, 255, 0.5);
+  /* Core theme tokens (defaults: Calm) - Legacy compatibility aliases */
+  /* PHASE C4: Thin aliases - no fallback, direct mapping to tokens */
+  --bg: var(--Color/Dark/Background/Primary);
+  --text: var(--Color/Light/Text/Primary);
+  --panel: var(--Color/Dark/Background/Tertiary);
+  --accent: var(--Color/Accent/Primary);
+  --border: var(--Color/Dark/Border/Default);
+  --muted: var(--Color/Light/Text/Muted);
+  --glow: var(--Color/Effect/Glow);
 
-  /* Optional surface tokens */
-  --panel-solid: #121722;
-  --panel-ghost: rgba(18, 23, 34, 0.15);
-  --shadow-soft: 0 2px 10px rgba(0,0,0,0.25);
+  /* Optional surface tokens - PHASE C4: Thin aliases */
+  --panel-solid: var(--Color/Dark/Background/Secondary);
+  --panel-ghost: var(--Color/Dark/Surface/Ghost);
+  --shadow-soft: 0 2px 10px var(--Color/Effect/Shadow/Soft);
 }
 
 /* Example theme overrides (not wired) */

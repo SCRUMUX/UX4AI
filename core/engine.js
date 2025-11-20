@@ -12,6 +12,8 @@ import { validateAnchors } from './sections.js';
 import { emit } from './state.js';
 import { initNavigation, resetNavigationState } from './navigation.js?v=35';
 import { initHUD } from './hud-manager.js';
+// PHASE C2: Import theme-colors for fallback values
+import { getThemeColors } from './theme-colors.js';
 
 export function createEngine({ canvasParent, labelsElement }) {
   // THREE.js setup
@@ -38,7 +40,18 @@ export function createEngine({ canvasParent, labelsElement }) {
   camera.position.set(0, 1.2, 12);
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x0B0F14);
+  // Use CSS variable for scene background (theme-aware)
+  // Engine does NOT read theme from localStorage or classes - it relies on CSS variables
+  // CSS variables are set by theme-controller.js, which is the single source of truth
+  let sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--scene-bg').trim();
+  if (!sceneBg || sceneBg === '') {
+    // PHASE C2: Fallback to theme-colors.js instead of hardcoded hex
+    // This should rarely happen, as theme-controller initializes theme before engine creation
+    console.warn('[Engine] --scene-bg CSS variable not available, using theme-colors.js fallback');
+    const themeColors = getThemeColors();
+    sceneBg = themeColors.bgBase; // Use bgBase from theme-colors.js
+  }
+  scene.background = new THREE.Color(sceneBg);
 
   // Initialize systems
   initPicking(renderer, camera);
@@ -51,8 +64,9 @@ export function createEngine({ canvasParent, labelsElement }) {
   let hud = null;
   let gridDebug = null;
 
-  function mount(theme) {
-    console.log('[Engine] Mounting theme:', theme.id);
+  async function mount(sceneConfig) {
+    // sceneConfig is a scene plugin configuration (e.g., calm), NOT a UI theme
+    console.log('[Engine] Mounting scene:', sceneConfig.id);
 
     // Dispose previous scene
     if (navigation && typeof navigation.dispose === 'function') {
@@ -71,14 +85,14 @@ export function createEngine({ canvasParent, labelsElement }) {
     // Reset navigation state when switching scenes to prevent state leakage
     resetNavigationState();
 
-    // Create new scene from theme factory
+    // Create new scene from scene factory
     try {
-      const sceneModule = theme.sceneFactory(theme.config);
+      const sceneModule = sceneConfig.sceneFactory(sceneConfig.config);
       const result = sceneModule.mount({
         scene,
         camera,
         renderer,
-        theme
+        theme: sceneConfig // Pass scene config for compatibility
       });
 
       // Validate anchors
@@ -91,10 +105,15 @@ export function createEngine({ canvasParent, labelsElement }) {
 
       // Store plugin
       currentPlugin = result;
-      // Expose Calm plugin globally for UI grid synchronization
+      // Expose plugin globally for UI grid synchronization and HUD access
       try {
-        if (typeof window !== 'undefined' && theme && theme.id === 'calm') {
-          window._calmPlugin = result;
+        if (typeof window !== 'undefined') {
+          if (sceneConfig && sceneConfig.id === 'calm') {
+            window._calmPlugin = result;
+          }
+          // Also expose as currentPlugin for easier access
+          window._engine = window._engine || {};
+          window._engine.currentPlugin = result;
         }
       } catch (_) {}
       
@@ -124,11 +143,52 @@ export function createEngine({ canvasParent, labelsElement }) {
         console.error('[Engine] Failed to init navigation/HUD:', err);
       }
 
-      emit('themeMounted', { themeId: theme.id });
+      // Update scene background to match current theme (in case it changed)
+      // Scene colors are read from getSceneColors() which respects current UI theme
+      // This is critical: scene must have correct background color for current theme
+      try {
+        // Force reflow to ensure theme classes are applied
+        if (typeof document !== 'undefined') {
+          document.documentElement.offsetHeight;
+        }
+        
+        // Import theme-colors from same directory (core/)
+        const { getSceneColors } = await import('./theme-colors.js');
+        const sceneColors = getSceneColors();
+        const sceneBg = sceneColors.background;
+        
+        if (scene.background) {
+          scene.background = new THREE.Color(sceneBg);
+          console.log('[Engine] Scene background updated to match theme:', sceneBg, 'for scene:', sceneConfig.id);
+        } else {
+          console.warn('[Engine] scene.background is null');
+        }
+      } catch (e) {
+        console.warn('[Engine] Could not update scene background after mount:', e);
+        // Fallback: read from CSS variable only (no theme class checking)
+        try {
+          const sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--scene-bg').trim();
+          if (sceneBg && scene.background) {
+            scene.background = new THREE.Color(sceneBg);
+            console.log('[Engine] Fallback: scene background set from CSS variable:', sceneBg);
+          } else {
+            console.warn('[Engine] Fallback: --scene-bg CSS variable not available');
+          }
+        } catch (e2) {
+          console.warn('[Engine] Fallback scene background update also failed:', e2);
+        }
+      }
+
+      emit('themeMounted', { themeId: sceneConfig.id }); // Legacy event name, but sceneId would be more accurate
 
       // Start animation if not running
+      // CRITICAL: Animation must start after scene is mounted
       if (!animationFrameId) {
+        console.log('[Engine] Starting animation loop...');
         startAnimation();
+        console.log('[Engine] Animation loop started, animationFrameId:', animationFrameId);
+      } else {
+        console.log('[Engine] Animation already running, animationFrameId:', animationFrameId);
       }
 
       return result;
@@ -139,6 +199,12 @@ export function createEngine({ canvasParent, labelsElement }) {
   }
 
   function startAnimation() {
+    console.log('[Engine] startAnimation() called');
+    if (animationFrameId) {
+      console.warn('[Engine] Animation already running, canceling previous frame');
+      cancelAnimationFrame(animationFrameId);
+    }
+    
     function animate() {
       animationFrameId = requestAnimationFrame(animate);
 
@@ -165,13 +231,24 @@ export function createEngine({ canvasParent, labelsElement }) {
           const q = new URLSearchParams(window.location.search);
           if (q.get('griddebug') === '1') {
             gridDebug = document.createElement('div');
-            gridDebug.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:4000;font:12px/1.4 ui-sans-serif,system-ui; color:#9cc; background:rgba(0,0,0,0.5); padding:6px 8px; border:1px solid #244; border-radius:6px;';
+            // PHASE C2: Use CSS variables with theme-colors fallback (not hardcoded hex)
+            const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
+                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim() ||
+                             getThemeColors().textMuted;
+            const bgOverlay = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Surface/Overlay').trim() ||
+                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Surface/2').trim() ||
+                             getThemeColors().surfaceOverlay;
+            const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() ||
+                               getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Default').trim() ||
+                               getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim() ||
+                               getThemeColors().borderBase;
+            gridDebug.style.cssText = `position:fixed;bottom:8px;left:8px;z-index:4000;font:12px/1.4 ui-sans-serif,system-ui; color:${textMuted}; background:${bgOverlay}; padding:6px 8px; border:1px solid ${borderColor}; border-radius:6px;`;
             document.body.appendChild(gridDebug);
           }
         }
       } catch(_) {}
 
-      // Sync CSS HUD grid pulse with engine time (used by Matrix "core" pulses as well)
+      // Sync CSS HUD grid pulse with engine time
       try {
         const root = document.documentElement;
         if (root && root.style) {
@@ -199,7 +276,17 @@ export function createEngine({ canvasParent, labelsElement }) {
           let r=0,g=0,b=0; const hSeg = Math.floor(H/60);
           if (hSeg===0){r=C;g=X;b=0;} else if (hSeg===1){r=X;g=C;b=0;} else if (hSeg===2){r=0;g=C;b=X;} else if (hSeg===3){r=0;g=X;b=C;} else if (hSeg===4){r=X;g=0;b=C;} else {r=C;g=0;b=X;}
           const R = Math.round((r+m)*255), G = Math.round((g+m)*255), B = Math.round((b+m)*255);
-          const a = (0.18 + 0.32 * corePulse).toFixed(3);
+          // Theme-aware grid opacity: softer in light theme
+          // PHASE C3.2: Even softer grid in light theme for better visibility
+          const isLightTheme = document.documentElement.classList.contains('theme-light') ||
+                               document.body.classList.contains('theme-light');
+          let baseAlpha = 0.18;
+          let pulseAlpha = 0.32;
+          if (isLightTheme) {
+            baseAlpha = 0.06;
+            pulseAlpha = 0.12;
+          }
+          const a = (baseAlpha + pulseAlpha * corePulse).toFixed(3);
           const col = `rgba(${R}, ${G}, ${B}, ${a})`;
           root.style.setProperty('--grid-color', col);
           root.style.setProperty('--phase', phase);
@@ -259,7 +346,7 @@ export function createEngine({ canvasParent, labelsElement }) {
 
       // Skip 3D updates and rendering when tour is active on mobile to improve performance
       if (shouldRender) {
-        // Update camera navigation (skip for Matrix/other drive-only scenes)
+        // Update camera navigation (skip for drive-only scenes)
         if (navigation && !(currentPlugin?.driveOnly)) {
           navigation.updateCameraFromScroll();
           if (navigation.orbitMode) {
@@ -267,9 +354,20 @@ export function createEngine({ canvasParent, labelsElement }) {
           }
         }
 
-        // Update scene plugin
+        // Update scene plugin (CRITICAL: this updates scene animations)
         if (currentPlugin && currentPlugin.update) {
-          currentPlugin.update(t, dt);
+          try {
+            currentPlugin.update(t, dt);
+          } catch (e) {
+            console.error('[Engine] Error in plugin.update:', e);
+          }
+        } else if (!currentPlugin) {
+          // Log warning only once per second to avoid spam
+          const logKey = 'noPluginWarning';
+          if (!window[logKey] || Date.now() - window[logKey] > 1000) {
+            console.warn('[Engine] No currentPlugin available for update');
+            window[logKey] = Date.now();
+          }
         }
 
         // Determine active camera (scene may provide its own)
@@ -280,8 +378,12 @@ export function createEngine({ canvasParent, labelsElement }) {
         // Update label positions with active camera
         updatePositions(activeCamera, renderer);
 
-        // Render
-        renderer.render(scene, activeCamera);
+        // Render (CRITICAL: this actually draws the scene)
+        try {
+          renderer.render(scene, activeCamera);
+        } catch (e) {
+          console.error('[Engine] Error in renderer.render:', e);
+        }
       }
     }
 
@@ -295,7 +397,18 @@ export function createEngine({ canvasParent, labelsElement }) {
       if (e.altKey && (e.key === 'g' || e.key === 'G')) {
         if (!gridDebug) {
           gridDebug = document.createElement('div');
-          gridDebug.style.cssText = 'position:fixed;bottom:8px;left:8px;z-index:4000;font:12px/1.4 ui-sans-serif,system-ui; color:#9cc; background:rgba(0,0,0,0.5); padding:6px 8px; border:1px solid #244; border-radius:6px;';
+          // PHASE C2: Use CSS variables with theme-colors fallback (not hardcoded hex)
+          const textMuted = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
+                           getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim() ||
+                           getThemeColors().textMuted;
+          const bgOverlay = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Surface/Overlay').trim() ||
+                           getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Surface/2').trim() ||
+                           getThemeColors().surfaceOverlay;
+          const borderColor = getComputedStyle(document.documentElement).getPropertyValue('--border').trim() ||
+                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Default').trim() ||
+                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim() ||
+                             getThemeColors().borderBase;
+          gridDebug.style.cssText = `position:fixed;bottom:8px;left:8px;z-index:4000;font:12px/1.4 ui-sans-serif,system-ui; color:${textMuted}; background:${bgOverlay}; padding:6px 8px; border:1px solid ${borderColor}; border-radius:6px;`;
           document.body.appendChild(gridDebug);
         } else {
           const visible = gridDebug.style.display !== 'none';
@@ -315,7 +428,7 @@ export function createEngine({ canvasParent, labelsElement }) {
       try { navigation.dispose(); } catch {}
       navigation = null;
     }
-    // Skip navigation init for drive-only scenes like Matrix
+    // Skip navigation init for drive-only scenes
     if (!(currentPlugin?.driveOnly)) {
       navigation = initNavigation(camera, nodes, modeBanner, renderer.domElement);
       console.log('[Engine] Navigation initialized:', navigation);
@@ -330,26 +443,47 @@ export function createEngine({ canvasParent, labelsElement }) {
       ? currentPlugin.getActiveCamera() || camera
       : camera;
     updatePickingCamera(activeCamera);
-    hud = initHUD({
-      overlay: document.getElementById('overlay'),
-      hudObjectIcon: document.getElementById('hud-object-icon'),
-      hudBigPanel: document.getElementById('hud-big-panel'),
-      hudSmallPanel: document.getElementById('hud-small-panel'),
-      hudContainer: document.getElementById('hud-container'),
-      labelsLayer: labelsElement,
-      btnAbout: document.getElementById('btn-about'),
-      btnLinks: document.getElementById('btn-links'),
-      btnDemo: document.getElementById('btn-demo'),
-      linksPanel: document.getElementById('links-panel'),
-      btnLinksClose: document.getElementById('btn-links-close'),
-      nodes: nodes || []
-    });
-    // Expose HUD globally for tour integration
-    try {
-      if (typeof window !== 'undefined') {
-        window.hud = hud;
-      }
-    } catch (_) {}
+    
+    // Only initialize HUD if it hasn't been initialized yet
+    // HUD may have been initialized early in bootstrap, but without nodes
+    if (!hud) {
+      // ФАЗА A: Логирование перед инициализацией HUD
+      console.log('[Bootstrap] Before initHUD');
+      console.log('[Engine] Initializing HUD with', nodes?.length || 0, 'nodes');
+      hud = initHUD({
+        overlay: document.getElementById('overlay'),
+        hudObjectIcon: document.getElementById('hud-object-icon'),
+        hudBigPanel: document.getElementById('hud-big-panel'),
+        hudSmallPanel: document.getElementById('hud-small-panel'),
+        hudContainer: document.getElementById('hud-container'),
+        labelsLayer: labelsElement,
+        btnAbout: document.getElementById('btn-about'),
+        btnLinks: document.getElementById('btn-links'),
+        btnDemo: document.getElementById('btn-demo'),
+        linksPanel: document.getElementById('links-panel'),
+        btnLinksClose: document.getElementById('btn-links-close'),
+        nodes: nodes || []
+      });
+      // ФАЗА A: Логирование после инициализации HUD
+      console.log('[Bootstrap] After initHUD', { hudApiKeys: hud && Object.keys(hud || {}) });
+      // Expose HUD globally for tour integration and other modules
+      try {
+        if (typeof window !== 'undefined') {
+          window._hud = hud;
+          // ФАЗА B: Сохранить ensureThemeButton для стабилизации кнопки темы
+          if (hud && typeof hud.ensureThemeButton === 'function') {
+            if (!window.hud) window.hud = {};
+            window.hud.ensureThemeButton = hud.ensureThemeButton;
+            console.log('[Bootstrap] ensureThemeButton saved to window.hud.ensureThemeButton');
+          }
+        }
+      } catch (_) {}
+    } else {
+      // HUD already exists (initialized early), but nodes are now available
+      // Update HUD's internal nodes reference if possible
+      console.log('[Engine] HUD already initialized, nodes available:', nodes?.length || 0);
+      // HUD will get nodes from engine plugin when needed (see btnDemo handler in hud-manager.js)
+    }
   }
 
   function resize(width, height) {
@@ -399,8 +533,8 @@ export function createEngine({ canvasParent, labelsElement }) {
     renderer,
     camera,
     scene,
-    mount: (theme) => {
-      const result = mount(theme);
+    mount: async (theme) => {
+      const result = await mount(theme);
       // Trigger event
       if (eventListeners.themeMounted) {
         eventListeners.themeMounted.forEach(fn => fn({ themeId: theme.id }));

@@ -1,4 +1,13 @@
 /* === CSS ПЕРЕМЕННЫЕ ДЛЯ ВСЕХ ТЕМ === */
+/* 
+ * PHASE C2: LEGACY FILE - This file is considered legacy/adaptor
+ * 
+ * Status: Legacy (candidate for removal after migration)
+ * Purpose: Old theme variable definitions, duplicates functionality of styles/tokens.css
+ * 
+ * Migration path: All usages should be migrated to styles/tokens.css tokens
+ * See docs/COLOR_MAP.md for current color token structure
+ */
 
 /* Темная тема (по умолчанию) */
 :root {

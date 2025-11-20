@@ -1,4 +1,14 @@
 /* === ПРОСТЫЕ ТЕМЫ === */
+/* 
+ * PHASE C2: LEGACY FILE - This file is considered legacy/adaptor
+ * 
+ * Status: Legacy (candidate for removal after migration)
+ * Purpose: Simple theme definitions (light, neon), duplicates functionality of styles/tokens.css
+ * 
+ * Migration path: All usages should be migrated to styles/tokens.css tokens
+ * Note: Neon theme is not used in current version
+ * See docs/COLOR_MAP.md for current color token structure
+ */
 
 /* Светлая тема */
 .theme-light {

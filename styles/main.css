@@ -21,7 +21,7 @@ body {
   margin: 0;
   padding: 0;
   background: transparent;
-  color: var(--Color/Light/Text/Primary);
+  color: var(--HUD/Text/Base);
 }
 
 /* Mobile orbit mode: block browser gestures */
@@ -62,7 +62,7 @@ body {
   /* Disable hover effects on mobile */
   #tour-overlay .tour-actions .btn:hover {
     background: var(--Color/Dark/Surface/Base) !important;
-    color: var(--Color/Light/Text/Tertiary) !important;
+    color: var(--HUD/Text/Muted) !important;
     border-color: var(--Color/Dark/Border/Default) !important;
   }
 
@@ -88,7 +88,7 @@ body {
   position: fixed;
   inset: 0;
   overflow: hidden;
-  background: transparent;
+  background: var(--scene-bg);
   z-index: var(--ZIndex/Base);
 }
 
@@ -102,6 +102,7 @@ body {
 }
 
 /* === Labels === */
+#labels .label,
 .label {
   position: absolute;
   transform: translate(-50%, -50%);
@@ -110,9 +111,9 @@ body {
   font-size: var(--Font/Size/S);
   letter-spacing: var(--Font/LetterSpacing/Tight);
   font-weight: var(--Font/Weight/Regular);
-  color: var(--Color/Light/Text/Primary);
-  background: var(--Color/Dark/Surface/Base);
-  border: 1px solid var(--Color/Dark/Border/Default);
+  color: var(--HUD/Text/Base);
+  background: var(--HUD/Panel/Bg);
+  border: 1px solid var(--HUD/Panel/Border);
   border-radius: var(--Radius/M);
   box-shadow: var(--Shadow/Inset), var(--Shadow/Medium);
   white-space: nowrap;
@@ -120,10 +121,11 @@ body {
   transition: var(--Transition/Background), var(--Transition/Color);
 }
 
+#labels .label:hover,
 .label:hover {
-  background: var(--Color/State/Hover/Surface);
+  background: var(--Color/State/Hover/Background);
   border-color: var(--Color/Accent/Primary);
-  color: var(--Color/Light/Text/Secondary);
+  color: var(--HUD/Text/Base);
   cursor: pointer;
 }
 
@@ -198,7 +200,7 @@ body {
 #hud-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--Color/Dark/Surface/Overlay);
+  background: var(--hud-backdrop);
   backdrop-filter: var(--Backdrop/Blur/Soft);
   z-index: var(--ZIndex/HUD/Backdrop);
   pointer-events: none !important;
@@ -210,6 +212,157 @@ body {
   display: none !important;
 }
 
+/* === HUD Panels === */
+/* PHASE C3.3: Moved from index.html inline styles to main.css for better maintainability */
+#hud-big-panel {
+  position: fixed;
+  top: 200px;
+  right: 450px;
+  left: auto;
+  width: 580px;
+  max-height: calc(100vh - 250px);
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  background: var(--HUD/Panel/Bg);
+  backdrop-filter: blur(2px) saturate(140%);
+  border: 1px solid var(--HUD/Panel/Border);
+  border-top: none;
+  border-radius: 0;
+  padding: 20px;
+  color: var(--HUD/Text/Base);
+  line-height: 1.5;
+  white-space: pre-line;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-weight: 200;
+  display: none;
+  z-index: 1000;
+}
+
+#hud-small-panel,
+#hud-small-panel * {
+  box-sizing: border-box;
+}
+
+#hud-small-panel .hud-section-header {
+  width: 100%;
+  text-align: left;
+  color: var(--HUD/Text/Base);
+  background: var(--HUD/Panel/Bg);
+  backdrop-filter: blur(2px) saturate(140%);
+  border: 1px solid var(--HUD/Panel/Border);
+  border-top: none;
+  border-radius: 0;
+}
+
+/* HUD Container: fixed, centered wrapper */
+#hud-container {
+  position: fixed;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: row;
+  gap: 24px;
+  z-index: 1000;
+}
+
+/* Inside container: refine child layouts */
+#hud-container #hud-small-panel {
+  position: static;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: none;
+  border: none;
+}
+
+#hud-container #hud-big-panel {
+  position: static;
+  width: 580px;
+  max-height: calc(100vh - 200px);
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  background: var(--HUD/Panel/Bg);
+  backdrop-filter: blur(2px) saturate(140%);
+  border: 1px solid var(--HUD/Panel/Border);
+  border-top: none;
+  border-radius: 0;
+  padding: 20px;
+  color: var(--HUD/Text/Base);
+  line-height: 1.5;
+  white-space: pre-line;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  font-weight: 200;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#hud-container #hud-big-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* HUD Small Panel */
+#hud-small-panel {
+  position: fixed;
+  top: 200px;
+  left: 450px;
+  right: auto;
+  width: 250px;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  background: none;
+  border: none;
+  z-index: 1000;
+}
+
+/* Mobile: HUD panels adjustments */
+@media (max-width: 767px) {
+  #hud-big-panel,
+  #hud-container #hud-big-panel {
+    backdrop-filter: none;
+    background: var(--hud-panel-bg-mobile);
+    border-radius: 0;
+    border-top: none;
+    box-shadow: 
+      0 8px 32px rgba(0,0,0,0.3),
+      inset 0 -1px 0 rgba(0,0,0,0.15),
+      0 0 0 1px var(--Color/Dark/Border/Subtle),
+      0 -1px 0 transparent;
+    position: relative;
+  }
+
+  #hud-big-panel::before,
+  #hud-container #hud-big-panel::before {
+    display: none;
+  }
+
+  #hud-big-panel > *,
+  #hud-container #hud-big-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  #hud-small-panel .hud-section-header {
+    backdrop-filter: none;
+    background: var(--tour-card-bg-mobile);
+    border-radius: 0;
+    box-shadow: 
+      0 2px 8px rgba(0,0,0,0.2),
+      0 0 0 1px var(--Color/Dark/Border/Subtle);
+  }
+}
+
 /* === Hide Legacy Panels === */
 #object-icon,
 #big-panel,
@@ -218,6 +371,7 @@ body {
 }
 
 /* === Header === */
+/* Header styles are identical in both themes - only colors change via CSS variables */
 header#site-header {
   position: fixed;
   top: 0;
@@ -228,15 +382,16 @@ header#site-header {
   align-items: center;
   gap: var(--Header/Gap);
   padding: var(--Header/Padding/V) var(--Header/Padding/H);
-  background: var(--Color/Dark/Surface/Ghost);
-  border-bottom: 1px solid var(--Color/Dark/Border/Default);
+  /* Use theme-aware variables that change based on theme class */
+  background: var(--header-bg, var(--Color/Dark/Surface/Ghost));
+  border-bottom: 1px solid var(--header-border, var(--Color/Dark/Border/Default));
   backdrop-filter: var(--Backdrop/Blur/Strong);
   font-family: var(--Font/Family/Base);
 }
 
 .hud-active header#site-header {
   backdrop-filter: var(--Backdrop/Blur/Strong);
-  background: var(--Color/Dark/Surface/Elevated);
+  background: var(--header-bg-hud, var(--Color/Dark/Surface/Elevated));
 }
 
 .header-logo {
@@ -249,14 +404,14 @@ header#site-header {
   font-weight: var(--Font/Weight/Semibold);
   font-size: var(--Font/Size/M);
   letter-spacing: var(--Font/LetterSpacing/Tight);
-  color: var(--Color/Light/Text/Secondary);
+  color: var(--Header/Logo/Name);
   white-space: nowrap;
 }
 
 .header-logo .tagline {
   margin-left: var(--Spacing/ML);
   font-size: var(--Font/Size/S);
-  color: var(--Color/Light/Text/Muted);
+  color: var(--Header/Logo/Tagline);
   font-weight: var(--Font/Weight/Regular);
   white-space: nowrap;
 }
@@ -276,7 +431,7 @@ header#site-header {
   box-sizing: border-box;
   font-size: var(--Font/Size/S);
   font-weight: var(--Font/Weight/Medium);
-  color: var(--Color/Light/Text/Muted);
+  color: var(--Header/Button/Text);
   background: transparent;
   border: 1px solid transparent;
   border-radius: var(--Button/BorderRadius);
@@ -285,8 +440,9 @@ header#site-header {
 }
 
 .header-btn:hover {
-  color: var(--Color/Accent/Primary);
-  background: var(--Color/State/Hover/Background);
+  background: var(--Header/Button/HoverBg);
+  border-color: var(--Header/Button/HoverBorder);
+  color: var(--Header/Button/HoverText);
 }
 
 .header-btn:active {
@@ -397,7 +553,7 @@ textarea:focus,
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--Color/Light/Text/Muted);
+  color: var(--HUD/Text/Muted);
   font-size: var(--Font/Size/M);
   cursor: pointer;
   transition: var(--Transition/Color);
@@ -410,22 +566,53 @@ textarea:focus,
 #links-panel .link-row a {
   display: block;
   padding: var(--Spacing/M);
-  color: var(--Color/Light/Text/Muted);
+  color: var(--Link/Base);
   text-decoration: none;
   border: 1px solid var(--Color/Dark/Border/Default);
   transition: var(--Transition/Background), var(--Transition/Color);
 }
 
 #links-panel .link-row a:hover {
-  color: var(--Color/Accent/Primary);
-  background: var(--Color/State/Hover/Background);
+  color: var(--Link/HoverText);
+  background: var(--Link/HoverBg);
   border-color: var(--Color/Accent/Primary);
+}
+
+/* HUD Navigation Links - PHASE C3.3: Fixed specificity to ensure hover styles work */
+.hud-active .hud-section-nav a,
+.hud-active #links-panel .link-row a,
+#hud-small-panel .hud-section-nav a {
+  color: var(--HUD/Link/Base);
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background var(--Transition/Fast), color var(--Transition/Fast);
+  padding: 4px 6px;
+}
+
+.hud-active .hud-section-nav a:hover,
+.hud-active #links-panel .link-row a:hover,
+#hud-small-panel .hud-section-nav a:hover {
+  background: var(--HUD/Link/HoverBg);
+  color: var(--HUD/Link/HoverText);
+}
+
+.hud-active .hud-section-nav a.active,
+#hud-small-panel .hud-section-nav a.active {
+  background: var(--Color/State/Selected/Background);
+  color: var(--HUD/Link/HoverText);
+}
+
+/* HUD Close Button Hover */
+#hud-small-panel .hud-close-btn:hover {
+  border: none;
+  background: var(--HUD/Link/HoverBg);
+  color: var(--HUD/Link/HoverText);
 }
 
 #links-panel .link-kicker {
   margin-top: var(--Spacing/SM);
   font-size: var(--Font/Size/XS);
-  color: var(--Color/Light/Text/Tertiary);
+  color: var(--HUD/Text/Muted);
   opacity: 0.7;
 }
 
@@ -529,3 +716,30 @@ textarea:focus,
     min-height: calc(100dvh - 80px);
   }
 }
+
+/* PHASE C3.1 — Theme polish: unified button/link hovers */
+body.theme-dark .header-btn {
+  color: var(--Header/Button/Text);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+body.theme-dark .header-btn:hover {
+  background: var(--Header/Button/HoverBg);
+  border-color: var(--Header/Button/HoverBorder);
+  color: var(--Header/Button/HoverText);
+}
+
+body.theme-light .header-btn {
+  color: var(--Header/Button/Text);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+body.theme-light .header-btn:hover {
+  background: var(--Header/Button/HoverBg);
+  border-color: var(--Header/Button/HoverBorder);
+  color: var(--Header/Button/HoverText);
+}
+
+/* Duplicate removed - see above for unified styles */

@@ -5,9 +5,33 @@
 <!-- Критический CSS - предотвращает белый экран при загрузке -->
 <style>
   /* Базовые стили для мгновенного применения - предотвращают FOUC */
+  /* PHASE C2: Critical colors now use tokens with fallback for FOUC prevention */
+  /* Default dark theme colors - will be overridden by theme-light class */
+  :root {
+    /* PHASE C2: Use tokens from styles/tokens.css with hex fallback for FOUC prevention */
+    /* DARK THEME (default) - light text on dark background */
+    --critical-bg: var(--bg, #0D1117);
+    --critical-text: var(--text, #F0F6FC);
+    --critical-header-bg: var(--Color/Dark/Surface/Ghost, rgba(18, 23, 34, 0.15));
+    /* Use semantic tokens from styles/tokens.css */
+    /* DARK THEME: light text colors as fallback */
+    --critical-logo-name: var(--Header/Logo/Name, #F0F6FC);
+    --critical-logo-tagline: var(--Header/Logo/Tagline, #A5B4C6);
+    --critical-btn: var(--Header/Button/Text, #A5B4C6);
+  }
+  :root.theme-light {
+    /* PHASE C2: Use tokens from styles/tokens.css with hex fallback for FOUC prevention */
+    --critical-bg: var(--bg, #FFFFFF);
+    --critical-text: var(--text, #0B0F14);
+    --critical-header-bg: var(--Color/Light/Surface/3, rgba(247, 248, 250, 0.95));
+    /* Use semantic tokens from styles/tokens.css */
+    --critical-logo-name: var(--Header/Logo/Name, #0B0F14);
+    --critical-logo-tagline: var(--Header/Logo/Tagline, #6B7280);
+    --critical-btn: var(--Header/Button/Text, #6B7280);
+  }
   html {
-    background: #0B0F14 !important;
-    color: #E6EEF8 !important;
+    background: var(--critical-bg) !important;
+    color: var(--critical-text) !important;
     margin: 0;
     padding: 0;
     height: 100%;
@@ -15,23 +39,23 @@
   }
   body {
     background: transparent !important;
-    color: #E6EEF8 !important;
+    color: var(--critical-text) !important;
     margin: 0;
     padding: 0;
   }
-  /* Хедер - светлый текст на темном фоне */
+  /* Хедер - адаптивный к теме */
   header#site-header {
-    background: rgba(18, 23, 34, 0.15) !important;
-    color: #E6EEF8 !important;
+    background: var(--critical-header-bg) !important;
+    color: var(--critical-text) !important;
   }
   .header-logo .name {
-    color: #CFE8FF !important;
+    color: var(--critical-logo-name) !important;
   }
   .header-logo .tagline {
-    color: #9AA6B2 !important;
+    color: var(--critical-logo-tagline) !important;
   }
   .header-btn {
-    color: #9AA6B2 !important;
+    color: var(--critical-btn) !important;
     background: transparent !important;
   }
 </style>
@@ -39,9 +63,11 @@
 <!-- iOS Safari: темная status bar -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
-<!-- Android Chrome: темная theme color -->
-<meta name="theme-color" content="#0B0F14"/>
-<meta name="msapplication-navbutton-color" content="#0B0F14"/>
+<!-- Android Chrome: theme color -->
+<!-- PHASE C2: Initial value uses token fallback, will be updated dynamically via JavaScript based on current theme -->
+<!-- Theme color will be updated dynamically via JavaScript based on current theme -->
+<meta name="theme-color" content="#0B0F14" id="meta-theme-color"/>
+<meta name="msapplication-navbutton-color" content="#0B0F14" id="meta-navbutton-color"/>
 <title>Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI</title>
 <meta name="description" content="Владимир Костял — проектирую UX-архитектуру и интерфейсы для AI‑сервисов. UX4AI: паттерны, подходы и решения для взаимодействия с ИИ."/>
 <meta name="keywords" content="UX, AI, UX архитектура, интерфейсы, проектирование, взаимодействие с ИИ, UX4AI"/>
@@ -131,8 +157,8 @@
 <link rel="apple-touch-icon" sizes="180x180" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="192x192" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="./android-chrome-512x512.png"/>
-<link rel="stylesheet" href="./styles/tokens.css"/>
-<link rel="stylesheet" href="./styles/main.css"/>
+<link rel="stylesheet" href="./styles/tokens.css?v=43"/>
+<link rel="stylesheet" href="./styles/main.css?v=43"/>
 <style>
     /* Scroll world: make body tall so camera flies segment-by-segment */
 html {
@@ -194,7 +220,7 @@ body {
     /* Remove transitions on mobile for instant feedback */
     transition: none !important;
     /* Предотвращение залипаний - оптимизация отклика */
-    -webkit-tap-highlight-color: rgba(91, 156, 255, 0.1);
+    -webkit-tap-highlight-color: var(--Color/State/Hover/Background, rgba(91, 156, 255, 0.1));
     /* Улучшение производительности */
     will-change: auto;
     transform: translateZ(0); /* GPU acceleration */
@@ -205,12 +231,12 @@ body {
   }
   /* Disable hover effects on mobile - they can interfere with touch */
   #tour-overlay .tour-actions .btn:hover {
-    background: rgba(18,23,34,0.9) !important;
-    color: #9AA6B2 !important;
-    border-color: #243041 !important;
+    background: var(--Color/State/Hover/Surface) !important;
+    color: var(--tour-text-muted) !important;
+    border-color: var(--border) !important;
   }
   #tour-overlay .tour-actions .btn-primary:hover {
-    background: rgba(91,156,255,0.12) !important;
+    background: var(--Color/State/Active/Background) !important;
   }
   /* Prevent text selection on interactive elements */
   .tour-card, .hud-big-panel, .hud-small-panel {
@@ -244,28 +270,30 @@ body {
       font-size: 14px;
       letter-spacing: 0.2px;
       font-weight: 400;
-      color: var(--text);
-      background: rgba(18,23,34,0.85);
-      border: 1px solid var(--border);
+      color: var(--HUD/Text/Base);
+      background: var(--HUD/Panel/Bg);
+      border: 1px solid var(--HUD/Panel/Border);
       border-radius: 10px;
-      box-shadow: 0 0 0 1px rgba(36,48,65,0.4) inset, 0 2px 10px rgba(0,0,0,0.25);
+      box-shadow: 0 0 0 1px var(--HUD/Panel/Border) inset, 0 2px 10px var(--Color/Effect/Shadow/Soft);
       white-space: nowrap;
       opacity: 0.96;
     }
 
     .label:hover {
-      background: rgba(36, 48, 65, 0.95);
-      border-color: var(--accent);
-      color: #CFE8FF;
+      background: var(--Color/State/Hover/Background);
+      border-color: var(--Color/Accent/Primary);
+      color: var(--HUD/Text/Base);
       cursor: pointer;
     }
     /* HUD chips (layer hints) preserved for orientation */
     .hud {
       position: fixed; left: 12px; top: 12px; right: 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-      background:#121722cc; border:1px solid var(--border); border-radius:12px; padding:8px 10px; backdrop-filter: blur(6px);
+      /* PHASE C4: Use token directly instead of legacy variable */
+      background: var(--Color/Dark/Background/Secondary); border:1px solid var(--border); border-radius:12px; padding:8px 10px; backdrop-filter: blur(6px);
       z-index:10; font-size:12px;
     }
-    .chip { padding:4px 8px; border:1px solid #2a3b51; border-radius:10px; background:#162032; opacity:0.96; }
+    /* PHASE C4: Use token directly instead of legacy variable */
+    .chip { padding:4px 8px; border:1px solid var(--Color/Dark/Border/Default); border-radius:10px; background:var(--Color/Dark/Background/Tertiary); opacity:0.96; }
     .spacer{flex:1}
     .hint {opacity:0.7}
 
@@ -278,7 +306,7 @@ body {
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.45);
+      background: var(--Color/Dark/Surface/Overlay, rgba(0, 0, 0, 0.45));
       pointer-events: none; /* Always none - don't block clicks */
       opacity: 0;
       transition: opacity 0.3s ease;
@@ -293,7 +321,7 @@ body {
     #hud-backdrop {
       position: fixed;
       inset: 0;
-      background: rgba(5,8,12,0.60);
+      background: var(--hud-backdrop);
       backdrop-filter: blur(2px) saturate(120%);
       z-index: 940;
       pointer-events: none;
@@ -350,13 +378,13 @@ body {
       overflow-y: auto !important;                /* enable scroll */
       overflow-x: hidden !important;            /* avoid nested horizontal scroll */
       overscroll-behavior: contain !important;  /* prevent scroll chaining */
-      background: rgba(18, 23, 34, 0.35);
+      background: var(--hud-panel-bg);
       backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid #243041;
+      border: 1px solid var(--border);
       border-top: none; /* Remove top border */
       border-radius: 0; /* Square corners to match tour style */
       padding: 20px;
-      color: #E6EEF8;
+      color: var(--hud-text);
       line-height: 1.5;
       white-space: pre-line;
       box-sizing: border-box;        /* keep padding inside bounds */
@@ -366,47 +394,7 @@ body {
       display: none;
       z-index: 1000;
     }
-    @media (max-width: 767px) {
-      /* Disable backdrop-filter on mobile, but keep visual effect with gradients and shadows */
-      #hud-big-panel,
-      #hud-container #hud-big-panel {
-        backdrop-filter: none !important;
-        /* Use more transparent background for better visibility - increased transparency */
-        background: linear-gradient(135deg, rgba(18, 23, 34, 0.50) 0%, rgba(18, 23, 34, 0.65) 100%) !important;
-        /* Remove border-radius and top border to match desktop style */
-        border-radius: 0 !important;
-        border-top: none !important;
-        /* Add subtle border glow and inner highlight for glass effect - remove top border */
-        box-shadow: 
-          0 8px 32px rgba(0,0,0,0.3),
-          inset 0 -1px 0 rgba(0,0,0,0.15),
-          0 0 0 1px rgba(36,48,65,0.3),
-          0 -1px 0 transparent !important; /* Remove top border shadow */
-        position: relative;
-      }
-      /* Remove top border effect - no pseudo-element needed */
-      #hud-big-panel::before,
-      #hud-container #hud-big-panel::before {
-        display: none;
-      }
-      /* Ensure content is above pseudo-element */
-      #hud-big-panel > *,
-      #hud-container #hud-big-panel > * {
-        position: relative;
-        z-index: 1;
-      }
-      #hud-small-panel .hud-section-header {
-        backdrop-filter: none !important;
-        /* Use more transparent background for better visibility - increased transparency */
-        background: linear-gradient(135deg, rgba(18,23,34,0.50) 0%, rgba(18,23,34,0.65) 100%) !important;
-        /* Remove border-radius to match desktop style */
-        border-radius: 0 !important;
-        /* Add subtle border glow - remove top border */
-        box-shadow: 
-          0 2px 8px rgba(0,0,0,0.2),
-          0 0 0 1px rgba(36,48,65,0.3) !important;
-      }
-    }
+    /* PHASE C3.3: Mobile styles moved to main.css */
     /* Ensure all text in big panel has consistent weight, except headings */
     #hud-big-panel * {
       font-weight: 200;
@@ -434,7 +422,7 @@ body {
     .hud-active #hud-big-panel h5,
     .hud-active #hud-big-panel h6 {
       font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
     }
@@ -451,7 +439,7 @@ body {
     #hud-container #hud-big-panel h3,
     .hud-active #hud-container #hud-big-panel h3 {
       font: 600 18px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
     }
@@ -460,7 +448,7 @@ body {
     #hud-container #hud-big-panel h4,
     .hud-active #hud-container #hud-big-panel h4 {
       font: 600 16px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
     }
@@ -516,8 +504,8 @@ body {
     #hud-small-panel .hud-section-header {
       width: 100%;
       text-align: left;
-      color: #E6EEF8;
-      background: rgba(18,23,34,0.35);
+      color: var(--hud-text);
+      background: var(--hud-panel-bg);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid var(--border);
       border-top: none; /* Remove top border */
@@ -553,13 +541,13 @@ body {
       overflow-y: auto !important;                 /* enable scroll in container mode */
       overflow-x: hidden !important;            /* avoid nested horizontal scroll */
       overscroll-behavior: contain !important;  /* prevent scroll chaining */
-      background: rgba(18, 23, 34, 0.35);
+      background: var(--hud-panel-bg);
       backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid #243041;
+      border: 1px solid var(--border);
       border-top: none; /* Remove top border */
       border-radius: 0; /* Square corners to match tour style */
       padding: 20px;
-      color: #E6EEF8;
+      color: var(--hud-text);
       line-height: 1.5;
       white-space: pre-line;
       box-sizing: border-box;        /* keep padding inside bounds */
@@ -585,7 +573,7 @@ body {
     .hud-active #hud-container #hud-big-panel h5,
     .hud-active #hud-container #hud-big-panel h6 {
       font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
     }
@@ -593,13 +581,13 @@ body {
       margin: 0 0 6px 0;
       
       font-weight: 400;
-      color: #CFE8FF;
+      color: var(--HUD/Text/Base);
     }
     #hud-small-panel .hud-section-summary {
       margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
       
       line-height: 1.4;
-      color: #9AA6B2;
+      color: var(--HUD/Text/Muted);
     }
     #hud-small-panel .hud-section-nav {
       display: flex;
@@ -609,22 +597,19 @@ body {
     #hud-small-panel .hud-section-nav a {
       font-size: 16px;
       font-weight: 200 !important;
-      color: #9AA6B2 !important;  /* same color as links panel */
+      color: var(--tour-text-muted) !important;  /* same color as links panel */
       text-decoration: none;
       padding: 4px 6px;
       border-radius: 6px;
       transition: background 0.2s, color 0.2s;
     }
-    #hud-small-panel .hud-section-nav a:hover {
-      color: #5B9CFF !important;  /* same hover color as links panel */
-      background: rgba(91,156,255,0.08);
-    }
+    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
     #hud-small-panel button {
       padding: 10px;
       font-size: 14px;
       font-weight: 500;
-      color: #9AA6B2;
-      background: rgba(18, 23, 34, 0.50);
+      color: var(--hud-text-muted);
+      background: var(--hud-panel-bg-mobile);
       backdrop-filter: blur(2px) saturate(140%);
       border: 1px solid var(--border);
       border-radius: 8px;
@@ -650,14 +635,14 @@ body {
       }
     }
     #hud-small-panel button:hover {
-      color: #5B9CFF;
-      background: rgba(91, 156, 255, 0.08);
+      color: var(--Color/Accent/Primary);
+      background: var(--Color/State/Hover/Background);
     }
     #hud-small-panel button.active-tab {
-      color: #CFE8FF;
-      background: rgba(91,156,255,0.12);
-      border-color: #5B9CFF;
-      box-shadow: 0 0 0 1px rgba(91,156,255,0.25) inset;
+      color: var(--HUD/Text/Base);
+      background: var(--Color/State/Active/Background);
+      border-color: var(--Color/Accent/Primary);
+      box-shadow: 0 0 0 1px var(--Color/Effect/Glow) inset;
     }
 
     /* === Custom header, tagline and links panel for the portfolio site === */
@@ -671,15 +656,16 @@ body {
       align-items: center;
       gap: 12px;
       padding: 6px 14px;
-      background: var(--panel-ghost);
-      border-bottom: 1px solid var(--border);
+      /* Use theme-aware header variables - same layout, different colors */
+      background: var(--header-bg, var(--panel-ghost));
+      border-bottom: 1px solid var(--header-border, var(--border));
       backdrop-filter: blur(20px) saturate(160%);
       font-family: inherit;
     }
     /* Keep blur effect in HUD mode (reduced intensity for performance) */
     .hud-active header#site-header {
       backdrop-filter: blur(20px) saturate(160%);
-      background: rgba(18,23,34,0.50);
+      background: var(--header-bg-hud, var(--hud-panel-bg-mobile));
     }
     .header-logo {
       display: flex;
@@ -690,7 +676,8 @@ body {
       font-weight: 600;
       font-size: 18px;
       letter-spacing: 0.2px;
-      color: #CFE8FF;
+      /* Use theme-aware color variable instead of hardcoded color */
+      color: var(--Header/Logo/Name, #CFE8FF);
       white-space: nowrap;
     }
     .header-logo .tagline {
@@ -719,12 +706,12 @@ body {
       transition: background 0.2s, color 0.2s;
     }
     .header-btn:hover {
-      color: var(--accent);
-      background: rgba(91, 156, 255, 0.08);
+      color: var(--Header/Button/HoverText);
+      background: var(--Header/Button/HoverBg);
     }
     .header-btn:active {
-      color: #4A8AE6;
-      background: rgba(91, 156, 255, 0.15);
+      color: var(--Color/Accent/Hover);
+      background: var(--Color/State/Active/Background);
     }
     /* Normalize theme toggle container children to button size */
     #theme-toggle-container { display: flex; align-items: center; gap: 8px; }
@@ -737,35 +724,44 @@ body {
       background: transparent; color: var(--muted);
       border: 1px solid transparent; cursor: pointer;
       line-height: 1; gap: 0;
+      pointer-events: auto !important;
+      z-index: 2001 !important;
+    }
+    /* Ensure theme toggle button is clickable */
+    #theme-toggle-btn {
+      pointer-events: auto !important;
+      z-index: 2001 !important;
+      cursor: pointer !important;
+      position: relative;
     }
     /* Hover/active match header buttons */
-    #theme-toggle-container > *:hover { color: var(--accent); background: rgba(91,156,255,0.08); }
-    #theme-toggle-container > *:active { color: #4A8AE6; background: rgba(91,156,255,0.15); }
+    #theme-toggle-container > *:hover { color: var(--Color/Accent/Primary); background: var(--Color/State/Hover/Background); }
+    #theme-toggle-container > *:active { color: var(--Color/Accent/Hover); background: var(--Color/State/Active/Background); }
     /* Icon sizes and color unification */
     #theme-toggle-container img, #tour-restart-btn img { width: 24px; height: 24px; display: block; }
     #theme-toggle-container svg, #tour-restart-btn svg { width: 24px; height: 24px; }
     /* Project gray color for icons */
-    :root { --icon-gray: #9AA6B2; }
+    :root { --icon-gray: var(--Header/Button/Text); }
     #theme-toggle-container svg { fill: var(--icon-gray) !important; stroke: var(--icon-gray) !important; }
     #tour-restart-btn img { filter: brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(342%) hue-rotate(176deg) brightness(92%) contrast(89%); }
     /* Hover: accent tint, matches buttons */
-    #theme-toggle-container > *:hover svg { fill: #5B9CFF !important; stroke: #5B9CFF !important; }
+    #theme-toggle-container > *:hover svg { fill: var(--Color/Accent/Primary) !important; stroke: var(--Color/Accent/Primary) !important; }
     #tour-restart-btn:hover img { filter: brightness(0) saturate(100%) invert(66%) sepia(58%) saturate(618%) hue-rotate(186deg) brightness(101%) contrast(101%); }
     /* === Custom header, tagline and links panel for the portfolio site === */
     /* Header styling improvements for the HUD */
     #hud-small-panel .hud-section-header {
       position: relative;
       padding: 12px;
-      background: rgba(18,23,34,0.35);
+      background: var(--hud-panel-bg);
       backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid #243041;
+      border: 1px solid var(--border);
       border-radius: 8px;
     }
     #hud-small-panel .hud-section-title {
       margin: 0 0 4px 0;
       
       font-weight: 400;
-      color: #CFE8FF;
+      color: var(--HUD/Text/Base);
     }
     #hud-small-panel .hud-section-summary {
       margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
@@ -786,9 +782,9 @@ body {
       padding: 4px 8px;
       font-size: 16px;
       font-weight: 200 !important;
-      color: #9AA6B2 !important;  /* same color as links panel */
-      background: rgba(18, 23, 34, 0.80);
-      border: 1px solid #243041;
+      color: var(--tour-text-muted) !important;  /* same color as links panel */
+      background: var(--hud-panel-bg);
+      border: 1px solid var(--border);
       border-radius: 6px;
       text-decoration: none;
       transition: background 0.2s, color 0.2s, border-color 0.2s;
@@ -796,11 +792,7 @@ body {
       pointer-events: auto; /* Ensure links receive clicks */
       touch-action: manipulation; /* Enable touch on mobile */
     }
-    #hud-small-panel .hud-section-nav a:hover {
-      color: #5B9CFF !important;  /* same hover color as links panel */
-      background: rgba(91,156,255,0.08);
-      border-color: #5B9CFF;
-    }
+    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
     /* Close button styling for the header */
     #hud-small-panel .hud-close-btn {
       position: absolute;
@@ -812,9 +804,9 @@ body {
       padding: 4px 6px;
       font-size: 16px;
       font-weight: 600;
-      color: #9AA6B2 !important;  /* same color as links panel */
-      background: rgba(18, 23, 34, 0.80);
-      border: 1px solid #243041;
+      color: var(--tour-text-muted) !important;  /* same color as links panel */
+      background: var(--hud-panel-bg);
+      border: 1px solid var(--border);
       border-radius: 6px;
       cursor: pointer;
       transition: background 0.2s, color 0.2s, border-color 0.2s;
@@ -824,11 +816,7 @@ body {
       height: auto !important;
       flex: 0 0 auto;
     }
-    #hud-small-panel .hud-close-btn:hover {
-      color: #5B9CFF !important;  /* same hover color as links panel */
-      background: rgba(91,156,255,0.08);
-      border-color: #5B9CFF;
-    }
+    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
 
     /* Responsive layout for tablet screens: stack panels vertically */
     @media (max-width: 767px) {
@@ -914,12 +902,12 @@ body {
       transition: background 0.2s, color 0.2s;
     }
     .link-row a:hover {
-      color: var(--accent) !important;
-      background: rgba(91, 156, 255, 0.08);
+      color: var(--Link/HoverText) !important;
+      background: var(--Link/HoverBg) !important;
     }
     .link-kicker {
       font-size: 12px;
-      color: #9AA6B2;
+      color: var(--HUD/Text/Muted);
       opacity: 0.75;
       padding: 0 12px; /* align with link rows */
       margin-top: 10px; /* shift down by 10px */
@@ -931,14 +919,14 @@ body {
       top: 4px;
       right: 6px;
       font-size: 18px;
-      color: #9AA6B2;
+      color: var(--HUD/Text/Muted);
       background: none;
       border: none;
       cursor: pointer;
       transition: color 0.2s;
     }
     #links-panel .close-btn:hover {
-      color: #CFE8FF;
+      color: var(--HUD/Text/Base);
     }
     /* Ensure HUD buttons look slightly bolder: we already set weight via main
        declaration. This override is removed to avoid conflicting with the
@@ -955,8 +943,8 @@ body {
       padding: 6px 12px;
       font-size: 13px;
       font-weight: 600;
-      color: #CFE8FF;
-      background: rgba(18,23,34,0.80);
+      color: var(--tour-text-secondary);
+      background: var(--hud-panel-bg);
       border: 1px solid var(--border);
       border-radius: 10px;
       backdrop-filter: blur(8px);
@@ -1130,12 +1118,7 @@ body {
   background: transparent !important;
   box-shadow: none !important;
 }
-#hud-small-panel .hud-section-nav a:hover,
-#hud-small-panel .hud-close-btn:hover {
-  border: none !important;
-  background: rgba(91,156,255,0.08) !important;
-  color: #CFE8FF !important;
-}
+/* PHASE C3.3: Hover styles moved to main.css with proper specificity */
 /* Big panel: contain within viewport; avoid horizontal overflow */
 /* REMOVED to restore fixed desktop layout; container/mobile rules remain */
 /*
@@ -1195,23 +1178,23 @@ body {
 /* Ensure link in big panel has same weight as main text */
 #hud-big-panel .hud-tab-link {
   font-weight: 200 !important;
-  color: #9AA6B2 !important;  /* same color as links panel */
+  color: var(--HUD/Text/Muted) !important;  /* same color as links panel */
 }
 #hud-big-panel .hud-tab-link:hover {
-  color: #5B9CFF !important;  /* same hover color as links panel */
+  color: var(--Color/Accent/Primary) !important;  /* same hover color as links panel */
 }
 /* Style links in solution text */
 #hud-big-panel a[target="_blank"]:not(.hud-tab-link) {
-  color: #9AA6B2 !important;  /* same color as links panel */
+  color: var(--HUD/Text/Muted) !important;  /* same color as links panel */
   text-decoration: none;
   font-weight: 200 !important;
   font-size: inherit !important;  /* same size as main text */
-  border-bottom: 1px solid rgba(154,166,178,0.3);
+  border-bottom: 1px solid var(--Color/Dark/Border/Subtle);
   transition: border-color 0.2s, color 0.2s;
 }
 #hud-big-panel a[target="_blank"]:not(.hud-tab-link):hover {
-  color: #5B9CFF !important;  /* same hover color as links panel */
-  border-bottom-color: rgba(91,156,255,0.8);
+  color: var(--Color/Accent/Primary) !important;  /* same hover color as links panel */
+  border-bottom-color: var(--Color/Accent/Primary);
 }
 
 /* Mobile orbit mode toggle */
@@ -1225,7 +1208,7 @@ body {
 }
 
 #toggle-orbit-btn {
-  background: rgba(18, 23, 34, 0.85);
+  background: var(--hud-panel-bg);
       border: 1px solid var(--border);
   border-radius: 10px;
   padding: 8px 14px;
@@ -1237,26 +1220,26 @@ body {
   gap: 6px;
   cursor: pointer;
   transition: all 0.2s;
-  box-shadow: 0 0 0 1px rgba(36,48,65,0.4) inset, 0 2px 10px rgba(0,0,0,0.25);
+  box-shadow: 0 0 0 1px var(--Color/Dark/Border/Subtle) inset, 0 2px 10px var(--Color/Effect/Shadow/Soft);
   white-space: nowrap;
   opacity: 0.96;
 }
 
 #toggle-orbit-btn:hover {
-  background: rgba(36, 48, 65, 0.95);
-  border-color: #5B9CFF;
-  color: #CFE8FF;
+  background: var(--Color/State/Hover/Background);
+  border-color: var(--Color/Accent/Primary);
+  color: var(--HUD/Text/Base);
 }
 
 #toggle-orbit-btn.active {
-  background: rgba(91, 156, 255, 0.15);
-  border-color: #5B9CFF;
-  color: #5B9CFF;
+  background: var(--Color/State/Active/Background);
+  border-color: var(--Color/Accent/Primary);
+  color: var(--Color/Accent/Primary);
 }
 
 #toggle-orbit-btn.active:hover {
-  border-color: #4A8AE6;
-  color: #CFE8FF;
+  border-color: var(--Color/Accent/Hover);
+  color: var(--HUD/Text/Base);
 }
 
 #toggle-orbit-icon {
@@ -1319,26 +1302,15 @@ html {
 }
 
 
-@media (max-width: 479px) {
-  #btn-demo { display: none !important; }
-}
-
-
-/* Mobile header: hide logo, left-align 'Автор' and 'Ссылки' */
+/* Mobile header: hide logo, left-align buttons */
 @media (max-width: 479px) {
   header#site-header { justify-content: flex-start !important; gap: 8px !important; }
   header#site-header .header-logo { display: none !important; }
   header#site-header .header-spacer { display: none !important; }
-  #btn-demo { display: none !important; }
   .header-btn { padding: 8px 12px !important; height: 36px; }
-}
-
-
-/* Mobile: show 'Смотреть демо' and keep buttons left-aligned */
-@media (max-width: 479px) {
+  /* Keep btn-demo visible - это кнопка "Демо" для быстрого доступа к контенту */
+  /* Настоящая кнопка темы: #theme-toggle-btn (создаётся hud-manager.js, живёт в #theme-toggle-container) */
   #btn-demo { display: inline-flex !important; }
-  header#site-header { justify-content: flex-start !important; gap: 8px !important; }
-  .header-btn { padding: 8px 12px !important; height: 36px; }
 }
 
 
@@ -1419,7 +1391,9 @@ html {
   header#site-header .header-logo .tagline { display: none !important; } /* убрать подзаголовок */
   /* Кнопки в одну строку, компактные отступы */
   .header-btn { padding: 8px 12px !important; height: 36px; }
-  #btn-demo { display: inline-flex !important; } /* демо остаётся видимой */
+  /* #btn-demo — кнопка "Демо" для быстрого доступа к контенту, всегда видна */
+  /* Настоящая кнопка темы: #theme-toggle-btn (создаётся hud-manager.js, живёт в #theme-toggle-container) */
+  #btn-demo { display: inline-flex !important; }
 }
 
 
@@ -1472,16 +1446,16 @@ body:hover::-webkit-scrollbar-thumb {
   pointer-events: none;
   will-change: opacity, filter, transform, background-position;
   /* dashed via repeating gradient; color set via --c */
-  --c: var(--grid-color, rgba(92, 182, 255, 0.18));
+  --c: var(--grid-color);
   --dash: 10px;   /* length of visible segment */
   --gap: 8px;     /* length of gap */
   --phase: 0px;   /* starting offset */
   background: none;
   box-shadow:
-    0 0 3px rgba(92, 182, 255, 0.22),
-    0 0 8px rgba(92, 182, 255, 0.14);
+    0 0 3px var(--grid-color),
+    0 0 8px var(--grid-color);
   mix-blend-mode: screen;
-  opacity: var(--grid-opacity, 0.85);
+  opacity: var(--grid-opacity);
   filter: hue-rotate(var(--grid-hue, 0deg)) saturate(var(--grid-sat, 1.1));
 }
 .grid-line::after {
@@ -1549,10 +1523,10 @@ body:hover::-webkit-scrollbar-thumb {
   #hud-big-panel > :first-child, #hud-container #hud-big-panel > :first-child { margin-top: 0 !important; }
 
   /* === Tour restart icon next to theme toggle === */
-  #tour-restart-btn { display:inline-flex; align-items:center; justify-content:center; width: 44px; height: 44px; margin-left: 6px; border:1px solid var(--border); border-radius: 10px; background: transparent; color: #9AA6B2; cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
-  #tour-restart-btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
-  #tour-restart-btn:active { color:#CFE8FF; border-color:#4A8AE6; }
-  #tour-restart-btn:focus { outline: 2px solid #5B9CFF; outline-offset: 2px; }
+  #tour-restart-btn { display:inline-flex; align-items:center; justify-content:center; width: 44px; height: 44px; margin-left: 6px; border:1px solid var(--border); border-radius: 10px; background: transparent; color: var(--tour-text-muted); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
+  #tour-restart-btn:hover { background: var(--Color/State/Hover/Surface); color: var(--tour-text-secondary); border-color: var(--Color/Accent/Primary); }
+  #tour-restart-btn:active { color: var(--tour-text-secondary); border-color: var(--Color/Accent/Hover); }
+  #tour-restart-btn:focus { outline: 2px solid var(--Color/Accent/Primary); outline-offset: 2px; }
   #tour-restart-btn .icon { font-size: 18px; line-height: 1; }
 
 </style>
@@ -1561,11 +1535,12 @@ body:hover::-webkit-scrollbar-thumb {
 
 <!-- Preloader overlay -->
 <div id="preloader-overlay" aria-hidden="true">
-  <iframe id="preloader-frame" src="./ux4ai-preloader-loop-outline-noise.html" title="UX4AI Preloader" loading="eager"></iframe>
+  <iframe id="preloader-frame" src="" title="UX4AI Preloader" loading="eager"></iframe>
   <style>
     #preloader-overlay {
       position: fixed; inset: 0; z-index: 3000;
-      background: #0B0F14; /* match theme bg to avoid flash */
+      /* PHASE C2: Use token with fallback for FOUC prevention */
+      background: var(--Color/Dark/Background/Primary, #0B0F14); /* match theme bg to avoid flash */
       display: flex; align-items: center; justify-content: center;
     }
     #preloader-overlay.hidden { display: none !important; }
@@ -1587,7 +1562,7 @@ body:hover::-webkit-scrollbar-thumb {
     <div class="tour-interactives" id="tour-interactives" aria-hidden="true">
       <noscript>
         <div class="tour-interactives-fallback">
-          <p style="color: #9AA6B2; font: 400 14px/1.3 ui-sans-serif, system-ui; text-align: center; margin: 0;">
+          <p style="color: var(--tour-text-muted); font: 400 14px/1.3 ui-sans-serif, system-ui; text-align: center; margin: 0;">
             Интерактивные элементы требуют JavaScript
           </p>
         </div>
@@ -1599,19 +1574,20 @@ body:hover::-webkit-scrollbar-thumb {
   <style>
     #tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
     #tour-overlay.hidden { display: none !important; }
-    #tour-overlay .tour-backdrop { position:absolute; inset:0; background: rgba(5,8,12,0.60); backdrop-filter: blur(2px) saturate(120%); z-index: 1; }
+    #tour-overlay .tour-backdrop { position:absolute; inset:0; background: var(--tour-backdrop); backdrop-filter: blur(2px) saturate(120%); z-index: 1; }
     @media (max-width: 767px) {
       /* Disable backdrop-filter on mobile, but keep visual effect with gradients and shadows */
       #tour-overlay .tour-backdrop { 
         backdrop-filter: none; 
-        background: rgba(5,8,12,0.70);
-        /* Add subtle gradient for depth */
-        background-image: radial-gradient(circle at center, rgba(5,8,12,0.55) 0%, rgba(5,8,12,0.80) 100%);
+        background: var(--tour-backdrop);
+        /* Add subtle gradient for depth - use CSS variables for light theme compatibility */
+        background-image: radial-gradient(circle at center, var(--tour-backdrop) 0%, var(--tour-backdrop) 100%);
+        opacity: 0.7;
       }
       #tour-overlay .tour-card { 
         backdrop-filter: none !important; 
         /* Use more transparent background for better visibility - increased transparency */
-        background: linear-gradient(135deg, rgba(18,23,34,0.50) 0%, rgba(18,23,34,0.65) 100%) !important;
+        background: var(--tour-card-bg-mobile) !important;
         /* Remove border-radius and top border to match desktop style */
         border-radius: 0 !important;
         border-top: none !important;
@@ -1619,7 +1595,7 @@ body:hover::-webkit-scrollbar-thumb {
         box-shadow: 
           0 12px 40px rgba(0,0,0,0.45),
           inset 0 -1px 0 rgba(0,0,0,0.2),
-          0 0 0 1px rgba(36,48,65,0.4),
+          0 0 0 1px var(--Color/Dark/Border/Subtle),
           0 -1px 0 transparent !important; /* Remove top border shadow */
         /* Add pseudo-element for additional glass effect */
         position: relative;
@@ -1636,29 +1612,29 @@ body:hover::-webkit-scrollbar-thumb {
     }
     /* HUD-like styling: straight corners; no inner grid - grid visible through card */
     #tour-overlay .tour-card { position: relative; width: min(720px, 92vw);
-      background: rgba(18,23,34,0.35);
+      background: var(--tour-card-bg);
       backdrop-filter: blur(2px) saturate(140%);
-      border:1px solid #243041; border-top: none; border-radius: 0; box-shadow: 0 12px 40px rgba(0,0,0,0.45); padding: 20px 20px 20px 20px; color:#E6EEF8; z-index: 2; }
+      border:1px solid var(--border); border-top: none; border-radius: 0; box-shadow: 0 12px 40px var(--Color/Effect/Shadow/Medium); padding: 20px 20px 20px 20px; color: var(--tour-text); z-index: 2; }
     /* Disable per-card grid to keep through-grid effect like HUD */
     #tour-overlay .tour-frame-lines { display:none; }
     /* Close link inside actions */
     #tour-overlay .tour-actions .close-link { 
-      background: transparent; border: none; color:#9AA6B2; text-decoration: none; 
+      background: transparent; border: none; color: var(--tour-text-muted); text-decoration: none; 
       padding: 10px 14px; height: 44px; display:inline-flex; align-items:center; justify-content:center;
       font: 400 18px/1 ui-sans-serif, system-ui; box-sizing: border-box;
       opacity: 0.5;
     }
-    #tour-overlay .tour-actions .close-link:hover { color:#CFE8FF; opacity: 1; }
+    #tour-overlay .tour-actions .close-link:hover { color: var(--tour-text-secondary); opacity: 1; }
     @media (min-width: 480px) {
       #tour-overlay .tour-actions .close-link { margin-left: auto; }
     }
-    #tour-overlay .tour-header h2 { margin: 0 0 32px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color:#CFE8FF; white-space: pre-line; }
-    #tour-overlay .tour-header .tour-sub { margin: 0 0 32px 0; color:#9AA6B2; font: 400 18px/1.3 ui-sans-serif, system-ui; }
+    #tour-overlay .tour-header h2 { margin: 0 0 32px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color: var(--tour-text-secondary); white-space: pre-line; }
+    #tour-overlay .tour-header .tour-sub { margin: 0 0 32px 0; color: var(--tour-text-muted); font: 400 18px/1.3 ui-sans-serif, system-ui; }
     /* Reduce sub margin when followed by links list (step 2) */
     #tour-overlay .tour-card.tour-step-2 .tour-header .tour-sub { margin-bottom: 8px !important; }
     /* Ensure consistent spacing: sub → content (16px), content → buttons (32px) */
     #tour-overlay .tour-body { margin-top: 0; }
-    #tour-overlay .tour-body p { margin: 0 0 32px 0; color:#B8C3CF; font: 300 18px/1.3 ui-sans-serif, system-ui; }
+    #tour-overlay .tour-body p { margin: 0 0 32px 0; color: var(--tour-text-body); font: 300 18px/1.3 ui-sans-serif, system-ui; }
     /* Icon color matching text color - use mask to inherit text color */
     #tour-overlay .tour-body p img { 
       filter: brightness(0) saturate(100%) invert(72%) sepia(2%) saturate(1000%) hue-rotate(180deg);
@@ -1682,7 +1658,7 @@ body:hover::-webkit-scrollbar-thumb {
       gap: 8px;
       text-decoration: none; 
       font: 400 18px/1 ui-sans-serif, system-ui;
-      color: #9AA6B2 !important; 
+      color: var(--tour-text-muted) !important; 
       background: transparent; 
       border: none; 
       border-radius: 0;
@@ -1694,22 +1670,22 @@ body:hover::-webkit-scrollbar-thumb {
       transition: filter 0.2s;
     }
     #tour-overlay .tour-body .tour-list a:hover { 
-      color: #5B9CFF !important; 
-      background: rgba(91,156,255,0.08); 
+      color: var(--Link/HoverText) !important; 
+      background: var(--Link/HoverBg) !important; 
     }
     /* Icon color on hover - match accent color */
     #tour-overlay .tour-body .tour-list a:hover img {
       filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(2000%) hue-rotate(200deg);
     }
-    #tour-overlay .tour-body .tour-list a:visited { color: #9AA6B2 !important; }
-    #tour-overlay .tour-body .tour-list a:visited:hover { color: #5B9CFF !important; }
+    #tour-overlay .tour-body .tour-list a:visited { color: var(--tour-text-muted) !important; }
+    #tour-overlay .tour-body .tour-list a:visited:hover { color: var(--Color/Accent/Primary) !important; }
     #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
       #tour-overlay .tour-actions .btn { 
       padding: 10px 14px; 
       border-radius: 0; 
-      border:1px solid #243041; 
-      background: rgba(18,23,34,0.9); 
-      color:#9AA6B2; 
+      border:1px solid var(--border); 
+      background: var(--tour-card-bg); 
+      color: var(--tour-text-muted); 
       font: 400 18px/1 ui-sans-serif, system-ui; 
       text-decoration: none; 
       cursor: pointer; 
@@ -1727,9 +1703,9 @@ body:hover::-webkit-scrollbar-thumb {
       z-index: 2503;
       /* Removed will-change and transform - they create unnecessary compositing layers */
     }
-    #tour-overlay .tour-actions .btn:hover { background: rgba(36,48,65,0.95); color:#CFE8FF; border-color:#5B9CFF; }
-    #tour-overlay .tour-actions .btn-primary { color:#CFE8FF; background: rgba(91,156,255,0.12); border-color:#5B9CFF; }
-    #tour-overlay .tour-actions .btn-primary:hover { background: rgba(91,156,255,0.18); }
+    #tour-overlay .tour-actions .btn:hover { background: var(--Color/State/Hover/Surface); color: var(--tour-text-secondary); border-color: var(--Color/Accent/Primary); }
+    #tour-overlay .tour-actions .btn-primary { color: var(--tour-text-secondary); background: var(--Color/State/Selected/Background); border-color: var(--Color/Accent/Primary); }
+    #tour-overlay .tour-actions .btn-primary:hover { background: var(--Color/State/Active/Background); }
     @media (max-width: 479px) {
       #tour-overlay { 
         align-items: flex-start; 
@@ -1909,15 +1885,15 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay .tour-interactives-header {
       margin: 0 0 20px 0;
       font: 600 20px/1.3 ui-sans-serif, system-ui;
-      color: #CFE8FF;
+      color: var(--tour-text-secondary);
     }
     
     /* Status bar */
     #tour-overlay .tour-status-bar {
       padding: 8px 0;
       font: 400 14px/1.3 ui-sans-serif, system-ui;
-      color: #9AA6B2;
-      border-bottom: 1px solid #243041;
+      color: var(--tour-text-muted);
+      border-bottom: 1px solid var(--HUD/Panel/Border);
     }
     
     /* Interactives layout - single column */
@@ -1948,7 +1924,7 @@ body:hover::-webkit-scrollbar-thumb {
     #tour-overlay .thermometer-widget-header {
       margin: 0 0 12px 0;
       font: 600 24px/1.3 ui-sans-serif, system-ui;
-      color: #CFE8FF;
+      color: var(--tour-text-secondary);
       text-align: left;
       width: 100%;
       flex-shrink: 0;
@@ -1982,7 +1958,7 @@ body:hover::-webkit-scrollbar-thumb {
     }
     
     #tour-overlay .thermometer-container:focus {
-      outline: 2px solid #5B9CFF;
+      outline: 2px solid var(--Color/Accent/Primary);
       outline-offset: 2px;
     }
     
@@ -2012,13 +1988,13 @@ body:hover::-webkit-scrollbar-thumb {
     
     #tour-overlay .readout-value {
       font: 600 56px/1 ui-sans-serif, system-ui;
-      color: #CFE8FF;
+      color: var(--tour-text-secondary);
       transition: color 0.3s ease;
     }
     
     #tour-overlay .readout-status {
       font: 400 14px/1.3 ui-sans-serif, system-ui;
-      color: #9AA6B2;
+      color: var(--tour-text-muted);
       transition: color 0.3s ease;
     }
     
@@ -2045,9 +2021,9 @@ body:hover::-webkit-scrollbar-thumb {
       flex: 1;
       min-width: 0;
       padding: 12px 8px;
-      background: rgba(36, 48, 65, 0.6);
-      border: 1px solid #243041;
-      color: #9AA6B2;
+      background: var(--HUD/Panel/Bg);
+      border: 1px solid var(--HUD/Panel/Border);
+      color: var(--tour-text-muted);
       font: 400 14px/1 ui-sans-serif, system-ui;
       text-align: center;
       cursor: pointer;
@@ -2060,43 +2036,50 @@ body:hover::-webkit-scrollbar-thumb {
     
     /* Default zone colors (dim) */
     #tour-overlay .thermometer-segment.zone-1 {
-      background: rgba(34, 197, 94, 0.08);
-      border-color: rgba(34, 197, 94, 0.3);
+      background: var(--Color/State/Success/Background);
+      border-color: var(--Color/State/Success/Border);
+      opacity: 0.3;
     }
     
     #tour-overlay .thermometer-segment.zone-2 {
-      background: rgba(34, 197, 94, 0.08);
-      border-color: rgba(34, 197, 94, 0.3);
+      background: var(--Color/State/Success/Background);
+      border-color: var(--Color/State/Success/Border);
+      opacity: 0.3;
     }
     
     #tour-overlay .thermometer-segment.zone-3 {
-      background: rgba(234, 179, 8, 0.08);
-      border-color: rgba(234, 179, 8, 0.3);
+      background: var(--Color/State/Warning/Background);
+      border-color: var(--Color/State/Warning/Border);
+      opacity: 0.3;
     }
     
     #tour-overlay .thermometer-segment.zone-4 {
-      background: rgba(234, 179, 8, 0.08);
-      border-color: rgba(234, 179, 8, 0.3);
+      background: var(--Color/State/Warning/Background);
+      border-color: var(--Color/State/Warning/Border);
+      opacity: 0.3;
     }
     
     #tour-overlay .thermometer-segment.zone-5 {
-      background: rgba(239, 68, 68, 0.08);
-      border-color: rgba(239, 68, 68, 0.3);
+      background: var(--Color/State/Error/Background);
+      border-color: var(--Color/State/Error/Border);
+      opacity: 0.3;
     }
     
     #tour-overlay .thermometer-segment:hover {
+      background: var(--Color/State/Hover/Background);
+      border-color: var(--Color/Accent/Primary);
       opacity: 0.8;
       transform: translateY(-1px);
     }
     
     #tour-overlay .thermometer-segment:focus {
-      outline: 2px solid #5B9CFF;
+      outline: 2px solid var(--Color/Accent/Primary);
       outline-offset: 2px;
     }
     
     /* Active state (bright colors) */
     #tour-overlay .thermometer-segment.active {
-      color: #CFE8FF;
+      color: var(--tour-text-secondary);
       font-weight: 600;
       opacity: 1;
       transform: translateY(-2px);
@@ -2104,28 +2087,28 @@ body:hover::-webkit-scrollbar-thumb {
     }
     
     #tour-overlay .thermometer-segment.zone-1.active {
-      background: rgba(34, 197, 94, 0.25);
-      border-color: #22C55E;
+      background: var(--Color/State/Success/BackgroundActive);
+      border-color: var(--Color/State/Success/Border);
     }
     
     #tour-overlay .thermometer-segment.zone-2.active {
-      background: rgba(34, 197, 94, 0.25);
-      border-color: #22C55E;
+      background: var(--Color/State/Success/BackgroundActive);
+      border-color: var(--Color/State/Success/Border);
     }
     
     #tour-overlay .thermometer-segment.zone-3.active {
-      background: rgba(234, 179, 8, 0.25);
-      border-color: #EAB308;
+      background: var(--Color/State/Warning/BackgroundActive);
+      border-color: var(--Color/State/Warning/Border);
     }
     
     #tour-overlay .thermometer-segment.zone-4.active {
-      background: rgba(234, 179, 8, 0.25);
-      border-color: #EAB308;
+      background: var(--Color/State/Warning/BackgroundActive);
+      border-color: var(--Color/State/Warning/Border);
     }
     
     #tour-overlay .thermometer-segment.zone-5.active {
-      background: rgba(239, 68, 68, 0.25);
-      border-color: #EF4444;
+      background: var(--Color/State/Error/BackgroundActive);
+      border-color: var(--Color/State/Error/Border);
     }
     
     
@@ -2143,9 +2126,9 @@ body:hover::-webkit-scrollbar-thumb {
       flex: 1;
       min-width: 0;
       padding: 12px 8px;
-      background: rgba(91, 156, 255, 0.12);
-      border: 1px solid #5B9CFF;
-      color: #CFE8FF;
+      background: var(--Color/State/Active/Background);
+      border: 1px solid var(--Color/Accent/Primary);
+      color: var(--tour-text-secondary);
       font: 400 14px/1 ui-sans-serif, system-ui;
       text-decoration: none;
       cursor: pointer;
@@ -2160,18 +2143,18 @@ body:hover::-webkit-scrollbar-thumb {
     }
     
     #tour-overlay .tour-cta-btn:hover {
-      background: rgba(91, 156, 255, 0.18);
-      border-color: #7BB3FF;
+      background: var(--Color/State/Selected/Background);
+      border-color: var(--Color/Accent/Hover);
     }
     
     #tour-overlay .tour-cta-btn:focus {
-      outline: 2px solid #5B9CFF;
+      outline: 2px solid var(--Color/Accent/Primary);
       outline-offset: 2px;
     }
     
     #tour-overlay .tour-cta-subtext {
       margin: 0;
-      color: #9AA6B2;
+      color: var(--tour-text-muted);
       font: 300 12px/1.3 ui-sans-serif, system-ui;
       text-align: center;
     }
@@ -2248,115 +2231,122 @@ body:hover::-webkit-scrollbar-thumb {
     }
     
     .theme-light #tour-overlay .tour-interactives-header {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .tour-status-bar {
-      color: #64748B;
-      border-bottom-color: #E2E8F0;
+      color: var(--tour-text-muted);
+      border-bottom-color: var(--Color/Light/Border/Base);
     }
     
     .theme-light #tour-overlay .thermometer-widget-header {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .thermometer-widget-description {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .thermometer-segment {
       background: rgba(241, 245, 249, 0.6);
-      border-color: #E2E8F0;
-      color: #64748B;
+      border-color: var(--Color/Light/Border/Base);
+      color: var(--tour-text-muted);
     }
     
     /* Default zone colors for light theme (dim) */
     .theme-light #tour-overlay .thermometer-segment.zone-1 {
-      background: rgba(34, 197, 94, 0.1);
-      border-color: rgba(34, 197, 94, 0.4);
+      background: var(--Color/State/Success/Background);
+      border-color: var(--Color/State/Success/Border);
+      opacity: 0.4;
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-2 {
-      background: rgba(34, 197, 94, 0.1);
-      border-color: rgba(34, 197, 94, 0.4);
+      background: var(--Color/State/Success/Background);
+      border-color: var(--Color/State/Success/Border);
+      opacity: 0.4;
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-3 {
-      background: rgba(234, 179, 8, 0.1);
-      border-color: rgba(234, 179, 8, 0.4);
+      background: var(--Color/State/Warning/Background);
+      border-color: var(--Color/State/Warning/Border);
+      opacity: 0.4;
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-4 {
-      background: rgba(234, 179, 8, 0.1);
-      border-color: rgba(234, 179, 8, 0.4);
+      background: var(--Color/State/Warning/Background);
+      border-color: var(--Color/State/Warning/Border);
+      opacity: 0.4;
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-5 {
-      background: rgba(239, 68, 68, 0.1);
-      border-color: rgba(239, 68, 68, 0.4);
+      background: var(--Color/State/Error/Background);
+      border-color: var(--Color/State/Error/Border);
+      opacity: 0.4;
     }
     
     .theme-light #tour-overlay .thermometer-segment:hover {
+      background: var(--Color/State/Hover/Background);
+      border-color: var(--Color/Accent/Primary);
       opacity: 0.8;
     }
     
     .theme-light #tour-overlay .thermometer-segment.active {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-1.active {
-      background: rgba(34, 197, 94, 0.3);
-      border-color: #22C55E;
+      background: var(--Color/State/Success/BackgroundActive);
+      border-color: var(--Color/State/Success/Border);
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-2.active {
-      background: rgba(34, 197, 94, 0.3);
-      border-color: #22C55E;
+      background: var(--Color/State/Success/BackgroundActive);
+      border-color: var(--Color/State/Success/Border);
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-3.active {
-      background: rgba(234, 179, 8, 0.3);
-      border-color: #EAB308;
+      background: var(--Color/State/Warning/BackgroundActive);
+      border-color: var(--Color/State/Warning/Border);
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-4.active {
-      background: rgba(234, 179, 8, 0.3);
-      border-color: #EAB308;
+      background: var(--Color/State/Warning/BackgroundActive);
+      border-color: var(--Color/State/Warning/Border);
     }
     
     .theme-light #tour-overlay .thermometer-segment.zone-5.active {
-      background: rgba(239, 68, 68, 0.3);
-      border-color: #EF4444;
+      background: var(--Color/State/Error/BackgroundActive);
+      border-color: var(--Color/State/Error/Border);
     }
     
     .theme-light #tour-overlay .readout-value {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .readout-placeholder {
-      color: #64748B;
+      color: var(--tour-text-muted);
     }
     
     .theme-light #tour-overlay .readout-example {
-      color: #64748B;
+      color: var(--tour-text-muted);
     }
     
     .theme-light #tour-overlay .thermometer-user-feeling {
-      color: #0F172A;
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .readout-status {
-      color: #64748B;
+      color: var(--tour-text-muted);
     }
     
     .theme-light #tour-overlay .tour-cta-subtext {
-      color: #64748B;
+      color: var(--tour-text-muted);
     }
     
     .theme-light #tour-overlay .tour-cta-btn {
       background: rgba(59, 130, 246, 0.12);
-      border-color: #3B82F6;
-      color: #0F172A;
+      border-color: var(--Color/Accent/Primary);
+      color: var(--tour-text-secondary);
     }
     
     .theme-light #tour-overlay .tour-cta-btn:hover {
@@ -2389,7 +2379,7 @@ body:hover::-webkit-scrollbar-thumb {
     .hud-active #hud-container #hud-big-panel h5,
     .hud-active #hud-container #hud-big-panel h6 {
       font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
       white-space: normal !important;
@@ -2407,7 +2397,7 @@ body:hover::-webkit-scrollbar-thumb {
     #hud-container #hud-big-panel h3,
     .hud-active #hud-container #hud-big-panel h3 {
       font: 600 18px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
       white-space: normal !important;
@@ -2417,7 +2407,7 @@ body:hover::-webkit-scrollbar-thumb {
     #hud-container #hud-big-panel h4,
     .hud-active #hud-container #hud-big-panel h4 {
       font: 600 16px/1.3 ui-sans-serif, system-ui !important;
-      color: #CFE8FF !important;
+      color: var(--HUD/Text/Base) !important;
       margin: 0 0 0 0 !important;
       font-weight: 600 !important;
       white-space: normal !important;
@@ -2452,19 +2442,19 @@ body:hover::-webkit-scrollbar-thumb {
 
 <!-- No-JS Fallback -->
 <noscript>
-  <div style="position: fixed; inset: 0; z-index: 9999; background: #0B0F14; color: #E6EEF8; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: ui-sans-serif, system-ui, sans-serif;">
-    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: #CFE8FF;">Интерактивные элементы требуют JavaScript</h1>
-    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0; color: #9AA6B2;">
+  <div style="position: fixed; inset: 0; z-index: 9999; background: var(--Color/Dark/Background/Primary); color: var(--Color/Light/Text/Primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: ui-sans-serif, system-ui, sans-serif;">
+    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: var(--Color/Light/Text/Secondary);">Интерактивные элементы требуют JavaScript</h1>
+    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0; color: var(--Color/Light/Text/Muted);">
       Этот сайт использует 3D-интерактивы и требует включения JavaScript для полноценной работы.
     </p>
     <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0;">
       Вы можете ознакомиться с материалами в статическом формате:
     </p>
-    <a href="./Vladimir_Kostyal_Resume.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background: #5B9CFF; color: #fff; text-decoration: none; font-weight: 500; margin-bottom: 12px;">
+    <a href="./Vladimir_Kostyal_Resume.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background: var(--Color/Accent/Primary); color: var(--Color/Light/Text/OnBrand); text-decoration: none; font-weight: 500; margin-bottom: 12px;">
       Скачать резюме (PDF)
     </a>
-    <p style="font-size: 14px; color: #9AA6B2; margin-top: 24px;">
-      Или свяжитесь напрямую: <a href="https://t.me/scrumux" target="_blank" style="color: #5B9CFF; text-decoration: underline;">Telegram</a>
+    <p style="font-size: 14px; color: var(--Color/Light/Text/Muted); margin-top: 24px;">
+      Или свяжитесь напрямую: <a href="https://t.me/scrumux" target="_blank" style="color: var(--Color/Accent/Primary); text-decoration: underline;">Telegram</a>
     </p>
   </div>
 </noscript>
@@ -2480,10 +2470,6 @@ body:hover::-webkit-scrollbar-thumb {
   <button class="header-btn" id="btn-links">Ссылки</button>
   <button class="header-btn" id="btn-about">Автор</button>
   <div id="theme-toggle-container"></div>
-  <select id="theme-select" style="display:none;">
-    <option value="calm">Calm</option>
-    <option value="matrix">Matrix</option>
-  </select>
 </header>
 
 <!-- Mode banner -->
@@ -2539,41 +2525,150 @@ body:hover::-webkit-scrollbar-thumb {
   }
 }
 </script>
+<script>
+  // ===== PHASE B.1: Compute base path for UX4AI (simplified) =====
+  // Считаем, что index.html лежит в корне проекта UX4AI,
+  // все модули и файлы подключаются ОТНОСИТЕЛЬНЫМИ путями от него.
+  const base = '.';
+  window.__UX4AI_BASE_PATH__ = base;
+  console.log('[Bootstrap] UX4AI base path set to "." (relative root)');
+  
+  // ===== PHASE B: Set preloader iframe src with fixed relative path =====
+  // Прелоадер всегда грузится из текущей папки рядом с index.html
+  (function() {
+    const preloaderFrame = document.getElementById('preloader-frame');
+    if (preloaderFrame) {
+      const preloaderPath = './ux4ai-preloader-loop-outline-noise.html';
+      preloaderFrame.src = preloaderPath;
+      console.log('[Bootstrap] Preloader path set:', preloaderFrame.src);
+      
+      preloaderFrame.addEventListener('error', (e) => {
+        console.error('[Bootstrap] Preloader iframe failed to load:', preloaderPath);
+        console.error('[Bootstrap] This may indicate that the file is missing next to index.html');
+      }, { once: true });
+    } else {
+      console.warn('[Bootstrap] Preloader iframe element not found');
+    }
+  })();
+</script>
 <script type="module">
 async function init() {
   try {
+    
     console.log('[Bootstrap] Importing THREE via importmap...');
     const THREE = await import('three');
     console.log('✓ THREE imported');
-    // Try hiding preloader as soon as core deps are ready
-    try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
+    // NOTE: Preloader will be hidden after theme fully mounts (see below)
     
     // Make available globally for modules
     window.THREE = THREE;
     
     console.log('[Bootstrap] Importing modules...');
-    const { createEngine } = await import('./core/engine.js?v=37');
-    const { initThemeSwitcher } = await import('./ui/themeSwitcher.js?v=37');
-    const { initHUD } = await import('./core/hud-manager.js?v=46');
+    // Use base path for all imports
+    const base = window.__UX4AI_BASE_PATH__ || '';
+    
+    const { createEngine } = await import(`${base}/core/engine.js?v=38`);
+    const { initThemeSwitcher, toggleTheme } = await import(`${base}/ui/themeSwitcher.js?v=38`);
+    const { initHUD } = await import(`${base}/core/hud-manager.js?v=47`);
+    const { initTheme, setEngine, getCurrentThemeId } = await import(`${base}/ui/theme-controller.js`);
+    
+    // ===== PHASE B: Expose theme functions globally for HUD =====
+    // CRITICAL: All theme functions must be exposed BEFORE HUD initialization
+    // This eliminates the need for dynamic imports in hud-manager.js
+    if (typeof getCurrentThemeId === 'function') {
+      window.getCurrentThemeId = getCurrentThemeId;
+      console.log('[Bootstrap] window.getCurrentThemeId exposed:', typeof window.getCurrentThemeId);
+    } else {
+      console.error('[Bootstrap] getCurrentThemeId is not a function!');
+    }
+    
+    // Initialize theme FIRST (before creating engine)
+    // This applies CSS classes and ensures theme variables are available
+    console.log('[Bootstrap] Initializing theme...');
+    initTheme(); // Reads from localStorage/hash and applies theme
+    
+    // Force CSS recalculation to ensure theme variables are available
+    document.documentElement.offsetHeight; // Force reflow
     
     console.log('[Bootstrap] Creating engine...');
     const engine = createEngine({
       canvasParent: document.getElementById('three-container'),
       labelsElement: document.getElementById('labels')
     });
-    // Hide preloader once engine is created (early UX)
-    try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
+    
+    // Set engine reference in theme controller
+    setEngine(engine);
+    
+    // Ensure engine scene background matches current theme immediately
+    try {
+      const { getSceneColors } = await import(`${base}/core/theme-colors.js`);
+      const sceneColors = getSceneColors();
+      if (engine.scene && engine.scene.background) {
+        engine.scene.background = new THREE.Color(sceneColors.background);
+      }
+    } catch (e) {
+      console.warn('[Bootstrap] Could not update scene background:', e);
+    }
+    
+    // NOTE: Preloader will be hidden after theme fully mounts (see below)
     // Expose engine for grid overlay to query current scene state
     try { window._engine = engine; } catch(_) {}
     
+    // Initialize theme switcher (mounts scene ONCE)
     console.log('[Bootstrap] Initializing theme switcher...');
     initThemeSwitcher(engine);
-    // Inject Tour Restart icon next to theme toggle
+    
+    // ===== PHASE B: Expose toggleTheme globally for HUD =====
+    // CRITICAL: Must be set synchronously before HUD initialization
+    // This eliminates the need for dynamic imports in hud-manager.js
+    if (typeof toggleTheme === 'function') {
+      window.toggleTheme = toggleTheme;
+      console.log('[Bootstrap] window.toggleTheme exposed:', typeof window.toggleTheme);
+      // Verify function is actually callable
+      if (typeof window.toggleTheme !== 'function') {
+        console.error('[Bootstrap] CRITICAL: window.toggleTheme was set but is not a function!');
+      }
+    } else {
+      console.error('[Bootstrap] toggleTheme is not a function! Module may have failed to load.');
+      console.error('[Bootstrap] toggleTheme type:', typeof toggleTheme);
+      console.error('[Bootstrap] toggleTheme value:', toggleTheme);
+    }
+    console.log('[Bootstrap] All theme functions available:', {
+      getCurrentThemeId: typeof window.getCurrentThemeId,
+      toggleTheme: typeof window.toggleTheme
+    });
+    
+    // NOTE: HUD will be initialized in engine.initNavigationAndHUD() after scene is mounted
+    // This ensures HUD has access to nodes from the scene
+    // We don't initialize HUD here to avoid double initialization
+    console.log('[Bootstrap] HUD will be initialized after scene is mounted');
+    
+    // ===== ФАЗА B: Tour Restart Button - Bootstrap Creation =====
+    // OWNER: Bootstrap (index.html) - ONLY responsible for creating #tour-restart-btn
+    // RESPONSIBILITY:
+    //   - Creates #tour-restart-btn ONCE
+    //   - Attaches click/keydown handlers ONCE
+    //   - NEVER touches #theme-toggle-btn or any other children of #theme-toggle-container
+    //   - NEVER removes, recreates, or moves other elements
+    // TOUR RESPONSIBILITY (separate):
+    //   - Manages visibility (style.display) via showTour/hideTour functions
+    //   - NEVER recreates or moves the button
+    //   - NEVER touches #theme-toggle-btn (жёсткий контракт Фаза B)
+    //
+    // ФАЗА B: ЖЁСТКИЙ КОНТРАКТ
+    // Единственный владелец #theme-toggle-btn — HUD (core/hud-manager.js).
+    // Bootstrap НЕ может искать #theme-toggle-btn через getElementById/querySelector
+    // Bootstrap НЕ может менять display/visibility/opacity/pointer-events напрямую
+    // Bootstrap НЕ может перемещать или удалять кнопку
+    // Bootstrap может ТОЛЬКО вызывать window.hud.ensureThemeButton() для стабилизации
     try {
       const container = document.getElementById('theme-toggle-container') || document.getElementById('site-header');
       if (container) {
+        // PHASE TT1: Check if button already exists (idempotent creation)
         let btn = document.getElementById('tour-restart-btn');
         if (!btn) {
+          // PHASE TT1: Create button ONCE - this is the single source of creation
+          // CRITICAL: Only creates tour-restart-btn, never touches other children
           btn = document.createElement('button');
           btn.id = 'tour-restart-btn';
           btn.className = 'header-btn';
@@ -2581,109 +2676,126 @@ async function init() {
           btn.title = 'Перезапустить тур';
           btn.tabIndex = 0;
           btn.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" loading="lazy" aria-hidden="true" />';
+          btn.style.display = 'inline-flex';
+          
+          // PHASE TT1: Append ONLY tour-restart-btn to container
+          // CRITICAL: Does NOT remove, clear, or touch other children (e.g., theme-toggle-btn)
           container.appendChild(btn);
+          console.log('[Bootstrap] Tour restart button created (PHASE TT1: isolated creation)');
+        } else {
+          // PHASE TT1: Button already exists - just ensure it's visible
+          // CRITICAL: Does NOT touch other children of container
+          btn.style.display = 'inline-flex';
         }
-        const canShowTourRestartIcon = () => {
-          try {
-            const overlayActive = !!(document.getElementById('tour-overlay') && !document.getElementById('tour-overlay').classList.contains('hidden'));
-            return !overlayActive; // always available across scenes
-          } catch { return true; }
-        };
-        const updateVisibility = () => { btn.style.display = canShowTourRestartIcon() ? 'inline-flex' : 'none'; };
-        updateVisibility();
-        window.addEventListener('hashchange', updateVisibility);
-        window.addEventListener('storage', updateVisibility);
-        document.addEventListener('readystatechange', updateVisibility);
-        // Analytics: view when in viewport
+        
+        // PHASE TT1: Set initial visibility (tour is closed by default)
+        // CRITICAL: Only modifies tour-restart-btn, never touches theme-toggle-btn
+        btn.style.display = 'inline-flex';
+        
+        // Analytics: view when in viewport (not self-healing, just analytics)
         try {
           const io = new IntersectionObserver((entries)=>{
             entries.forEach(en=>{ if (en.isIntersecting) { console.log('analytics: tour_restart_icon_view'); io.disconnect(); } });
           });
           io.observe(btn);
         } catch {}
-        const tour_reset = () => {
-          try { 
-            localStorage.removeItem('tour_done'); 
-            localStorage.setItem('tour_step','1'); 
-          } catch {}
-          // Use window.tour_reset if available (properly resets to step 1)
-          if (typeof window.tour_reset === 'function') {
-            window.tour_reset();
+        
+        // ===== PHASE TT3: Tour Restart Button Click Handler - Absolutely Clean =====
+        // OWNER: Bootstrap (index.html) - ONLY handles tour restart button clicks
+        // RESPONSIBILITY:
+        //   - Ignores non-relevant keys (only Enter/Space)
+        //   - Checks if tour overlay is already open (prevents double-click)
+        //   - Calls window.tour_reset() ONCE
+        //   - Prevents default and stops propagation
+        // CRITICAL INVARIANTS:
+        //   - NO imports of themeSwitcher/theme-controller
+        //   - NO access to #theme-toggle-btn
+        //   - NO logic to "fix header/buttons"
+        //   - NO side effects on theme, HUD, or any other elements
+        const onActivate = (e) => {
+          // PHASE TT3: Ignore non-relevant keys (only Enter and Space activate)
+          if (e.type === 'keydown' && !(e.key === 'Enter' || e.key === ' ')) {
             return;
           }
-          // Fallback: try to set step manually using window.setTourStep
-          try {
-            const overlay = document.getElementById('tour-overlay');
-            if (overlay) {
-              overlay.classList.remove('hidden'); 
-              overlay.setAttribute('aria-hidden','false');
-              // Try to set step to 1 using exported function
-              if (typeof window.setTourStep === 'function') {
-                window.setTourStep(1);
-              } else {
-                // Last resort: reload page to ensure clean start
-                location.reload();
-              }
-            }
-          } catch (e) {
-            console.warn('[Tour] Error resetting tour:', e);
-            // Last resort: reload page
-            try { location.reload(); } catch {}
+          
+          // PHASE TT3: Check if tour overlay is already open (prevent double-click issues)
+          // CRITICAL: Only checks tour-overlay state, does NOT touch other elements
+          const overlayActive = !!(document.getElementById('tour-overlay') && 
+                                   !document.getElementById('tour-overlay').classList.contains('hidden'));
+          if (overlayActive) {
+            e.preventDefault();
+            e.stopPropagation();
+            return;
           }
-        };
-        const onActivate = (e) => {
-          if (e.type === 'keydown' && !(e.key === 'Enter' || e.key === ' ')) return;
-          const overlayActive = !!(document.getElementById('tour-overlay') && !document.getElementById('tour-overlay').classList.contains('hidden'));
-          if (overlayActive) return; // ignore when tour is already open
-          console.log('analytics: tour_restart_click');
-          tour_reset();
-          updateVisibility();
+          
+          // PHASE TT3: Call window.tour_reset() ONCE - tour will manage button visibility
+          // CRITICAL: Does NOT switch theme, does NOT touch theme-toggle-btn, does NOT touch HUD
+          // CRITICAL: No imports, no side effects, only tour restart
+          if (typeof window.tour_reset === 'function') {
+            window.tour_reset();
+          } else {
+            console.error('[Tour] window.tour_reset is not available, tour cannot be restarted');
+          }
+          
+          // PHASE TT3: Prevent default and stop propagation for complete isolation
           e.preventDefault();
+          e.stopPropagation();
         };
+        
+        // PHASE TT3: Attach ONLY these two event listeners - no others
+        // CRITICAL: No additional listeners that could trigger theme or HUD logic
         btn.addEventListener('click', onActivate);
         btn.addEventListener('keydown', onActivate);
-        // Self-healing: if theme switcher re-renders, re-insert the button
-        try {
-          const ensureBtn = () => {
-            let b = document.getElementById('tour-restart-btn');
-            if (!b) {
-              b = document.createElement('button');
-              b.id = 'tour-restart-btn';
-              b.className = 'header-btn';
-              b.setAttribute('aria-label', 'Перезапустить тур');
-              b.title = 'Перезапустить тур';
-              b.tabIndex = 0;
-              b.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" loading="lazy" aria-hidden="true" />';
-              container.appendChild(b);
-              b.addEventListener('click', onActivate);
-              b.addEventListener('keydown', onActivate);
-              updateVisibility();
-            }
-          };
-          const mo = new MutationObserver(() => ensureBtn());
-          mo.observe(container, { childList: true, subtree: true });
-        } catch {}
+        
+        // PHASE TT1: No self-healing, no MutationObserver, no hashchange/storage listeners
+        // Button is created once in bootstrap, tour manages visibility via showTour/hideTour
+        // CRITICAL: Bootstrap never touches theme-toggle-btn or any other children
       }
-    } catch {}
+    } catch (e) {
+      console.error('[Bootstrap] Failed to create tour restart button:', e);
+    }
     
-    // Listen for theme mounted event and then initialize HUD
-    let hud = null;
-    engine.on('themeMounted', () => {
-      if (!hud) {
-        hud = initHUD({
-          overlay: document.getElementById('overlay'),
-          hudObjectIcon: document.getElementById('hud-object-icon'),
-          hudBigPanel: document.getElementById('hud-big-panel'),
-          hudSmallPanel: document.getElementById('hud-small-panel'),
-          hudContainer: document.getElementById('hud-container'),
-          labelsLayer: document.getElementById('labels'),
-          btnAbout: document.getElementById('btn-about'),
-          btnLinks: document.getElementById('btn-links'),
-          btnDemo: document.getElementById('btn-demo'),
-          linksPanel: document.getElementById('links-panel'),
-          btnLinksClose: document.getElementById('btn-links-close')
-        });
+    // Listen for theme mounted event
+    // HUD is initialized early, but we need to update it with nodes after scene is mounted
+    engine.on('themeMounted', ({ themeId }) => {
+      console.log('[Bootstrap] Theme mounted event received:', themeId);
+      
+      // Update HUD with nodes from mounted scene
+      try {
+        const plugin = engine.currentPlugin || window._calmPlugin;
+        if (plugin && plugin.nodes) {
+          console.log('[Bootstrap] Updating HUD with', plugin.nodes.length, 'nodes');
+          // HUD should get nodes from engine, but we can also update it here
+          // The nodes are already passed via initNavigationAndHUD, but let's ensure HUD has access
+          if (typeof window._hud === 'object' && window._hud) {
+            // HUD already has nodes from initNavigationAndHUD
+            console.log('[Bootstrap] HUD already has nodes');
+          }
+        }
+      } catch (e) {
+        console.warn('[Bootstrap] Could not update HUD with nodes:', e);
       }
+      
+      // ===== ФАЗА B: Bootstrap НЕ манипулирует кнопкой темы напрямую =====
+      // КОНТРАКТ: Bootstrap НЕ имеет права изменять #theme-toggle-btn напрямую
+      // RESPONSIBILITY:
+      //   - Bootstrap может только вызывать HUD API для стабилизации кнопки
+      //   - НЕ может менять display/visibility/opacity/pointer-events напрямую
+      //   - НЕ может искать #theme-toggle-btn через getElementById/querySelector
+      //   - НЕ может перемещать или удалять кнопку
+      // CRITICAL INVARIANT: Единственный владелец #theme-toggle-btn — HUD Manager
+      // ФАЗА B: Используем HUD API вместо прямых манипуляций
+      try {
+        if (window.hud && typeof window.hud.ensureThemeButton === 'function') {
+          window.hud.ensureThemeButton();
+          console.log('[Bootstrap] Theme button stabilized via HUD API after theme mount (ФАЗА B: контракт)');
+        } else {
+          console.warn('[Bootstrap] HUD API not available, cannot stabilize theme button');
+        }
+      } catch (e) {
+        console.error('[Bootstrap] Error calling HUD API for theme button:', e);
+      }
+      
       // Hide preloader when the first theme fully mounts
       try {
         const pre = document.getElementById('preloader-overlay');
@@ -2704,689 +2816,52 @@ async function init() {
       try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
     }, 8000);
 
-    // ===== Guided Tour (A->B->C) =====
-    (function initGuidedTour(){
+    // ===== Guided Tour (PHASE 3: Using tour module) =====
+    (async function initGuidedTour(){
+      try {
+        // Import tour module
+        const base = window.__UX4AI_BASE_PATH__ || '';
+        const { initTour, TOUR_STEPS } = await import(`${base}/core/tour.js?v=1`);
+        
+        // Parse URL parameters
       const params = new URLSearchParams(location.search);
-      if (params.get('tour') === 'off') return;
+      const tourOff = params.get('tour') === 'off';
       if (params.get('tour') === 'reset') {
-        try { localStorage.removeItem('tour_done'); localStorage.removeItem('tour_step'); } catch {}
-      }
-      const done = (typeof localStorage !== 'undefined') ? localStorage.getItem('tour_done') : null;
-      if (done === '1') return;
-      const overlay = document.getElementById('tour-overlay');
-      if (!overlay) return;
-      const titleEl = document.getElementById('tour-title');
-      const subEl = document.getElementById('tour-sub');
-      const textEl = document.getElementById('tour-text');
-      const actionsEl = document.getElementById('tour-actions');
-      const interactivesEl = document.getElementById('tour-interactives');
-
-      const steps = {
-        1: {
-          title: `Владимир Костял. UX-архитектор. 
-          Проектировщик интерфейсов для AI-продуктов`,
-          sub: 'Проектирую понятные и масштабируемые UX-паттерны для ассистентов, агентных систем и внутренних платформ. Прозрачность ИИ, контроль стоимости и продуктивность команд — в одном дизайне.',
-          text: `<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./supervisor_account_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Управляю продуктом и кросс-функциональными командами.</span> <br>
-<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./graph_2_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Собираю дизайн-системы и шаблоны для быстрого выхода в прод и роста.</span> <br>
-<span style="display: inline-flex; align-items: center; gap: 8px;"><img src="./monitoring_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="20" height="20" loading="lazy" />  Настраиваю метрики и дашборды (TTFT↓, cost/request↓, ошибки↓, CSAT/конверсия↑)</span>`,
-          actions: [
-            { type:'button', primary:true, label:'Кейсы', on:'next' },
-            { type:'link', label:'Резюме', href:'./Vladimir_Kostyal_Resume.pdf' },
-            { type:'link', label:'UX4AI (PDF гайд + ссылки)', href:'https://t.me/...' }
-          ]
-        },
-        2: {
-          title: 'Контролируемый AI вместо «чёрного ящика»',
-          sub: 'Оркестрация ассистентов и агентов в одном интерфейсе: прозрачные решения, управляемые данные, безопасность и метрики. Рабочая система: роли и сценарии, права и бюджеты, единая панель контроля. Управление рисками: где хранятся данные, срок жизни, маскировка PII, аудит событий.',
-          text: '<ul class="tour-list">\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Почему так? — Live Answer Trace (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Orchestrator Dashboard (Figma demo)</a></li>\n<li><a href="#" target="_blank"><img src="./call_made_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="" width="18" height="18" loading="lazy" /> Scenario Builder / Playbooks (Figma demo)</a></li>\n</ul>',
-          actions: [
-            { type:'button', primary:false, label:'Назад', on:'back' },
-            { type:'button', primary:true, label:'Далее', on:'next' },
-            { type:'link', label:'Написать в TG', href:'https://t.me/scrumux' }
-          ]
-        },
-        3: {
-          title: 'От знакомства к исследованиям',
-          sub: 'Люди решают за 6–10 секунд — заголовок, первая строка и наличие аргументов (исследование eye-tracking, F/Z-паттерны, «информационный запах»).',
-          text: 'Если верить исследованию, первых 2 экранов должно было хватить  для принятия решения. Если нет... ну что же, это не единственная точка входа, а метрики дадут точную картину. Далее углубляемся непосредственно в тему UX для AI. Разбираемся в проблемах и исследуем решения ;)',
-          actions: [
-            { type:'button', primary:false, label:'Назад', on:'back' },
-            { type:'button', primary:true, label:'К обзору', on:'finish' },
-            { type:'link', label:'Написать в TG', href:'https://t.me/scrumux' }
-          ]
+              try { 
+                localStorage.removeItem('tour_done'); 
+                localStorage.removeItem('tour_step');
+          } catch {}
         }
-      };
-
-      // Initialize tour interactives for step 3
-      function initTourInteractives(container) {
-        container.innerHTML = '';
-        container.setAttribute('aria-hidden', 'false');
+        const done = (typeof localStorage !== 'undefined') ? localStorage.getItem('tour_done') : null;
+        const tourDone = done === '1';
         
-        // Create skeleton loaders first
-        const skeleton = document.createElement('div');
-        skeleton.className = 'tour-interactives-skeleton';
-        skeleton.innerHTML = `
-          <div class="skeleton-header"></div>
-          <div class="skeleton-status"></div>
-          <div class="skeleton-interactives">
-            <div class="skeleton-item"></div>
-            <div class="skeleton-item"></div>
-          </div>
-          <div class="skeleton-cta"></div>
-        `;
-        container.appendChild(skeleton);
+        // Initialize tour module
+        const tour = initTour({ tourOff, tourDone });
         
-        // Create wrapper for interactives
-        const wrapper = document.createElement('div');
-        wrapper.className = 'tour-interactives-wrapper';
-        wrapper.style.display = 'none';
-        
-        // Section header
-        const sectionHeader = document.createElement('h3');
-        sectionHeader.className = 'tour-interactives-header';
-        sectionHeader.textContent = 'С чего стоит начать оптимизировать AI-продукт';
-        
-        wrapper.appendChild(sectionHeader);
-        
-        // Interactive A: TTFT → Trust Thermometer
-        const interactiveA = document.createElement('div');
-        interactiveA.className = 'tour-interactive tour-interactive-a';
-        interactiveA.setAttribute('role', 'group');
-        interactiveA.setAttribute('aria-label', 'TTFT к доверию');
-        
-        // Widget container (header + description + widget)
-        const widgetContainer = document.createElement('div');
-        widgetContainer.className = 'thermometer-widget-container';
-        
-        // Description text (replaces header)
-        const widgetDescription = document.createElement('p');
-        widgetDescription.className = 'thermometer-widget-description';
-        widgetDescription.textContent = 'TTFT формирует доверие. Проверьте сколько времени тратит пользователь продукта на ожидание появления первого токена ответа от модели на экране. Эта одна из основных метрик, которая формирует % удержания пользователей.';
-        
-        // Thermometer container
-        const thermometerContainer = document.createElement('div');
-        thermometerContainer.className = 'thermometer-container';
-        thermometerContainer.setAttribute('role', 'group');
-        thermometerContainer.setAttribute('aria-label', 'Термометр времени ответа');
-        thermometerContainer.setAttribute('tabindex', '0');
-        
-        // Readout value (above buttons, left-aligned)
-        const readout = document.createElement('div');
-        readout.className = 'thermometer-readout';
-        readout.setAttribute('aria-live', 'polite');
-        readout.setAttribute('aria-atomic', 'true');
-        
-        const readoutValue = document.createElement('div');
-        readoutValue.className = 'readout-value';
-        readoutValue.textContent = '95';
-        
-        const readoutStatus = document.createElement('div');
-        readoutStatus.className = 'readout-status';
-        readoutStatus.textContent = '% удержания';
-        
-        readout.appendChild(readoutValue);
-        readout.appendChild(readoutStatus);
-        
-        // Placeholder (top right corner of widget)
-        const readoutPlaceholder = document.createElement('div');
-        readoutPlaceholder.className = 'readout-placeholder';
-        readoutPlaceholder.textContent = '⚡ «Мгновенный контакт»\nПоток сохранён. \nЭто зона "живого отклика".';
-        
-        // Segments container (horizontal row)
-        const segmentsContainer = document.createElement('div');
-        segmentsContainer.className = 'thermometer-segments-container';
-        
-        // Create 5 clickable segments
-        const segments = [
-          { ttft: 1, label: '≤1s', zone: 'zone-1' },
-          { ttft: 2, label: '2s', zone: 'zone-2' },
-          { ttft: 3, label: '3s', zone: 'zone-3' },
-          { ttft: 5, label: '5s', zone: 'zone-4' },
-          { ttft: 7, label: '≥7s', zone: 'zone-5' }
-        ];
-        
-        segments.forEach((seg, index) => {
-          const segment = document.createElement('button');
-          segment.type = 'button';
-          segment.className = `thermometer-segment ${seg.zone}`;
-          segment.setAttribute('role', 'option');
-          segment.setAttribute('aria-selected', 'false');
-          segment.setAttribute('data-ttft', seg.ttft);
-          segment.setAttribute('aria-label', `Время ответа ${seg.label}`);
-          segment.textContent = seg.label;
-          segmentsContainer.appendChild(segment);
-        });
-        
-        thermometerContainer.appendChild(readoutPlaceholder);
-        thermometerContainer.appendChild(readout);
-        thermometerContainer.appendChild(segmentsContainer);
-        
-        // User feeling text (under buttons)
-        const userFeelingEl = document.createElement('p');
-        userFeelingEl.className = 'thermometer-user-feeling';
-        userFeelingEl.textContent = 'Взгляд пользователя в фокусе. Есть ощущение совместной работы. Диалог течёт без паузы.';
-        thermometerContainer.appendChild(userFeelingEl);
-        
-        widgetContainer.appendChild(widgetDescription);
-        widgetContainer.appendChild(thermometerContainer);
-        interactiveA.appendChild(widgetContainer);
-        
-        wrapper.appendChild(interactiveA);
-        container.appendChild(wrapper);
-        
-        // Initialize interactions
-        initThermometerInteraction(thermometerContainer, readoutValue, readoutStatus, readoutPlaceholder, userFeelingEl);
-        
-        // Lazy load: observe when container enters viewport
-        if ('IntersectionObserver' in window) {
-          const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-              if (entry.isIntersecting) {
-                // Hide skeleton, show content
-                skeleton.style.display = 'none';
-                wrapper.style.display = 'block';
-                container.classList.add('loaded');
-                // Track view metric
-                trackMetric('metric_view', { section: 'tour_card_3' });
-                observer.unobserve(entry.target);
-              }
-            });
-          }, { rootMargin: '50px', threshold: 0.1 });
-          observer.observe(container);
-        } else {
-          // Fallback: load immediately
-          skeleton.style.display = 'none';
-          wrapper.style.display = 'block';
-          container.classList.add('loaded');
-        }
-      }
-      
-      // Thermometer interaction handler
-      function initThermometerInteraction(container, readoutValue, readoutStatus, readoutPlaceholder, userFeelingEl) {
-        const segments = container.querySelectorAll('.thermometer-segment');
-        let activeIndex = 0; // Start with first segment (≤1s)
-        
-        // Data from table
-        const widgetData = {
-          1: {
-            retention: 88,
-            displayScore: 95,
-            metaphor: '⚡ «Мгновенный контакт»',
-            userFeeling: 'Пользователь в фокусе. Есть ощущение совместной работы. Диалог течёт без паузы.',
-            uxMeaning: 'Поток сохранён. \nЭто зона "живого отклика".'
-          },
-          2: {
-            retention: 76,
-            displayScore: 76,
-            metaphor: '👁️ «Внимание ещё здесь»',
-            userFeeling: 'Пользователь замечает лёгкую паузу, но ждёт — доверие остаётся.',
-            uxMeaning: 'Комфортный UX. \nМозг всё ещё "в диалоге".'
-          },
-          3: {
-            retention: 63,
-            displayScore: 63,
-            metaphor: '💭 «Начинает отвлекаться»',
-            userFeeling: 'Мысль успевает ускользнуть: человек ждёт, но уже смотрит в сторону, доверие падает.',
-            uxMeaning: 'Риск потери потока. \nНадо показать, что ответ формируется.'
-          },
-          5: {
-            retention: 40,
-            displayScore: 40,
-            metaphor: '⏳ «Сомнение»',
-            userFeeling: 'Половина пользователей решают — система зависла; ощущение контроля почти исчезает.',
-            uxMeaning: 'Критическая зона. \nНужны визуальные признаки активности.'
-          },
-          7: {
-            retention: 16,
-            displayScore: 16,
-            metaphor: '❌ «Потеря контакта»',
-            userFeeling: 'Пользователь уходит мысленно или физически. Сессия воспринимается как сбой.',
-            uxMeaning: 'UX-провал. \nПотеря доверия и вовлечённости.'
-          }
-        };
-        
-        function updateThermometer(ttft) {
-          const data = widgetData[ttft] || widgetData[1];
-          
-          // Update readout
-          readoutValue.textContent = data.displayScore;
-          readoutStatus.textContent = '% удержания';
-          
-          // Update placeholder with metaphor + UX meaning
-          readoutPlaceholder.textContent = `${data.metaphor}\n${data.uxMeaning}`;
-          
-          // Update user feeling text under buttons
-          if (userFeelingEl) {
-            userFeelingEl.textContent = data.userFeeling;
-          }
-          
-          // Update active segment
-          segments.forEach((seg, index) => {
-            const isActive = parseInt(seg.dataset.ttft) === ttft;
-            seg.classList.toggle('active', isActive);
-            seg.setAttribute('aria-selected', isActive ? 'true' : 'false');
-            if (isActive) {
-              activeIndex = index;
-            }
-          });
-          
-          // Track metric
-          trackMetric('metric_interact', { 
-            widget: 'ttft', 
-            valueSec: ttft, 
-            trustScore: data.displayScore 
-          });
-        }
-        
-        // Click handler for segments - optimized for mobile
-        let lastTouchTime = 0;
-        const TOUCH_DELAY = 300; // Prevent double-tap
-        segments.forEach(segment => {
-          const ttft = parseInt(segment.dataset.ttft);
-          let touchHandled = false;
-          
-          // Touch handler (mobile-first)
-          const handleTouch = (e) => {
-            const now = Date.now();
-            if (now - lastTouchTime < TOUCH_DELAY) return;
-            lastTouchTime = now;
-            
-            e.preventDefault();
-            e.stopPropagation();
-            touchHandled = true;
-            updateThermometer(ttft);
-            
-            // Prevent click from firing after touch
-            setTimeout(() => { touchHandled = false; }, 300);
-          };
-          
-          // Click handler (fallback for desktop)
-          const handleClick = (e) => {
-            if (touchHandled) {
-              e.preventDefault();
-              e.stopPropagation();
+        if (!tour) {
+          console.error('[Tour] Failed to initialize tour module');
               return;
             }
-            updateThermometer(ttft);
-          };
-          
-          segment.addEventListener('touchend', handleTouch, { passive: false });
-          segment.addEventListener('click', handleClick);
+        
+        // Export tour API to window - CRITICAL: Must be set before any tour button clicks
+        window.tour_reset = tour.tour_reset;
+        window.showTour = tour.showTour;
+        window.hideTour = tour.hideTour;
+        window.setTourStep = tour.setStep;
+        window.startTour = tour.startTour;
+        console.log('[Tour] Tour API exported to window:', {
+          hasTourReset: typeof window.tour_reset === 'function',
+          hasStartTour: typeof window.startTour === 'function'
         });
         
-        // Keyboard support (arrow keys on container)
-        container.addEventListener('keydown', (e) => {
-          if (e.key === 'ArrowUp') {
-            e.preventDefault();
-            if (activeIndex > 0) {
-              const prevSegment = segments[activeIndex - 1];
-              const ttft = parseInt(prevSegment.dataset.ttft);
-              updateThermometer(ttft);
-              prevSegment.focus();
-            }
-          } else if (e.key === 'ArrowDown') {
-            e.preventDefault();
-            if (activeIndex < segments.length - 1) {
-              const nextSegment = segments[activeIndex + 1];
-              const ttft = parseInt(nextSegment.dataset.ttft);
-              updateThermometer(ttft);
-              nextSegment.focus();
-            }
-          } else if (e.key === 'Home') {
-            e.preventDefault();
-            const firstSegment = segments[0];
-            const ttft = parseInt(firstSegment.dataset.ttft);
-            updateThermometer(ttft);
-            firstSegment.focus();
-          } else if (e.key === 'End') {
-            e.preventDefault();
-            const lastSegment = segments[segments.length - 1];
-            const ttft = parseInt(lastSegment.dataset.ttft);
-            updateThermometer(ttft);
-            lastSegment.focus();
-          }
-        });
-        
-        // Initialize with first segment
-        updateThermometer(1);
-      }
-      
-      // CTA download handler
-      function initCTADownload(button) {
-        button.addEventListener('click', (e) => {
-          trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
-          // Default behavior (download) will handle the rest
-        });
-      }
-      
-      // Analytics/metrics tracking
-      function trackMetric(name, data) {
-        if (typeof window.analytics !== 'undefined' && typeof window.analytics.track === 'function') {
-          window.analytics.track(name, data);
-        } else {
-          console.info(`[Analytics] ${name}:`, data);
-        }
-      }
-      
-      // allow only <br> in text; escape everything else; also support \n -> <br>
-      function sanitizeAllowBr(str){
-        return String(str)
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/\n/g, '<br>')
-          .replace(/&lt;br\s*\/?&gt;/gi, '<br>')
-          // allow very limited HTML for links list (normalize UL to have class)
-          .replace(/&lt;ul(?:\s+class=\"tour-list\")?\s*&gt;/gi, '<ul class="tour-list">')
-          .replace(/&lt;\/ul&gt;/gi, '</ul>')
-          .replace(/&lt;li&gt;/gi, '<li>')
-          .replace(/&lt;\/li&gt;/gi, '</li>')
-          // allow span and img tags for icons (before processing links, so img inside links works)
-          .replace(/&lt;span([^&]*)&gt;/gi, '<span$1>')
-          .replace(/&lt;\/span&gt;/gi, '</span>')
-          .replace(/&lt;img\s+([^&]*?)(?:\s*\/)?&gt;/gi, '<img $1>')
-          .replace(/&lt;a\s+href=\"([^\"]*)\"(?:\s+target=\"[^\"]*\")?\s*&gt;/gi, '<a href="$1" target="_blank">')
-          .replace(/&lt;\/a&gt;/gi, '</a>');
-      }
-
-      function setStep(step){
-        const s = steps[step]; if (!s) return;
-        // Use requestIdleCallback for localStorage to avoid blocking UI
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(() => {
-            try { localStorage.setItem('tour_step', String(step)); } catch {}
-          });
-        } else {
-          // Fallback for older browsers
-          setTimeout(() => {
-            try { localStorage.setItem('tour_step', String(step)); } catch {}
-          }, 0);
-        }
-        // Add class to card for step 2 (with links list) to reduce spacing
-        const card = document.querySelector('.tour-card');
-        if (card) {
-          if (step === 2) {
-            card.classList.add('tour-step-2');
-          } else {
-            card.classList.remove('tour-step-2');
-          }
-        }
-        titleEl.textContent = s.title;
-        subEl.textContent = s.sub;
-        textEl.innerHTML = sanitizeAllowBr(s.text);
-        actionsEl.innerHTML = '';
-        // Clear and hide interactives by default
-        if (interactivesEl) {
-          interactivesEl.innerHTML = '';
-          interactivesEl.setAttribute('aria-hidden', 'true');
-          interactivesEl.classList.remove('loaded');
-        }
-        s.actions.forEach(a => {
-          if (a.type === 'link') {
-            const link = document.createElement('a');
-            link.className = 'btn';
-            link.href = a.href; 
-            const isPdf = a.href.toLowerCase().endsWith('.pdf');
-            // For PDF files: open in new tab and also trigger download
-            if (isPdf) {
-              link.target = '_blank';
-              link.addEventListener('click', (e) => {
-                // Open in new tab (default behavior)
-                // Also trigger download
-                setTimeout(() => {
-                  const downloadLink = document.createElement('a');
-                  downloadLink.href = a.href;
-                  downloadLink.download = a.href.split('/').pop() || 'download.pdf';
-                  downloadLink.style.display = 'none';
-                  document.body.appendChild(downloadLink);
-                  downloadLink.click();
-                  document.body.removeChild(downloadLink);
-                }, 100);
-              });
-            } else {
-              link.target = a.href.startsWith('http') ? '_blank' : '_self';
-            }
-            link.textContent = a.label;
-            actionsEl.appendChild(link);
-          } else {
-            const btn = document.createElement('button');
-            btn.type = 'button'; btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
-            btn.textContent = a.label;
-            // Optimized touch/click handler for mobile performance
-            let isProcessing = false;
-            const isMobile = window.innerWidth <= 767;
-            const createHandler = (action) => {
-              return (e) => {
-                // Prevent double-firing and ensure instant response
-                if (isProcessing) {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  return;
-                }
-                isProcessing = true;
-                e.preventDefault();
-                e.stopPropagation();
-                // IMMEDIATE execution without requestAnimationFrame for instant response
-                action();
-                // Reset flag after shorter delay (50ms instead of 150ms)
-                setTimeout(() => { isProcessing = false; }, 50);
-              };
-            };
-            
-            if (a.on === 'next') {
-              const handler = createHandler(() => setStep(Math.min(3, step+1)));
-              if (isMobile) {
-                // On mobile: use only touchstart for faster response
-                btn.addEventListener('touchstart', handler, { passive: false });
-              } else {
-                // On desktop: use click
-                btn.addEventListener('click', handler);
-              }
-            }
-            if (a.on === 'back') {
-              const handler = createHandler(() => setStep(Math.max(1, step-1)));
-              if (isMobile) {
-                btn.addEventListener('touchstart', handler, { passive: false });
-              } else {
-                btn.addEventListener('click', handler);
-              }
-            }
-            if (a.on === 'finish') {
-              const handler = createHandler(() => finishTour());
-              if (isMobile) {
-                btn.addEventListener('touchstart', handler, { passive: false });
-              } else {
-                btn.addEventListener('click', handler);
-              }
-            }
-            actionsEl.appendChild(btn);
-          }
-        });
-        // Add "План оптимизации" button for step 3, after all actions but before close
-        if (step === 3) {
-          const planButton = document.createElement('a');
-          planButton.href = '/assets/UX4AI_90day_plan.pdf';
-          planButton.className = 'btn';
-          planButton.setAttribute('download', 'UX4AI_90day_plan.pdf');
-          planButton.setAttribute('aria-label', 'Скачать план оптимизации');
-          planButton.textContent = 'План оптимизации';
-          // Handle PDF download
-          planButton.target = '_blank';
-          // Optimized touch/click handler for mobile performance
-          let planProcessing = false;
-          const isMobilePlan = window.innerWidth <= 767;
-          const handlePlanAction = (e) => {
-            if (planProcessing) {
-              e.preventDefault();
-              e.stopPropagation();
-              return;
-            }
-            planProcessing = true;
-            e.preventDefault();
-            e.stopPropagation();
-            // IMMEDIATE execution for faster response
-            const downloadLink = document.createElement('a');
-            downloadLink.href = '/assets/UX4AI_90day_plan.pdf';
-            downloadLink.download = 'UX4AI_90day_plan.pdf';
-            downloadLink.style.display = 'none';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
-            trackMetric('metric_download_plan', { file: 'UX4AI_90day_plan.pdf' });
-            setTimeout(() => { planProcessing = false; }, 50);
-          };
-          if (isMobilePlan) {
-            planButton.addEventListener('touchstart', handlePlanAction, { passive: false });
-          } else {
-            planButton.addEventListener('click', handlePlanAction);
-          }
-          actionsEl.appendChild(planButton);
-        }
-        // add close link as last action
-        const closeA = document.createElement('a');
-        closeA.href = '#';
-        closeA.className = 'close-link';
-        closeA.textContent = 'Закрыть';
-        // Optimized touch/click handler for mobile performance
-        let closeProcessing = false;
-        const isMobileClose = window.innerWidth <= 767;
-        const handleCloseAction = (e) => {
-          if (closeProcessing) {
-            e.preventDefault();
-            e.stopPropagation();
-            return;
-          }
-          closeProcessing = true;
-          e.preventDefault();
-          e.stopPropagation();
-          // IMMEDIATE execution for faster response
-          dismissTour();
-          setTimeout(() => { closeProcessing = false; }, 50);
-        };
-        if (isMobileClose) {
-          closeA.addEventListener('touchstart', handleCloseAction, { passive: false });
-        } else {
-          closeA.addEventListener('click', handleCloseAction);
-        }
-        actionsEl.appendChild(closeA);
-        
-        // Add interactives for step 3
-        if (step === 3 && interactivesEl) {
-          initTourInteractives(interactivesEl);
-        }
-        
-        // reflect in hash (optional)
-        try { history.replaceState(null, '', `#tour/${step}`); } catch {}
-
-        // Scroll tour card to top when switching steps (mobile and desktop)
-        const tourCard = document.querySelector('.tour-card');
-        if (tourCard) {
-          requestAnimationFrame(() => {
-            tourCard.scrollTop = 0;
-          });
-        }
-      }
-      function showTour(){ 
-        overlay.classList.remove('hidden'); 
-        overlay.setAttribute('aria-hidden','false');
-        overlay.removeAttribute('inert'); // Remove inert to enable interactions on iOS
-        document.body.classList.add('tour-active');
-        document.documentElement.classList.add('tour-active');
-        
-        // Scroll tour card to top when opening tour (mobile and desktop)
-        const tourCard = document.querySelector('.tour-card');
-        if (tourCard) {
-          requestAnimationFrame(() => {
-            tourCard.scrollTop = 0;
-          });
-        }
-      }
-      function hideTour(){ 
-        overlay.classList.add('hidden'); 
-        overlay.setAttribute('aria-hidden','true');
-        overlay.setAttribute('inert', ''); // Add inert when hidden to prevent focus issues 
-        document.body.classList.remove('tour-active');
-        document.documentElement.classList.remove('tour-active');
-        try { const btn = document.getElementById('tour-restart-btn'); if (btn) btn.style.display = 'inline-flex'; } catch {} 
-      }
-      function finishTour(){ 
-        hideTour(); 
-        // Use requestIdleCallback for localStorage to avoid blocking UI
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(() => {
-            try { localStorage.setItem('tour_done','1'); } catch {} 
-            try { history.replaceState(null,'', location.pathname + location.search); } catch {}
-          });
-        } else {
-          setTimeout(() => {
-            try { localStorage.setItem('tour_done','1'); } catch {} 
-            try { history.replaceState(null,'', location.pathname + location.search); } catch {}
-          }, 0);
-        }
-        // Open "Основы UX для AI" section in HUD
+        // Export steps for fallback (if needed)
         try {
-          if (window.hud && typeof window.hud.openBasicsSection === 'function') {
-            // Small delay to ensure HUD is ready
-            setTimeout(() => {
-              window.hud.openBasicsSection();
-            }, 100);
-          }
+          window.tourSteps = TOUR_STEPS;
         } catch (e) {
-          console.warn('[Tour] Failed to open basics section:', e);
+          console.warn('[Tour] Could not export tourSteps:', e);
         }
-      }
-      function dismissTour(){ 
-        hideTour(); 
-        // Mark tour as completed when closed from any step
-        // Use requestIdleCallback for localStorage to avoid blocking UI
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(() => {
-            try { localStorage.setItem('tour_done','1'); } catch {} 
-            try { history.replaceState(null,'', location.pathname + location.search); } catch {}
-          });
-        } else {
-          setTimeout(() => {
-            try { localStorage.setItem('tour_done','1'); } catch {} 
-            try { history.replaceState(null,'', location.pathname + location.search); } catch {}
-          }, 0);
-        }
-        // Open "Основы UX для AI" section in HUD
-        try {
-          if (window.hud && typeof window.hud.openBasicsSection === 'function') {
-            // Small delay to ensure HUD is ready
-            setTimeout(() => {
-              window.hud.openBasicsSection();
-            }, 100);
-          }
-        } catch (e) {
-          console.warn('[Tour] Failed to open basics section:', e);
-        }
-      }
-
-      // Expose hooks
-      try { window.canShowTourRestartIcon = function(){ try { return localStorage.getItem('tour_done')==='1' && (document.getElementById('tour-overlay')?.classList.contains('hidden')||false); } catch { return false; } }; } catch {}
-      try { window.setTourStep = setStep; } catch {}
-      try { window.tour_reset = function(){ 
-        try { 
-          localStorage.removeItem('tour_done'); 
-          localStorage.setItem('tour_step','1'); 
-        } catch {} 
-        setStep(1); 
-        showTour(); 
-      }; } catch {}
-
-      // Block interactions under overlay handled by backdrop covering entire page via CSS
-
-      // Schedule display as soon as preloader hides
-      const tryShow = () => {
-        const preHidden = !document.getElementById('preloader-overlay') || document.getElementById('preloader-overlay').classList.contains('hidden');
-        if (!preHidden) { setTimeout(tryShow, 120); return; }
-        const step = Number((typeof localStorage!=='undefined' && localStorage.getItem('tour_step')) || '1') || 1;
-        setStep(step);
-        console.log('analytics: tour_start');
-        showTour();
-      };
-      // Close (X)
+        
+        // Setup close button handler
       try { 
         const closeBtn = document.getElementById('tour-close'); 
         if (closeBtn) { 
@@ -3401,8 +2876,7 @@ async function init() {
             closeBtnProcessing = true;
             e.preventDefault();
             e.stopPropagation();
-            // IMMEDIATE execution for faster response
-            dismissTour();
+              tour.dismissTour();
             setTimeout(() => { closeBtnProcessing = false; }, 50);
           };
           if (isMobileCloseBtn) {
@@ -3410,15 +2884,39 @@ async function init() {
           } else {
             closeBtn.addEventListener('click', handleCloseBtnAction);
           }
-          closeBtn.addEventListener('keydown', (e)=>{ 
-            if(e.key==='Enter'||e.key===' ') { 
+            closeBtn.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
               e.preventDefault(); 
-              dismissTour(); 
+                tour.dismissTour();
             } 
           }); 
         } 
-      } catch {}
+        } catch (e) {
+          console.warn('[Tour] Could not setup close button:', e);
+        }
+        
+        // Schedule display as soon as preloader hides
+        const tryShow = () => {
+          const preHidden = !document.getElementById('preloader-overlay') || document.getElementById('preloader-overlay').classList.contains('hidden');
+          if (!preHidden) {
+            setTimeout(tryShow, 120);
+            return;
+          }
+          const step = Number((typeof localStorage !== 'undefined' && localStorage.getItem('tour_step')) || '1') || 1;
+          console.log('[Tour] Attempting to start tour from step:', step);
+          const started = tour.startTour(step);
+          if (!started) {
+            console.error('[Tour] Failed to start tour on page load. Check console for detailed error messages from tour module.');
+          } else {
+            console.log('[Tour] Tour started successfully from step:', step);
+          }
+        };
       tryShow();
+        
+        console.log('[Tour] Tour module initialized successfully');
+      } catch (e) {
+        console.error('[Tour] Failed to initialize tour module:', e);
+      }
     })();
 
     // Ensure any prior custom cursor element is removed
@@ -3644,7 +3142,7 @@ async function init() {
     };
     try { window.addEventListener('resize', debouncedUpdateMobileHudTop, { passive: true }); } catch {}
 
-    // Initial draw at startup (before any theme mounts) so Calm/Matrix both show lines
+    // Initial draw at startup (before any theme mounts) so Calm scene shows lines
     scheduleBuildBurst();
 
     // --- Canvas drawing loop ---
@@ -4034,7 +3532,10 @@ init();
   // Service Worker registration with update notification
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-      navigator.serviceWorker.register('/sw.js')
+      // Use base path for Service Worker registration
+      const swPath = (window.__UX4AI_BASE_PATH__ || '') + '/sw.js';
+      console.log('[SW] Registering Service Worker at:', swPath);
+      navigator.serviceWorker.register(swPath)
         .then((registration) => {
           console.log('[SW] Registered:', registration.scope);
           
@@ -4049,10 +3550,11 @@ init();
             
             newWorker.addEventListener('statechange', () => {
               if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                // New version available
+                // New version available - show notification, but don't auto-reload
                 console.log('[SW] New version available');
                 showUpdateNotification(newWorker);
               }
+              // Removed auto-reload on activation to prevent reload loops
             });
           });
         })
@@ -4060,11 +3562,8 @@ init();
           console.error('[SW] Registration failed:', error);
         });
       
-      // Handle controller change (after skipWaiting)
-      navigator.serviceWorker.addEventListener('controllerchange', () => {
-        console.log('[SW] Controller changed, reloading page');
-        window.location.reload();
-      });
+      // Removed controllerchange listener to prevent reload loops
+      // Users can manually reload if needed via update notification
     });
   }
   
@@ -4095,8 +3594,8 @@ init();
       <span>Доступна новая версия сайта</span>
       <button id="update-btn" style="
         padding: 6px 12px;
-        background: #fff;
-        color: #5B9CFF;
+        background: var(--Color/Light/Surface/1);
+        color: var(--Color/Accent/Primary);
         border: none;
         font-weight: 500;
         cursor: pointer;

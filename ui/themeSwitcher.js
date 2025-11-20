@@ -1,101 +1,107 @@
 /**
  * Theme Switcher - UI for selecting and applying themes
+ * 
+ * REFACTORED: Now uses unified theme-controller.js
+ * This module only handles UI (button/select) and delegates to applyThemeById()
  */
 
-import { THEMES } from '../themes/index.js?v=35';
-import { get } from '../core/state.js';
+import { applyThemeById, getCurrentThemeId, setEngine } from './theme-controller.js';
 
+/**
+ * Initialize theme switcher UI
+ * 
+ * PHASE T2: Thin wrapper - delegates theme management to theme-controller
+ * 
+ * This function:
+ * 1. Sets up engine reference in theme controller (for scene color updates)
+ * 2. Mounts the scene ONCE (calm scene only)
+ * 3. Does NOT manage theme initialization (that's done in bootstrap via initTheme())
+ * 4. Does NOT create theme toggle button (that's done in hud-manager.js)
+ * 
+ * @param {Object} engine - Engine instance
+ */
 export function initThemeSwitcher(engine) {
-  // Get saved theme or default
-  const urlTheme = location.hash.match(/theme=([\w-]+)/)?.[1];
-  const savedTheme = localStorage.getItem('theme');
-  const themeId = urlTheme || savedTheme || 'calm';
+  console.log('[ThemeSwitcher] Initializing (thin wrapper mode)...');
+  
+  // Set engine reference in theme controller (for scene color updates on theme change)
+  setEngine(engine);
+  
+  // NOTE: UI theme (dark/light) is already initialized in bootstrap via initTheme()
+  // We only mount the scene here - always calm, regardless of localStorage/hash
+  // Scene colors will be updated automatically by theme-controller when theme changes
+  
+  // Mount scene ONCE with calm scene plugin
+  // Scene is independent of UI theme - it will read colors from getSceneColors()
+  // IMPORTANT: We must await scene mounting to ensure it completes
+  mountCalmScene(engine).then(() => {
+    console.log('[ThemeSwitcher] Calm scene mounted successfully');
+  }).catch(e => {
+    console.error('[ThemeSwitcher] Failed to mount calm scene:', e);
+  });
+  
+  console.log('[ThemeSwitcher] Initialized (thin wrapper)');
+}
 
-  // Apply theme
-  const theme = THEMES[themeId] || THEMES.calm;
-  applyTheme(theme, engine);
-
-  // Get or create selector
-  let select = document.getElementById('theme-select');
-  if (!select) {
-    select = document.createElement('select');
-    select.id = 'theme-select';
-    select.style.cssText = 'padding:6px 12px; background:rgba(18,23,34,0.8); color:#E6EEF8; border:1px solid #243041; border-radius:8px; font-size:14px; cursor:pointer;';
+/**
+ * Mount calm scene (only scene plugin available)
+ * This is called ONCE during initialization
+ * @param {Object} engine - Engine instance
+ */
+async function mountCalmScene(engine) {
+  console.log('[ThemeSwitcher] Mounting calm scene...');
+  
+  try {
+    // Import calm scene config from themes directory
+    // Use relative path from ui/ directory to themes/ directory
+    const { calm } = await import('../themes/calm.js?v=1');
+    
+    // Mount scene with calm config
+    await engine.mount(calm);
+    console.log('[ThemeSwitcher] Calm scene mounted');
+  } catch (e) {
+    console.error('[ThemeSwitcher] Failed to mount calm scene:', e);
   }
-
-  // Populate options
-  select.innerHTML = ''; // Clear existing
-  Object.values(THEMES).forEach(t => {
-    const option = document.createElement('option');
-    option.value = t.id;
-    option.textContent = t.name;
-    if (t.id === themeId) option.selected = true;
-    select.appendChild(option);
-  });
-
-  // Handle change
-  select.addEventListener('change', () => {
-    const selectedTheme = THEMES[select.value] || THEMES.calm;
-    applyTheme(selectedTheme, engine);
-    localStorage.setItem('theme', selectedTheme.id);
-    location.hash = `theme=${selectedTheme.id}`;
-    setToggleIconColor(selectedTheme.id);
-  });
-
-  // Also create a clickable button for quick theme toggle (icon cycles)
-  const allThemes = Object.values(THEMES);
-  let currentThemeIdx = allThemes.findIndex(t => t.id === themeId);
-  const toggleBtn = document.createElement('button');
-  toggleBtn.id = 'theme-toggle-btn';
-  toggleBtn.className = 'header-btn';
-  toggleBtn.innerHTML = '<img id="theme-toggle-icon" src="./wallpaper_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="wallpaper" width="24" height="24" style="display:inline-block; vertical-align:middle;">';
-  toggleBtn.title = 'Переключить тему';
-  toggleBtn.style.fontSize = '18px';
-  toggleBtn.style.padding = '4px 10px';
-
-  // Insert into container div instead
-  const container = document.getElementById('theme-toggle-container');
-  if (container) {
-    container.appendChild(toggleBtn);
-  } else if (select.parentNode) {
-    select.parentNode.insertBefore(toggleBtn, select);
-  }
-
-  toggleBtn.addEventListener('click', () => {
-    // Cycle to next theme
-    currentThemeIdx = (currentThemeIdx + 1) % allThemes.length;
-    const nextTheme = allThemes[currentThemeIdx];
-    select.value = nextTheme.id;
-    applyTheme(nextTheme, engine);
-    localStorage.setItem('theme', nextTheme.id);
-    location.hash = `theme=${nextTheme.id}`;
-    toggleBtn.title = `Тема: ${nextTheme.name}`;
-    setToggleIconColor(nextTheme.id);
-  });
-
-  // Initial icon state
-  toggleBtn.title = `Тема: ${allThemes[currentThemeIdx].name}`;
-  setToggleIconColor(allThemes[currentThemeIdx].id);
 }
 
-function applyTheme(theme, engine) {
-  console.log('[ThemeSwitcher] Applying theme:', theme.id);
-
-  // Apply CSS variables
-  const root = document.documentElement;
-  Object.entries(theme.cssVars).forEach(([key, value]) => {
-    root.style.setProperty(key, value);
+/**
+ * Toggle theme (dark <-> light)
+ * Called by theme toggle button
+ * 
+ * PHASE T2: Theme switching enabled - delegates to theme-controller
+ * 
+ * @param {Object} options - Options for theme application
+ */
+export function toggleTheme(options = {}) {
+  const currentThemeId = getCurrentThemeId();
+  const newThemeId = currentThemeId === 'dark' ? 'light' : 'dark';
+  
+  console.log('[ThemeSwitcher] Toggling theme:', currentThemeId, '->', newThemeId);
+  
+  // Delegate to theme-controller (single source of truth)
+  applyThemeById(newThemeId, {
+    saveToStorage: true,
+    updateHash: false,
+    reload: false, // No reload - theme changes should be instant
+    ...options
   });
-
-  // Mount scene
-  engine.mount(theme);
 }
 
-// Map theme to CSS filter to tint monochrome SVG icon (now always gray like camera icon)
-function setToggleIconColor(themeId) {
-  const img = document.getElementById('theme-toggle-icon');
-  if (!img) return;
-  // Always use gray color (#9AA6B2 / var(--muted)) like camera icon
-  img.style.filter = 'brightness(0) saturate(100%) invert(65%) sepia(8%) saturate(443%) hue-rotate(177deg) brightness(94%) contrast(92%)';
+/**
+ * Apply specific theme by ID
+ * 
+ * PHASE T2: Theme switching enabled - delegates to theme-controller
+ * 
+ * @param {'dark' | 'light'} themeId
+ * @param {Object} options
+ */
+export function switchToTheme(themeId, options = {}) {
+  console.log('[ThemeSwitcher] Switching to theme:', themeId);
+  
+  // Delegate to theme-controller (single source of truth)
+  applyThemeById(themeId, {
+    saveToStorage: true,
+    updateHash: false,
+    reload: false, // No reload - theme changes should be instant
+    ...options
+  });
 }
-
