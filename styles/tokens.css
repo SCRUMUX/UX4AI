@@ -205,10 +205,10 @@
   --scene-core: #4A9EFF;
   --scene-grid: #58A6FF; /* Primary blue - same as accent */
   --scene-accent: #58A6FF;
-  /* Stars & Mist */
+  /* Stars & Mist - blue tones */
   --scene-star-near: #58A6FF;
   --scene-star-far: #6B7A8A;
-  --scene-mist: #9FC5F0;
+  --scene-mist: #6BB0FF; /* Bright blue mist */
   /* Beams */
   --scene-beam-base: #6BB0FF;
   --scene-beam-line: #B8D9FF;
@@ -238,7 +238,7 @@
   --scene-node-8: #84CC16;
 
   /* Grid / Baseline - DARK THEME */
-  /* PHASE AUDIT: Changed to Primary blue for consistent accent */
+  /* Primary blue for consistent accent */
   --grid-color: rgba(88, 166, 255, 0.35);
   --grid-opacity: 0.85;
   
@@ -488,7 +488,8 @@ body.theme-light {
   --panel-content-bg: rgba(255, 255, 255, 0.92);
   --panel-content-bg-mobile: rgba(244, 245, 247, 0.92);
   --panel-content-border: var(--color-light-border-base);
-  --panel-overlay-bg: rgba(11, 15, 20, 0.25);
+  /* Bluish overlay matching primary accent */
+  --panel-overlay-bg: rgba(60, 100, 150, 0.25);
   --panel-header-bg: var(--color-light-surface-3);
   --panel-header-bg-active: var(--color-light-surface-2);
   --panel-header-border: var(--color-light-border-base);
@@ -604,36 +605,35 @@ body.theme-light {
   --scene-bg: #C4D8F0;
   
   /* === Scene Tokens - LIGHT THEME === */
-  /* Light theme uses balanced blue tones - not too saturated, not too gray */
   /* Background & Space - soft blue */
   --scene-background: #C4D8F0;
   --scene-space: #B0C8E8;
-  /* Core sphere - deep saturated blue */
+  /* Core sphere - saturated blue */
   --scene-core: #2E7DD8;
-  --scene-grid: #FFFFFF;
+  --scene-grid: #3A7AC0;
   --scene-accent: #3B8EF0;
-  /* Stars & Mist - white for contrast on blue bg */
+  /* Stars & Mist - blue tones for light theme */
   --scene-star-near: #FFFFFF;
   --scene-star-far: #E8F4FF;
-  --scene-mist: #B8D9FF;
-  /* Beams - blue spectrum - more saturated */
+  --scene-mist: #7AB8F0; /* Soft blue mist */
+  /* Beams - blue spectrum */
   --scene-beam-base: #3B8EF0;
-  --scene-beam-line: #8FC4FF;
-  --scene-beam-inner: #A8D0FF;
+  --scene-beam-line: #5A9AE8;
+  --scene-beam-inner: #7AB0F0;
   --scene-beam-outer: #2E7DD8;
   --scene-beam-a: #4A9EFF;
-  --scene-beam-b: #7AB8F0;
-  /* Pulse effects - deeper blue */
-  --scene-pulse: #1E4F7A;
-  --scene-pulse-b: #2E6FA5;
+  --scene-beam-b: #6AAAF0;
+  /* Pulse effects */
+  --scene-pulse: #2E6FA5;
+  --scene-pulse-b: #3E8AC0;
   /* Lighting */
   --scene-light-hemi: #F0F7FF;
   --scene-light-hemi-ground: #F7F8FA;
   --scene-light-dir: #0B0F14;
-  /* Wire */
-  --scene-wire: #0B0F14;
-  /* Impulse */
-  --scene-impulse: #58A6FF;
+  /* Wire - blue for visibility */
+  --scene-wire: #2A5080;
+  /* Impulse - bright blue */
+  --scene-impulse: #3B8EF0;
   /* Node palette - first node matches theme accent */
   --scene-node-1: #58A6FF;
   --scene-node-2: #2DD4BF;
@@ -645,7 +645,7 @@ body.theme-light {
   --scene-node-8: #84CC16;
   
   /* Grid / Baseline - LIGHT THEME */
-  /* Light theme uses Primary blue for grid - increased visibility */
+  /* White grid for light theme */
   --grid-color: rgba(255, 255, 255, 0.60);
   --grid-opacity: 0.80;
   /* Edge lines (above overlay) - more transparent */
