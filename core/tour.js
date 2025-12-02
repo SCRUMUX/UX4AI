@@ -471,6 +471,17 @@ export function initTour(options = {}) {
    */
   function dismissTour() {
     hideTour();
+    
+    // Open "Основы UX для AI" section in HUD
+    try {
+      if (window.hud && typeof window.hud.openBasicsSection === 'function') {
+        setTimeout(() => {
+          window.hud.openBasicsSection();
+        }, 300);
+      }
+    } catch (e) {
+      console.warn('[Tour] Could not open basics section:', e);
+    }
   }
   
   /**

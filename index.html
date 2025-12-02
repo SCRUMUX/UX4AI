@@ -1307,6 +1307,7 @@ async function init() {
 
       const vw = window.innerWidth;
       const vh = window.innerHeight;
+      const isMobile = vw <= 767;
       // Compute canvas size with device pixel ratio for crisp 1px strokes
       const dpr = window.devicePixelRatio || 1;
       canvas.width = Math.floor(vw * dpr);
@@ -1318,8 +1319,11 @@ async function init() {
 
       // Cache edges for canvas drawing
       // Exclude the area next to the scrollbar (avoid rightmost vertical line)
-      const rightGutter = 18; // ~scrollbar width on Win
-      cachedXs = Array.from(xs).sort((a,b)=>a-b).filter(x => x > 0.5 && x < (vw - rightGutter));
+      // On mobile: no scrollbar, use smaller gutter
+      const rightGutter = isMobile ? 2 : 18;
+      // On mobile: allow lines closer to edges (panels are full-width)
+      const minX = isMobile ? -1 : 0.5;
+      cachedXs = Array.from(xs).sort((a,b)=>a-b).filter(x => x > minX && x < (vw - rightGutter));
       cachedYs = Array.from(ys).sort((a,b)=>a-b).filter(y => y > 0.5 && y < vh - 0.5);
       // assign random dash settings per line for desync
       lineSeeds = new Map();

@@ -1177,38 +1177,10 @@ export function initHUD(options) {
       console.warn('[HUD] Could not subscribe to theme changes:', e);
     }
     
-    // Also handle mousedown for immediate feedback (but don't trigger toggle twice)
-    let mousedownHandled = false;
-    btn.addEventListener('mousedown', (e) => {
-      e.stopPropagation();
-      if (e.button === 0 && !mousedownHandled) { // Left mouse button only
-        mousedownHandled = true;
-        setTimeout(() => { mousedownHandled = false; }, 100);
-        // Don't call toggleTheme here - let click handle it
-      }
-    }, { capture: false });
-    
-    // Touch support for mobile
-    let touchStartTime = 0;
-    let touchStartPos = null;
-    btn.addEventListener('touchstart', (e) => {
-      e.stopPropagation();
-      touchStartTime = Date.now();
-      touchStartPos = { x: e.touches[0].clientX, y: e.touches[0].clientY };
-    }, { capture: false, passive: true });
-    
-    btn.addEventListener('touchend', (e) => {
-      e.stopPropagation();
-      const touchDuration = Date.now() - touchStartTime;
-      const touchEndPos = e.changedTouches[0];
-      const touchDistance = touchStartPos ? 
-        Math.sqrt(Math.pow(touchEndPos.clientX - touchStartPos.x, 2) + Math.pow(touchEndPos.clientY - touchStartPos.y, 2)) : 0;
-      
-      if (touchDuration < 300 && touchDistance < 10) { // Quick tap, not a swipe
-        e.preventDefault();
-        toggleTheme(e);
-      }
-    }, { capture: false });
+    // Touch optimization: use touch-action: manipulation in CSS
+    // This eliminates 300ms delay without needing separate touch handlers
+    // Removes redundant touchstart/touchend handlers that could cause double-firing
+    btn.style.touchAction = 'manipulation';
     
     // Ensure button is always visible and clickable
     // CRITICAL: These styles must be set to prevent button from disappearing

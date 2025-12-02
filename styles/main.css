@@ -319,8 +319,8 @@ button:active {
 #hud-backdrop {
   position: fixed;
   inset: 0;
-  /* Use token for theme-aware backdrop */
-  background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.25));
+  /* Dark theme overlay */
+  background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.45));
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   z-index: 940;
@@ -839,19 +839,19 @@ html.theme-dark body header#site-header {
   align-items: center;
   gap: var(--header-gap);
   padding: var(--header-padding-v) var(--header-padding-h);
-  /* UNIFIED PANEL STYLE - dark theme */
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  /* UNIFIED PANEL STYLE - dark theme, aligned with light theme transparency */
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   background: 
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0.02) 20%,
       transparent 40%
     ),
-    rgba(15, 25, 45, 0.35);
+    rgba(15, 25, 45, 0.45);
   border: none;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
   font-family: var(--font-family-base);
   visibility: visible;
   opacity: 1;
@@ -883,16 +883,16 @@ html.theme-light body header#site-header {
 
 /* HUD mode: header with same style */
 .hud-active header#site-header {
-  backdrop-filter: blur(40px);
-  -webkit-backdrop-filter: blur(40px);
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
   background: 
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.06) 0%,
       rgba(255, 255, 255, 0.02) 20%,
       transparent 40%
     ),
-    rgba(15, 25, 45, 0.35);
+    rgba(15, 25, 45, 0.45);
 }
 
 /* Light theme header - unified style */
@@ -992,7 +992,8 @@ html.theme-light body header#site-header {
 
 .theme-light #hud-backdrop,
 .theme-light #tour-overlay .tour-backdrop {
-  background: rgba(0, 0, 0, 0.15);
+  /* Bluish overlay for light theme */
+  background: rgba(60, 100, 150, 0.25);
 }
 
 .header-logo {
@@ -1471,6 +1472,7 @@ html.theme-light .hud-nav-link:hover {
 
 /* === Mode Banner === */
 /* PHASE C3.4: Unified styles from index.html */
+/* Style matches header for consistency */
 #mode-banner {
   position: fixed;
   top: 75px;
@@ -1481,14 +1483,29 @@ html.theme-light .hud-nav-link:hover {
   font-size: 16px;
   font-weight: 600;
   color: var(--hud-text-base);
-  /* Transparent glass effect */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  background: rgba(15, 25, 45, 0.15);
+  /* Same as header - dark theme */
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.45);
   border: none;
   border-radius: var(--radius-none);
   display: none;
   pointer-events: none;
+}
+
+/* Light theme mode banner - same as light header */
+.theme-light #mode-banner {
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(252, 252, 255, 0.45);
+  color: var(--hud-text-base);
 }
 
 .hud-active #mode-banner {
@@ -1667,11 +1684,12 @@ html.theme-light .hud-nav-link:hover {
     z-index: 1850;
   }
 
-  /* Links panel mobile adjustments */
+  /* Links panel mobile adjustments - full width */
   #links-panel {
+    left: 8px;
     right: 8px;
-    width: calc(100% - 16px);
-    max-width: 320px;
+    width: auto;
+    max-width: none;
   }
 }
 
@@ -1688,10 +1706,17 @@ html.theme-light .hud-nav-link:hover {
 }
 
 #toggle-orbit-btn {
-  /* Transparent glass effect */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  background: rgba(15, 25, 45, 0.15);
+  /* Same as header - dark theme */
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.45);
   border: none;
   border-radius: var(--radius-none);
   padding: 8px 14px;
@@ -1726,6 +1751,23 @@ html.hud-active #mobile-orbit-toggle {
 
 /* Active orbit mode: tint icon to accent blue */
 #toggle-orbit-btn.active #toggle-orbit-icon {
+  filter: brightness(0) saturate(100%) invert(42%) sepia(66%) saturate(1675%) hue-rotate(189deg) brightness(101%) contrast(98%);
+}
+
+/* Light theme: orbit toggle button - same as light header */
+.theme-light #toggle-orbit-btn {
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(252, 252, 255, 0.45);
+}
+
+/* Light theme: icon color - same as clickable elements (#0B0F14) */
+.theme-light #toggle-orbit-icon {
+  filter: brightness(0) saturate(100%) invert(5%) sepia(10%) saturate(1000%) hue-rotate(180deg) brightness(95%) contrast(95%);
+}
+
+/* Light theme: active state - accent blue */
+.theme-light #toggle-orbit-btn.active #toggle-orbit-icon {
   filter: brightness(0) saturate(100%) invert(42%) sepia(66%) saturate(1675%) hue-rotate(189deg) brightness(101%) contrast(98%);
 }
 
@@ -2025,7 +2067,7 @@ html:has(#tour-overlay:not(.hidden)) #grid-canvas {
 #tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
 /* Use specificity .hidden class instead of !important */
 #tour-overlay.hidden { display: none; }
-#tour-overlay .tour-backdrop { position:absolute; inset:0; background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.25)); backdrop-filter: blur(4px); z-index: 1; }
+#tour-overlay .tour-backdrop { position:absolute; inset:0; background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.45)); backdrop-filter: blur(4px); z-index: 1; }
 @media (max-width: 767px) {
   /* Mobile: keep desktop glass style, only adjust size */
   #tour-overlay .tour-card { 
@@ -2393,11 +2435,22 @@ html.theme-light #tour-overlay .tour-body .tour-list a:hover {
     user-select: none;
   }
 }
-/* Block page scroll when tour overlay is visible, but allow scrolling inside tour card */
-/* CRITICAL: Tour effects limited to #tour-overlay, no global classes on html/body */
-/* Overlay itself blocks interaction with page through z-index and backdrop */
-/* Scrolling is handled by overlay's own structure - no need to block body scroll */
-/* Разрешить скролл только внутри карточки тура */
+/* === FIX: Block body scroll when tour is active === */
+/* Prevents double scroll (body + tour card) */
+html:has(#tour-overlay:not(.hidden)),
+html.tour-active {
+  overflow: hidden;
+}
+
+html:has(#tour-overlay:not(.hidden)) body,
+html.tour-active body {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+/* Tour card scrolls independently */
 #tour-overlay:not(.hidden) .tour-card,
 #tour-overlay:not(.hidden) .tour-body {
   touch-action: pan-y;
@@ -3317,4 +3370,59 @@ body.ux4ai-preload-lock {
 /* Readout value (big number) - should be heading color */
 .theme-light #tour-overlay .readout-value {
   color: #0B0F14;
+}
+
+/* ==========================================================================
+   TOUCH DEVICE FIXES - Prevent sticky hover on mobile
+   ========================================================================== */
+
+/* Reset hover states on touch devices - hover "sticks" after touch */
+@media (hover: none), (pointer: coarse) {
+  /* Remove sticky hover backgrounds */
+  .header-btn:hover,
+  .hud-nav-link:hover,
+  .hud-tabs-container button[data-index]:hover,
+  #hud-big-panel a:hover,
+  #hud-small-panel .hud-section-nav a:hover,
+  .theme-light .header-btn:hover,
+  .theme-light .hud-nav-link:hover,
+  .theme-light .hud-tabs-container button[data-index]:hover,
+  .theme-light #hud-big-panel a:hover {
+    background: transparent;
+  }
+  
+  /* Use :active for touch feedback instead of :hover */
+  .header-btn:active,
+  .hud-nav-link:active,
+  .hud-tabs-container button[data-index]:active,
+  #hud-small-panel .hud-section-nav a:active {
+    background: var(--color-state-hover-bg);
+    color: var(--hud-link-hover-text, var(--color-accent-primary));
+  }
+  
+  #hud-big-panel a:active {
+    color: var(--color-accent-primary);
+  }
+  
+  /* Ensure touch-action is set for fast taps */
+  .header-btn,
+  .hud-nav-link,
+  .hud-tabs-container button[data-index],
+  #hud-big-panel a,
+  #hud-small-panel .hud-section-nav a,
+  .hud-tab-link {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(88, 166, 255, 0.15);
+  }
+}
+
+/* Ensure hover works only on devices with mouse/trackpad */
+@media (hover: hover) and (pointer: fine) {
+  .header-btn:hover,
+  .hud-nav-link:hover,
+  .hud-tabs-container button[data-index]:hover,
+  #hud-small-panel .hud-section-nav a:hover {
+    background: var(--hud-link-hover-bg);
+    color: var(--hud-link-hover-text, var(--color-accent-primary));
+  }
 }
