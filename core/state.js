@@ -3,7 +3,10 @@
  */
 
 const state = {
-  activeThemeId: 'calm',
+  // UI Theme: 'dark' or 'light' (NOT scene theme like 'calm'/'matrix')
+  activeThemeId: 'dark',
+  // Scene: always 'calm' (only one 3D scene plugin)
+  activeSceneId: 'calm',
   activeSection: null,
   currentNodeIndex: -1,
   orbitModeEnabled: false,

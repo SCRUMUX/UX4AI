@@ -5,23 +5,139 @@
  */
 
 /* === Base Styles === */
+/* PHASE C3.4: Unified base styles from index.html and main.css */
 html {
   margin: 0;
   padding: 0;
-  background: var(--Color/Dark/Background/Primary);
+  /* CRITICAL FIX: Add fallback values to ensure styles work even if CSS variables fail */
+  background: var(--bg, #0D1117);
   height: 100%;
   overflow-x: hidden;
-  font-size: var(--Font/Size/Base);
-  line-height: var(--Font/LineHeight/Base);
-  font-weight: var(--Font/Weight/Regular);
-  font-family: var(--Font/Family/Base);
+  /* CRITICAL FIX: Apply text color with fallback */
+  color: var(--text, #CFE8FF);
+  /* Establish consistent typography across the site: the base body text
+     corresponds to Text/Body/Base (16px/24px) from the design system. */
+  font-size: 16px;
+  line-height: 1.5;
+  font-weight: 400;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
 }
 
 body {
   margin: 0;
   padding: 0;
   background: transparent;
-  color: var(--Color/Light/Text/Primary);
+  /* CRITICAL FIX: Apply text color with fallback */
+  color: var(--text, #CFE8FF);
+}
+
+/*
+ * Theme‑specific typography
+ *
+ * The base html/body rules above rely on the `--text` token defined in
+ * `styles/tokens.css` to set the default text color.  In practice
+ * there have been cases where the variable cascade fails during startup
+ * causing dark‑theme pages to pick up dark text values from the light
+ * palette.  These explicit rules ensure that once the theme class is
+ * applied to the root elements, the color property is forced to the
+ * correct palette regardless of other CSS ordering issues.
+ *
+ * CRITICAL FIX: Using !important to guarantee correct text color even if
+ * tokens.css loads late or CSS variable cascade fails.
+ */
+html.theme-dark,
+body.theme-dark {
+  color: #CFE8FF !important; /* Основной текст темной темы */
+  --text: #CFE8FF;
+}
+
+html.theme-light,
+body.theme-light {
+  color: #0B0F14 !important; /* Dark text for light theme - NEW graphite */
+  --text: #0B0F14;
+}
+
+/* Default state (no theme class yet): assume dark theme */
+html:not(.theme-light):not(.theme-dark),
+body:not(.theme-light):not(.theme-dark) {
+  color: #CFE8FF !important; /* Основной текст темной темы */
+}
+
+/* === Link Reset === */
+
+/* === Global Link Styles === */
+/* Base link styles using semantic tokens - auto-switch with theme */
+/* CRITICAL FIX: Hardcoded fallback for browsers that don't support slash-named CSS vars */
+a {
+  color: #9CA3AF; /* Fallback - gray interactive */
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+
+a:visited {
+  color: #9CA3AF; /* Fallback */
+}
+
+a:hover {
+  color: #58A6FF; /* Fallback - blue interactive */
+}
+
+/* Light theme link overrides */
+.theme-light a,
+html.theme-light a {
+  color: #0B0F14;
+}
+
+.theme-light a:visited,
+html.theme-light a:visited {
+  color: #0B0F14;
+}
+
+.theme-light a:hover,
+html.theme-light a:hover {
+  color: #58A6FF;
+}
+
+/* === Focus Styles === */
+/* Global focus outline using theme colors */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid #58A6FF;
+  outline-offset: 2px;
+}
+
+/* Light theme focus */
+.theme-light *:focus-visible,
+html.theme-light *:focus-visible {
+  outline-color: #58A6FF;
+}
+
+/* === Global Button Styles === */
+/* Base button styles using semantic tokens - auto-switch with theme */
+/* CRITICAL FIX: Added fallback values to ensure buttons work even if CSS variables fail */
+/* NOTE: Using hardcoded fallback first, then CSS variable override for browsers that support slash-named vars */
+button {
+  color: #9CA3AF; /* Fallback for browsers that don't parse var() with slashes */
+  color: var(--Link-Base, #9CA3AF);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+button:hover {
+  color: #58A6FF; /* Fallback */
+  color: var(--Link-HoverText, #58A6FF);
+  background: rgba(88, 166, 255, 0.10); /* Fallback */
+  background: var(--Color-State-Hover-Background, rgba(88, 166, 255, 0.10));
+}
+
+button:active {
+  transform: scale(0.96);
+  opacity: 0.9;
 }
 
 /* Mobile orbit mode: block browser gestures */
@@ -39,6 +155,7 @@ body {
   }
 
   /* Optimize touch interactions for interactive elements */
+  /* Use specificity instead of !important - these rules are already in @media (max-width: 767px) */
   button,
   a,
   .btn,
@@ -51,27 +168,16 @@ body {
     user-select: none;
     -webkit-user-select: none;
     /* Remove transitions on mobile for instant feedback */
-    transition: none !important;
+    transition: none;
   }
 
-  /* Reduce transition duration for tour buttons */
+  /* Mobile tour buttons: faster transitions */
   #tour-overlay .tour-actions .btn {
-    transition: background var(--Transition/Fast), color var(--Transition/Fast), border-color var(--Transition/Fast) !important;
-  }
-
-  /* Disable hover effects on mobile */
-  #tour-overlay .tour-actions .btn:hover {
-    background: var(--Color/Dark/Surface/Base) !important;
-    color: var(--Color/Light/Text/Tertiary) !important;
-    border-color: var(--Color/Dark/Border/Default) !important;
-  }
-
-  #tour-overlay .tour-actions .btn-primary:hover {
-    background: var(--Color/State/Selected/Background) !important;
+    transition: background var(--transition-fast), color var(--transition-fast);
   }
 
   /* Prevent text selection on interactive elements */
-  .tour-card,
+  #tour-overlay .tour-card,
   .hud-big-panel,
   .hud-small-panel {
     -webkit-touch-callout: none;
@@ -84,12 +190,13 @@ body {
 }
 
 /* === Layout Containers === */
+/* PHASE C3.4: Unified styles from index.html and main.css */
 #three-container {
   position: fixed;
   inset: 0;
   overflow: hidden;
   background: transparent;
-  z-index: var(--ZIndex/Base);
+  z-index: 1;
 }
 
 #labels {
@@ -97,60 +204,69 @@ body {
   inset: 0;
   pointer-events: none;
   background: transparent;
-  z-index: var(--ZIndex/Labels);
-  font-family: var(--Font/Family/Base);
+  z-index: 900;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
 }
 
 /* === Labels === */
+/* Phase 2.2: hardcoded hex → tokens */
+#labels .label,
 .label {
   position: absolute;
   transform: translate(-50%, -50%);
-  padding: var(--Spacing/XS) var(--Spacing/M);
+  padding: var(--spacing-xs) var(--spacing-m);
   pointer-events: auto;
-  font-size: var(--Font/Size/S);
-  letter-spacing: var(--Font/LetterSpacing/Tight);
-  font-weight: var(--Font/Weight/Regular);
-  color: var(--Color/Light/Text/Primary);
-  background: var(--Color/Dark/Surface/Base);
-  border: 1px solid var(--Color/Dark/Border/Default);
-  border-radius: var(--Radius/M);
-  box-shadow: var(--Shadow/Inset), var(--Shadow/Medium);
+  font-size: var(--font-size-base);
+  letter-spacing: var(--font-letter-spacing-tight);
+  font-weight: var(--font-weight-regular);
+  color: var(--interactive-dark-text-base);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-none);
   white-space: nowrap;
-  opacity: 0.96;
-  transition: var(--Transition/Background), var(--Transition/Color);
 }
 
+#labels .label:hover,
 .label:hover {
-  background: var(--Color/State/Hover/Surface);
-  border-color: var(--Color/Accent/Primary);
-  color: var(--Color/Light/Text/Secondary);
+  color: var(--color-accent-primary);
   cursor: pointer;
+}
+
+/* Light theme: labels - using semantic tokens */
+.theme-light #labels .label,
+.theme-light .label {
+  color: var(--color-light-theme-text-base);
+}
+
+.theme-light #labels .label:hover,
+.theme-light .label:hover {
+  color: var(--color-accent-primary);
 }
 
 /* === HUD Chips === */
 .hud {
   position: fixed;
-  left: var(--Spacing/ML);
-  top: var(--Spacing/ML);
-  right: var(--Spacing/ML);
+  left: var(--spacing-ml);
+  top: var(--spacing-ml);
+  right: var(--spacing-ml);
   display: flex;
-  gap: var(--Spacing/SM);
+  gap: var(--spacing-sm);
   flex-wrap: wrap;
   align-items: center;
-  background: var(--Color/Dark/Background/Secondary);
-  border: 1px solid var(--Color/Dark/Border/Default);
-  border-radius: var(--Radius/L);
-  padding: var(--Spacing/SM) var(--Spacing/M);
-  backdrop-filter: var(--Backdrop/Blur/Medium);
+  background: var(--color-dark-bg-secondary);
+  border: 1px solid var(--color-dark-border-default);
+  border-radius: var(--radius-none);
+  padding: var(--spacing-sm) var(--spacing-m);
+  backdrop-filter: var(--backdrop-blur-medium);
   z-index: 10;
-  font-size: var(--Font/Size/XS);
+  font-size: var(--font-size-xs);
 }
 
 .chip {
-  padding: var(--Spacing/XS) var(--Spacing/SM);
-  border: 1px solid var(--Color/Dark/Border/Default);
-  border-radius: var(--Radius/M);
-  background: var(--Color/Dark/Background/Tertiary);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border: 1px solid var(--color-dark-border-default);
+  border-radius: var(--radius-none);
+  background: var(--color-dark-bg-tertiary);
   opacity: 0.96;
 }
 
@@ -163,14 +279,15 @@ body {
 }
 
 /* === Overlay === */
+/* PHASE C3.4: Unified styles from index.html and main.css */
 #overlay {
   position: fixed;
   inset: 0;
-  background: var(--Color/Effect/Shadow/Medium);
+  background: var(--color-dark-surface-overlay, rgba(0, 0, 0, 0.45));
   pointer-events: none;
   opacity: 0;
-  transition: var(--Transition/Opacity);
-  z-index: var(--ZIndex/Overlay);
+  transition: var(--transition-opacity);
+  z-index: var(--z-index-overlay);
 }
 
 #overlay.active {
@@ -178,86 +295,735 @@ body {
   opacity: 1;
 }
 
+/* Use specificity .hud-active #overlay instead of !important */
 .hud-active #overlay {
-  background: transparent !important;
-  pointer-events: none !important;
+  background: transparent;
+  pointer-events: none;
 }
 
 /* Hide overlay on mobile when not active */
 @media (max-width: 479px) {
+  /* Use specificity #overlay:not(.active) instead of !important */
   #overlay:not(.active) {
-    display: none !important;
+    display: none;
   }
 
+  /* Use specificity @media (max-width: 479px) body instead of !important */
   body {
-    background: transparent !important;
+    background: transparent;
   }
 }
 
 /* === HUD Backdrop === */
+/* PHASE C3.4: Unified styles from index.html and main.css */
 #hud-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--Color/Dark/Surface/Overlay);
-  backdrop-filter: var(--Backdrop/Blur/Soft);
-  z-index: var(--ZIndex/HUD/Backdrop);
-  pointer-events: none !important;
+  /* Use token for theme-aware backdrop */
+  background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.25));
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  z-index: 940;
+  pointer-events: none;
   opacity: 1;
-  transition: var(--Transition/Opacity);
+  transition: opacity 0.3s ease;
 }
 
+/* Use specificity .hidden class instead of !important */
 #hud-backdrop.hidden {
-  display: none !important;
-}
-
-/* === Hide Legacy Panels === */
-#object-icon,
-#big-panel,
-#small-panel {
   display: none;
 }
 
+/* === HUD Panels === */
+/* PHASE C3.4: Unified styles from index.html and main.css */
+/* Базовое правило - общие стили для панели (БЕЗ позиционирования) */
+/* Позиционирование НЕ применяется здесь, так как панель всегда находится в #hud-container */
+/* Позиционирование применяется только через правило #hud-container #hud-big-panel */
+#hud-big-panel {
+  /* Base styles for the big panel. The panel itself is initially hidden; visibility
+     is controlled via the `.hud-active` class on the html/body elements. To keep the
+     architecture predictable, all layout-related properties (positioning, sizing,
+     display) are only applied when the HUD is active. See the selectors defined
+     later in this file under the `.hud-active` rules. */
+  width: 580px;
+  max-height: calc(100vh - 250px);
+  height: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  /* FAUX GLASS - balanced blur + gradients for glass illusion */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  color: var(--hud-text-base);
+  line-height: 1.5;
+  box-sizing: border-box;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  /* Use the semantic typography token for body text weight so that tour, HUD and
+     header text share the same base weight. */
+  font-weight: var(--font-weight-regular);
+  /* Hide by default; shown when .hud-active is applied */
+  display: none;
+  z-index: 1150; /* Above edge grid lines (1100) for readable text */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* Позиционирование НЕ задается здесь - применяется через #hud-container #hud-big-panel */
+}
+
+#hud-big-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ensure all text in big panel has consistent weight, except headings */
+#hud-big-panel * {
+  font-weight: var(--font-weight-light);
+}
+
+/* Override for headings */
+#hud-big-panel h1,
+#hud-big-panel h2,
+#hud-big-panel h3,
+#hud-big-panel h4,
+#hud-big-panel h5,
+#hud-big-panel h6 {
+  font-weight: 600;
+}
+
+/* Headings in big panel main text use tour style */
+#hud-big-panel h1,
+#hud-big-panel h2,
+#hud-big-panel h3,
+#hud-big-panel h4,
+#hud-big-panel h5,
+#hud-big-panel h6,
+.hud-active #hud-big-panel h1,
+.hud-active #hud-big-panel h2,
+.hud-active #hud-big-panel h3,
+.hud-active #hud-big-panel h4,
+.hud-active #hud-big-panel h5,
+.hud-active #hud-big-panel h6 {
+  font: 600 20px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  margin: 0;
+}
+
+/* Main heading (h2) - 10px margin bottom to paragraph */
+#hud-big-panel h2,
+.hud-active #hud-big-panel h2,
+#hud-container #hud-big-panel h2,
+.hud-active #hud-container #hud-big-panel h2 {
+  margin: 0 0 var(--spacing-m) 0;
+}
+
+/* Subheadings (h3, h4) - smaller than main heading, no margin */
+#hud-big-panel h3,
+.hud-active #hud-big-panel h3,
+#hud-container #hud-big-panel h3,
+.hud-active #hud-container #hud-big-panel h3 {
+  font: 600 18px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  margin: 0;
+}
+
+#hud-big-panel h4,
+.hud-active #hud-big-panel h4,
+#hud-container #hud-big-panel h4,
+.hud-active #hud-container #hud-big-panel h4 {
+  font: 600 16px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  margin: 0;
+}
+
+/* Paragraph spacing: 20px between paragraphs */
+#hud-big-panel p,
+.hud-active #hud-big-panel p,
+#hud-container #hud-big-panel p,
+.hud-active #hud-container #hud-big-panel p {
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+#hud-big-panel p:last-child,
+.hud-active #hud-big-panel p:last-child,
+#hud-container #hud-big-panel p:last-child,
+.hud-active #hud-container #hud-big-panel p:last-child {
+  margin-bottom: 0;
+}
+
+/* Remove spacing after subheadings - no margin for first paragraph after h3/h4 */
+#hud-big-panel h3 + p,
+#hud-big-panel h4 + p,
+.hud-active #hud-big-panel h3 + p,
+.hud-active #hud-big-panel h4 + p,
+#hud-container #hud-big-panel h3 + p,
+#hud-container #hud-big-panel h4 + p,
+.hud-active #hud-container #hud-big-panel h3 + p,
+.hud-active #hud-container #hud-big-panel h4 + p {
+  margin-top: 0;
+}
+
+#hud-small-panel,
+#hud-small-panel * {
+  box-sizing: border-box;
+}
+
+#hud-small-panel .hud-section-header {
+  position: relative; /* Required for absolute positioning of close button */
+  width: 100%;
+  text-align: left;
+  color: var(--hud-text-base);
+  /* PHASE AUDIT: Added padding from index.html */
+  padding: var(--spacing-md) var(--spacing-ml) var(--spacing-ml) var(--spacing-ml);
+  /* FAUX GLASS - same as #hud-big-panel */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+}
+
+/* HUD Small Panel Section Title and Summary */
+#hud-small-panel .hud-section-title {
+  margin: 0 0 4px 0;
+  padding: 0; /* padding уже есть на .hud-section-header */
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--hud-text-base);
+}
+
+#hud-small-panel .hud-section-summary {
+  margin: 8px 0 12px 0;
+  padding: 0; /* padding уже есть на .hud-section-header */
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: var(--hud-text-base);
+}
+
+#hud-small-panel .hud-section-nav {
+  display: flex;
+  gap: 8px;
+  justify-content: space-between;
+  padding: 0;
+  margin: 0;
+}
+
+/* HUD Container: fixed, centered wrapper */
+#hud-container {
+  position: fixed;
+  top: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  flex-direction: row;
+  gap: 24px;
+  z-index: 1150; /* Above edge grid lines (1100) for readable text */
+}
+
+/* Show container when HUD is active - use specificity instead of !important */
+.hud-active #hud-container {
+  display: flex;
+}
+
+/* Inside container: refine child layouts */
+#hud-container #hud-small-panel {
+  position: static;
+  width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: none;
+  border: none;
+}
+
+#hud-container #hud-big-panel {
+  /* Override positioning and display from base #hud-big-panel styles */
+  position: static;
+  display: block; /* Override display: none from base #hud-big-panel styles */
+  /* Сбросить координаты из базового правила #hud-big-panel */
+  top: auto;
+  right: auto;
+  left: auto;
+  /* Override max-height for container context: 200px offset (vs 250px in base rule)
+     because container has additional spacing/header that reduces available height */
+  max-height: calc(100vh - 200px);
+  /* Override font-weight for container context */
+  font-weight: var(--font-weight-light);
+  /* All other styles (width, height, overflow, background, border, padding, color, etc.)
+     are inherited from base #hud-big-panel rule */
+}
+
+#hud-container #hud-big-panel::-webkit-scrollbar {
+  display: none;
+}
+
+/* HUD spacing normalization: equal top padding in headers and big panel */
+/* PHASE 3C: Use spacing tokens */
+#hud-big-panel,
+#hud-container #hud-big-panel {
+  padding-top: var(--spacing-md);
+}
+
+/* Remove top margin from first child */
+#hud-big-panel > :first-child,
+#hud-container #hud-big-panel > :first-child {
+  margin-top: 0;
+}
+
+/* Text links inside HUD big panel - no underline */
+/* CRITICAL FIX: Added fallback values */
+#hud-big-panel a,
+#hud-container #hud-big-panel a {
+  color: var(--hud-link-base, #9CA3AF);
+  text-decoration: none;
+  transition: color 0.2s, background 0.2s;
+}
+
+#hud-big-panel a:hover,
+#hud-container #hud-big-panel a:hover {
+  color: var(--hud-link-hover-text, #58A6FF);
+  background: transparent;
+}
+
+#hud-big-panel a:visited,
+#hud-container #hud-big-panel a:visited {
+  color: var(--hud-link-base, #9CA3AF);
+}
+
+/* Links in big panel - no underline */
+#hud-container #hud-big-panel .hud-tab-link {
+  font-weight: var(--font-weight-light, 400);
+  color: var(--hud-link-base, #9CA3AF);
+  text-decoration: none;
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+#hud-container #hud-big-panel .hud-tab-link:hover {
+  color: var(--hud-link-hover-text, #58A6FF);
+}
+
+#hud-container #hud-big-panel a[target="_blank"]:not(.hud-tab-link) {
+  color: var(--hud-link-base, #9CA3AF);
+  text-decoration: none;
+  font-weight: var(--font-weight-light, 400);
+  font-size: inherit;
+  transition: color 0.2s;
+}
+
+#hud-container #hud-big-panel a[target="_blank"]:not(.hud-tab-link):hover {
+  color: var(--hud-link-hover-text, #58A6FF);
+}
+
+/* Headings in container big panel main text use tour style */
+#hud-container #hud-big-panel h1,
+#hud-container #hud-big-panel h2,
+#hud-container #hud-big-panel h3,
+#hud-container #hud-big-panel h4,
+#hud-container #hud-big-panel h5,
+#hud-container #hud-big-panel h6,
+.hud-active #hud-container #hud-big-panel h1,
+.hud-active #hud-container #hud-big-panel h2,
+.hud-active #hud-container #hud-big-panel h3,
+.hud-active #hud-container #hud-big-panel h4,
+.hud-active #hud-container #hud-big-panel h5,
+.hud-active #hud-container #hud-big-panel h6 {
+  font: 600 20px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  margin: 0;
+}
+
+/* HUD Small Panel */
+#hud-small-panel {
+  position: fixed;
+  top: 200px;
+  left: 450px;
+  right: auto;
+  width: 250px;
+  display: none;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  background: none;
+  border: none;
+  z-index: 1150; /* Above edge grid lines (1100) for readable text */
+  font-size: 16px;
+  font-weight: 400;
+}
+
+/* Mobile: HUD panels adjustments */
+@media (max-width: 767px) {
+  /* Убрать #hud-big-panel - он не используется отдельно на мобильных */
+  /* Используем максимальную специфичность для гарантии переопределения базового правила */
+  body.hud-active #hud-container #hud-big-panel,
+  html.hud-active #hud-container #hud-big-panel,
+  .hud-active #hud-container #hud-big-panel,
+  #hud-container #hud-big-panel {
+    /* Override positioning and sizing for tablet/mobile (767px breakpoint) */
+    position: relative;
+    top: auto;
+    right: auto;
+    left: auto;
+    width: 100%;
+    max-width: 100vw;
+    max-height: none;
+    overflow: visible;
+    padding: 16px;
+    /* display: block is already set in #hud-container #hud-big-panel rule */
+    /* box-sizing, overflow-wrap, word-break are inherited from base #hud-big-panel */
+  }
+
+  #hud-container #hud-big-panel::before {
+    display: none;
+  }
+
+  #hud-container #hud-big-panel > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Mobile: keep desktop glass style for header panel */
+  #hud-small-panel .hud-section-header {
+    padding: 16px;
+    position: relative;
+  }
+  
+  /* Обертка для иконки и заголовка */
+  #hud-small-panel .hud-title-wrapper {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  
+  /* Навигация внизу баннера - слева и справа */
+  #hud-small-panel .hud-section-nav {
+    margin-top: 12px;
+    justify-content: space-between;
+  }
+  
+  /* Кнопка закрытия в правом верхнем углу */
+  #hud-small-panel .hud-close-btn {
+    position: absolute;
+    top: 16px; /* Равен padding .hud-section-header */
+    right: 16px; /* Равен padding .hud-section-header */
+    background: transparent;
+    border: none;
+    color: var(--hud-link-base);
+    font-size: 20px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: var(--radius-none);
+  }
+  
+  #hud-small-panel .hud-close-btn:hover {
+    background: transparent;
+  color: var(--hud-link-hover-text);
+  opacity: 0.7;
+  }
+  
+  /* Контейнер для вкладок - горизонтальный flex */
+  #hud-small-panel {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  /* Контейнер для вкладок - горизонтальный ряд на всю ширину */
+  .hud-tabs-container {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    gap: 8px; /* Отступ между кнопками */
+    padding: 0;
+    margin: 0;
+  }
+  
+  /* HUD Tabs - Phase 2.2: hardcoded hex → tokens */
+  .hud-tabs-container button[data-index] {
+    flex: 1 1 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: var(--radius-none);
+    border: none;
+    /* FAUX GLASS - same as desktop */
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    background: 
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.02) 20%,
+        transparent 40%
+      ),
+      rgba(15, 25, 45, 0.35);
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-ml);
+    margin: 0;
+    white-space: nowrap;
+    font-size: var(--font-size-base);
+    box-sizing: border-box;
+    color: var(--hud-link-base, var(--interactive-dark-text-base));
+  }
+  
+  /* Активная вкладка */
+  .hud-tabs-container button[data-index].active-tab {
+    color: var(--hud-text-muted);
+  }
+  
+  /* Hover для вкладок */
+  .hud-tabs-container button[data-index]:hover {
+    background: var(--color-state-hover-bg);
+    color: var(--hud-link-hover-text, var(--color-accent-primary));
+  }
+  
+  /* Light theme mobile buttons - only background changes, color via tokens */
+  .theme-light .hud-tabs-container button[data-index] {
+    background: 
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.5) 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        transparent 40%
+      ),
+      rgba(240, 245, 255, 0.4);
+    box-shadow: var(--shadow-small);
+  }
+  
+  /* Light theme mobile buttons hover */
+  .theme-light .hud-tabs-container button[data-index]:hover {
+    background: var(--color-state-hover-bg);
+  }
+}
+
+/* Legacy panels removed - elements not used in HTML */
+
 /* === Header === */
-header#site-header {
+/* Header styles are identical in both themes - only colors change via CSS variables */
+/* Base styles without !important - use specific selectors for override protection */
+/* CRITICAL FIX: Ensure header is ALWAYS visible above all layers except tour/preloader */
+/* CSS ARCHITECTURE: Using specificity instead of !important (Phase 2.1 cleanup) */
+/* Dark theme header (default) */
+html body header#site-header,
+html.theme-dark body header#site-header {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: var(--ZIndex/Header);
+  z-index: 2400; /* Above HUD (1000), grid (2490 edges), BELOW tour overlay (2500) */
   display: flex;
   align-items: center;
-  gap: var(--Header/Gap);
-  padding: var(--Header/Padding/V) var(--Header/Padding/H);
-  background: var(--Color/Dark/Surface/Ghost);
-  border-bottom: 1px solid var(--Color/Dark/Border/Default);
-  backdrop-filter: var(--Backdrop/Blur/Strong);
-  font-family: var(--Font/Family/Base);
+  gap: var(--header-gap);
+  padding: var(--header-padding-v) var(--header-padding-h);
+  /* UNIFIED PANEL STYLE - dark theme */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  font-family: var(--font-family-base);
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
 }
 
+/* Light theme header - separate rule with matching specificity */
+html.theme-light body header#site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2400;
+  display: flex;
+  align-items: center;
+  gap: var(--header-gap);
+  padding: var(--header-padding-v) var(--header-padding-h);
+  /* UNIFIED PANEL STYLE - light theme, balanced */
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(252, 252, 255, 0.45);
+  border-bottom: 1px solid rgba(220, 225, 235, 0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  font-family: var(--font-family-base);
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* HUD mode: header with same style */
 .hud-active header#site-header {
-  backdrop-filter: var(--Backdrop/Blur/Strong);
-  background: var(--Color/Dark/Surface/Elevated);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+}
+
+/* Light theme header - unified style */
+.theme-light header#site-header {
+  backdrop-filter: blur(20px) saturate(140%);
+  -webkit-backdrop-filter: blur(20px) saturate(140%);
+  background: rgba(252, 252, 255, 0.45);
+  border-bottom: 1px solid rgba(220, 225, 235, 0.4);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+}
+
+.theme-light.hud-active header#site-header {
+  background: rgba(252, 252, 255, 0.45);
+}
+
+/* ===== Light Theme Panel Overrides ===== */
+.theme-light #hud-big-panel {
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%
+    ),
+    rgba(240, 245, 255, 0.4);
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  /* Base text color for light theme - gray for body content */
+  color: var(--color-light-theme-text-muted);
+}
+
+/* Light theme: base text color for all content elements in HUD */
+.theme-light #hud-big-panel li,
+.theme-light #hud-container #hud-big-panel li,
+.theme-light #hud-big-panel span:not(.icon):not(.hud-tab-link),
+.theme-light #hud-container #hud-big-panel span:not(.icon):not(.hud-tab-link) {
+  color: var(--color-light-theme-text-muted);
+}
+
+/* Light theme: links in big panel */
+.theme-light #hud-big-panel a,
+.theme-light #hud-container #hud-big-panel a,
+.theme-light #hud-big-panel a:visited,
+.theme-light #hud-container #hud-big-panel a:visited,
+.theme-light #hud-container #hud-big-panel .hud-tab-link,
+.theme-light #hud-container #hud-big-panel a[target="_blank"]:not(.hud-tab-link) {
+  color: #0B0F14;
+}
+
+.theme-light #hud-big-panel a:hover,
+.theme-light #hud-container #hud-big-panel a:hover,
+.theme-light #hud-container #hud-big-panel .hud-tab-link:hover,
+.theme-light #hud-container #hud-big-panel a[target="_blank"]:not(.hud-tab-link):hover {
+  color: #58A6FF;
+}
+
+.theme-light #hud-small-panel .hud-section-header {
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%
+    ),
+    rgba(240, 245, 255, 0.4);
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* NOTE: .theme-light button styles moved to @media (min-width: 768px) block for correct cascade */
+
+.theme-light #links-panel {
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%
+    ),
+    rgba(240, 245, 255, 0.4);
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.theme-light #tour-overlay .tour-card {
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%
+    ),
+    rgba(240, 245, 255, 0.4);
+  border: none;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+}
+
+.theme-light #hud-backdrop,
+.theme-light #tour-overlay .tour-backdrop {
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .header-logo {
   display: flex;
   align-items: center;
-  gap: var(--Spacing/ML);
+  gap: 8px; /* --spacing-sm */
+  margin-left: 12px; /* --spacing-ml */
+}
+
+.header-logo .header-icon {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  filter: invert(56%) sepia(98%) saturate(1000%) hue-rotate(195deg) brightness(100%) contrast(96%);
 }
 
 .header-logo .name {
-  font-weight: var(--Font/Weight/Semibold);
-  font-size: var(--Font/Size/M);
-  letter-spacing: var(--Font/LetterSpacing/Tight);
-  color: var(--Color/Light/Text/Secondary);
+  /* Primary color for both themes */
+  font-weight: 600;
+  font-size: 20px;
+  letter-spacing: 0.2px;
+  color: #58A6FF;
   white-space: nowrap;
 }
 
 .header-logo .tagline {
-  margin-left: var(--Spacing/ML);
-  font-size: var(--Font/Size/S);
-  color: var(--Color/Light/Text/Muted);
-  font-weight: var(--Font/Weight/Regular);
+  /* Use tokens for theme-aware colors */
+  margin-left: 16px;
+  font-size: 16px;
+  color: var(--header-logo-tagline, #9CA3AF);
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -266,35 +1032,73 @@ header#site-header {
 }
 
 /* === Buttons === */
+/* Base button styles with semantic color tokens (Phase 2.2 - hardcoded hex → tokens) */
 .header-btn {
   display: inline-flex;
   align-items: center;
-  gap: var(--Button/Gap);
-  padding: var(--Button/Padding/V) var(--Button/Padding/H) !important;
-  height: var(--Button/Height);
+  gap: var(--spacing-sm);
+  padding: var(--btn-padding-v) var(--btn-padding-h);
+  height: var(--btn-height);
   line-height: 1;
   box-sizing: border-box;
-  font-size: var(--Font/Size/S);
-  font-weight: var(--Font/Weight/Medium);
-  color: var(--Color/Light/Text/Muted);
-  background: transparent;
-  border: 1px solid transparent;
-  border-radius: var(--Button/BorderRadius);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  border-radius: var(--radius-none);
   cursor: pointer;
-  transition: var(--Transition/Background), var(--Transition/Color);
+  color: var(--header-btn-text, var(--interactive-dark-text-base));
+  background: transparent;
+  border: none;
+  transition: all var(--transition-fast) ease;
 }
 
 .header-btn:hover {
-  color: var(--Color/Accent/Primary);
-  background: var(--Color/State/Hover/Background);
+  color: var(--header-btn-hover-text, var(--color-accent-primary));
+  background: transparent;
 }
 
 .header-btn:active {
-  color: var(--Color/Accent/Hover);
-  background: var(--Color/State/Active/Background);
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* === Light Theme Button Overrides === */
+/* Using semantic tokens that switch automatically via tokens.css */
+.theme-light .header-btn,
+html.theme-light .header-btn {
+  color: var(--header-btn-text, var(--color-light-theme-text-muted));
+}
+
+.theme-light .header-btn:hover,
+html.theme-light .header-btn:hover {
+  color: var(--header-btn-hover-text, var(--color-accent-primary));
+  background: transparent;
+}
+
+.theme-light button,
+html.theme-light button {
+  color: var(--color-light-theme-text-muted, #4B5563);
+}
+
+.theme-light button:hover,
+html.theme-light button:hover {
+  color: var(--color-accent-primary);
+  background: var(--color-state-hover-bg);
+}
+
+/* === Theme Toggle Button - Explicit Styles === */
+/* Ensures button is always visible regardless of CSS variable cascade */
+#theme-toggle-btn {
+  display: inline-flex;
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+  cursor: pointer;
+  position: relative;
+  z-index: 2001;
 }
 
 /* === Square Corners Globally === */
+/* Use specificity instead of !important */
 button,
 button:hover,
 button:active,
@@ -340,10 +1144,11 @@ textarea:focus,
 #links-panel .close-btn:hover,
 #links-panel .close-btn:active,
 #links-panel .close-btn:focus {
-  border-radius: var(--Radius/None) !important;
+  border-radius: var(--radius-none);
 }
 
 /* HUD mode: enforce square corners */
+/* Use specificity .hud-active instead of !important */
 .hud-active button,
 .hud-active a,
 .hud-active input,
@@ -360,26 +1165,39 @@ textarea:focus,
 .hud-active #hud-small-panel,
 .hud-active #hud-small-panel *,
 .hud-active #hud-big-panel,
-.hud-active #hud-big-panel * {
-  border-radius: var(--Radius/None) !important;
+.hud-active #hud-big-panel *,
+.hud-active .hud,
+.hud-active .hud * {
+  border-radius: var(--radius-none);
 }
 
 /* === Links Panel === */
 #links-panel {
   position: fixed;
-  top: 56px;
-  right: 14px;
-  width: 280px;
-  background: var(--Color/Dark/Surface/Elevated);
-  backdrop-filter: var(--Backdrop/Blur/Soft);
-  border: 1px solid var(--Color/Dark/Border/Default);
-  border-radius: var(--Radius/None);
-  padding: var(--Spacing/XXL);
-  box-shadow: var(--Shadow/Large);
-  z-index: var(--ZIndex/Links);
+  top: 90px;
+  right: 20px;
+  width: 320px;
+  font-size: 16px;
+  font-weight: 400;
+  /* UNIFIED PANEL STYLE - same as main panels */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  z-index: 1850;
   display: none;
   flex-direction: column;
-  gap: var(--Spacing/SM);
+  gap: 12px;
 }
 
 #links-panel.visible {
@@ -388,8 +1206,8 @@ textarea:focus,
 
 #links-panel .close-btn {
   position: absolute;
-  top: var(--Spacing/SM);
-  right: var(--Spacing/SM);
+  top: 12px;
+  right: 12px;
   width: 32px;
   height: 32px;
   display: flex;
@@ -397,50 +1215,456 @@ textarea:focus,
   justify-content: center;
   background: transparent;
   border: none;
-  color: var(--Color/Light/Text/Muted);
-  font-size: var(--Font/Size/M);
+  color: var(--link-base);
+  font-size: 20px;
   cursor: pointer;
-  transition: var(--Transition/Color);
+  transition: color 0.2s;
 }
 
 #links-panel .close-btn:hover {
-  color: var(--Color/Accent/Primary);
+  color: var(--link-hover-text);
+}
+
+#links-panel .link-row {
+  margin-bottom: 12px;
+}
+
+#links-panel .link-row:last-of-type {
+  margin-bottom: 0;
 }
 
 #links-panel .link-row a {
-  display: block;
-  padding: var(--Spacing/M);
-  color: var(--Color/Light/Text/Muted);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  font-size: 16px;
+  font-weight: 400;
+  color: var(--link-base);
   text-decoration: none;
-  border: 1px solid var(--Color/Dark/Border/Default);
-  transition: var(--Transition/Background), var(--Transition/Color);
+  border: none;
+  background: transparent;
+  transition: color 0.2s;
+}
+
+#links-panel .link-row a:visited {
+  color: var(--link-base);
 }
 
 #links-panel .link-row a:hover {
-  color: var(--Color/Accent/Primary);
-  background: var(--Color/State/Hover/Background);
-  border-color: var(--Color/Accent/Primary);
+  color: var(--link-hover-text);
+  background: transparent;
 }
 
+/* Light theme: links panel - using semantic tokens */
+.theme-light #links-panel .link-row a,
+.theme-light #links-panel .link-row a:visited {
+  color: var(--link-base, var(--color-light-theme-text-muted));
+}
+
+.theme-light #links-panel .link-row a:hover {
+  color: var(--link-hover-text, var(--color-accent-primary));
+}
+
+.theme-light #links-panel .close-btn {
+  color: var(--link-base, var(--color-light-theme-text-muted));
+}
+
+.theme-light #links-panel .close-btn:hover {
+  color: var(--link-hover-text, var(--color-accent-primary));
+}
+
+/* HUD Prev/Next Navigation Links - Phase 2.2: hardcoded hex → tokens */
+.hud-nav-link {
+  text-decoration: none;
+  font-weight: var(--font-weight-regular);
+  cursor: pointer;
+  color: var(--hud-link-base, var(--color-light-text-muted));
+  transition: color var(--transition-base), background var(--transition-base);
+  padding: 6px 10px;
+  margin: -6px -10px;
+}
+
+.hud-nav-link:hover {
+  color: var(--hud-link-hover-text, var(--color-accent-primary));
+  background: var(--hud-link-hover-bg);
+}
+
+/* Light theme overrides - using semantic tokens */
+.theme-light .hud-nav-link,
+html.theme-light .hud-nav-link {
+  color: var(--hud-link-base, var(--color-light-theme-text-muted));
+}
+
+.theme-light .hud-nav-link:hover,
+html.theme-light .hud-nav-link:hover {
+  color: var(--hud-link-hover-text, var(--color-accent-primary));
+  background: var(--hud-link-hover-bg);
+}
+
+/* HUD Navigation Links - PHASE C3.4: Unified styles from index.html and main.css */
+/* CRITICAL FIX: Hardcoded fallback for browsers that don't support slash-named CSS vars */
+/* HUD Navigation Links - Phase 2.2: hardcoded hex → tokens */
+.hud-active .hud-section-nav a,
+#hud-small-panel .hud-section-nav a {
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-regular);
+  color: var(--hud-link-base, var(--interactive-dark-text-base));
+  border-radius: 0;
+  text-decoration: none;
+  transition: color var(--transition-base), background var(--transition-base);
+  padding: 6px 10px;
+  margin: -6px -10px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  white-space: nowrap;
+  background: transparent;
+}
+
+.hud-active .hud-section-nav a:hover,
+#hud-small-panel .hud-section-nav a:hover {
+  background: var(--hud-link-hover-bg);
+  color: var(--hud-link-hover-text, var(--color-accent-primary));
+}
+
+.hud-active .hud-section-nav a.active,
+#hud-small-panel .hud-section-nav a.active {
+  background: var(--color-state-selected-bg);
+  color: var(--hud-text-muted); /* Активный = серый (выбран, не кликабелен) */
+}
+
+/* Light theme: colors handled by tokens, no overrides needed */
+
+/* HUD Small Panel Buttons */
+/* HUD Small Panel Buttons - exclude tab buttons and close button which have their own styles */
+#hud-small-panel button:not([data-index]):not(.hud-close-btn) {
+  padding: 8px 12px;
+  font-size: 16px;
+  font-weight: 400;
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  width: 100%;
+  color: var(--hud-link-base);
+  background: transparent;
+  border: none;
+  transition: all 0.15s ease;
+}
+
+#hud-small-panel button:not([data-index]):not(.hud-close-btn):hover {
+  color: var(--hud-link-hover-text);
+  background: var(--hud-link-hover-bg);
+}
+
+#hud-small-panel button:not([data-index]):not(.hud-close-btn):active {
+  transform: scale(0.96);
+  opacity: 0.9;
+}
+
+/* Desktop only - вкладки вертикальные */
+@media (min-width: 768px) {
+  /* Контейнер на desktop - вертикальный */
+  .hud-tabs-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    gap: 12px;
+  }
+  
+  /* HUD Tabs Desktop - Phase 2.2: hardcoded hex → tokens */
+  .hud-tabs-container button[data-index] {
+    width: 100%;
+    /* FAUX GLASS - same as #hud-big-panel */
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    background: 
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.08) 0%,
+        rgba(255, 255, 255, 0.02) 20%,
+        transparent 40%
+      ),
+      rgba(15, 25, 45, 0.35);
+    border: none;
+    box-shadow: var(--shadow-medium);
+    padding: var(--spacing-ml) var(--spacing-md);
+    text-align: center;
+    justify-content: center;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-regular);
+    color: var(--hud-link-base, var(--interactive-dark-text-base));
+  }
+  
+  .hud-tabs-container button[data-index]:hover {
+    color: var(--hud-link-hover-text, var(--color-accent-primary));
+    background: var(--color-state-hover-bg);
+  }
+  
+  .hud-tabs-container button[data-index].active-tab {
+    color: var(--hud-text-muted);
+  }
+  
+  /* Light theme: buttons - only background changes, colors via tokens */
+  .theme-light .hud-tabs-container button[data-index] {
+    background: 
+      linear-gradient(
+        180deg,
+        rgba(255, 255, 255, 0.5) 0%,
+        rgba(255, 255, 255, 0.2) 20%,
+        transparent 40%
+      ),
+      rgba(240, 245, 255, 0.4);
+    box-shadow: var(--shadow-small);
+  }
+  
+  /* Light theme: buttons hover */
+  .theme-light .hud-tabs-container button[data-index]:hover {
+    background: var(--color-state-hover-bg);
+  }
+  
+  /* Fallback для кнопок без контейнера (старая структура) */
+  #hud-small-panel button[data-index] {
+    width: 100%;
+  }
+}
+
+/* HUD Close Button */
+#hud-small-panel .hud-close-btn {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 6px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hud-link-base);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-none);
+  cursor: pointer;
+  transition: color 0.2s;
+  width: auto;
+  height: auto;
+  flex: 0 0 auto;
+}
+
+#hud-small-panel .hud-close-btn:hover {
+  background: var(--hud-link-hover-bg);
+  color: var(--hud-link-hover-text);
+}
+
+/* Links Panel additional styles - base definition at line ~1037 */
+
 #links-panel .link-kicker {
-  margin-top: var(--Spacing/SM);
-  font-size: var(--Font/Size/XS);
-  color: var(--Color/Light/Text/Tertiary);
-  opacity: 0.7;
+  font-size: 16px;
+  color: var(--hud-text-muted);
+  opacity: 0.75;
+  padding: 0 12px;
+  margin-top: 10px;
+}
+
+/* === Mode Banner === */
+/* PHASE C3.4: Unified styles from index.html */
+#mode-banner {
+  position: fixed;
+  top: 75px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2100;
+  padding: 6px 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--hud-text-base);
+  /* Transparent glass effect */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(15, 25, 45, 0.15);
+  border: none;
+  border-radius: var(--radius-none);
+  display: none;
+  pointer-events: none;
+}
+
+.hud-active #mode-banner {
+  z-index: 800;
+}
+
+/* === Grid Canvas === */
+/* PHASE C3.4: Unified styles from index.html */
+.hud-active #grid-canvas {
+  z-index: 1100 !important; /* Edge lines ABOVE panels (1000) and overlay */
+  pointer-events: none;
+}
+
+.links-active #grid-canvas {
+  z-index: 1845;
+  pointer-events: none;
+}
+
+#grid-canvas-bg {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 930 !important; /* Full grid BELOW backdrop (940) */
+}
+
+/* Duplicate removed - using unified definition above */
+
+/* Remove blur on big panel during HUD activity */
+.hud-active #hud-big-panel,
+.hud-active #hud-container #hud-big-panel,
+.hud-active #hud-small-panel .hud-section-header {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 /* === Responsive Adjustments === */
+/* PHASE 5: Consolidated media queries from index.html */
 @media (max-width: 767px) {
-  /* Prevent horizontal scroll */
-  html,
+  /* Mobile performance optimizations */
+  /* Prevent text size adjustment issues on reload */
+  html {
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Use specificity @media (max-width: 767px) body instead of !important */
   body {
-    overflow-x: hidden !important;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+    width: 100%;
     max-width: 100vw;
+    overflow-x: hidden;
+    overflow-y: auto;
+    position: relative;
+  }
+  
+  /* Disable tap highlight for better performance */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Optimize touch interactions for buttons and interactive elements */
+  /* Note: transition: none and other mobile optimizations are defined in the first @media (max-width: 767px) block above */
+  
+  /* Disable hover effects on mobile - they can interfere with touch */
+  /* Use high specificity selector instead of !important - duplicate removed, using styles from first @media block */
+  
+  /* Prevent text selection - rule already defined above (line 80) */
+  
+  /* Optimize will-change usage - only for elements that actually animate */
+  .grid-line {
+    will-change: auto; /* Remove will-change on mobile for better performance */
+  }
+  
+  /* HUD scroll lock - base rule defined below (line 1309), applies to all screen sizes */
+  
+  /* Header: mobile/tablet adjustments - only override what's needed */
+  /* Mobile header: base styles already defined above (line 542), only add mobile-specific overrides */
+  header#site-header {
+    justify-content: flex-start;
   }
 
+  /* HUD container mobile adjustments - positioned below header */
+  /* Header height: ~56px (padding 6px*2 + button 36px + gap) */
+  /* For tablets (480px-767px): top: 72px */
+  /* Use specificity .hud-active #hud-container instead of !important */
+  .hud-active #hud-container {
+    top: 72px;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 94%;
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    scrollbar-gutter: auto;
+    flex-direction: column;
+    gap: 12px; /* Равный gap между small-panel и big-panel */
+  }
+  
+  .hud-active #hud-container::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+  
+  .hud-active #hud-container::-webkit-scrollbar-thumb {
+    background: transparent;
+  }
+  
+  /* NOTE: #hud-container #hud-big-panel styles are defined above in the same @media (max-width: 767px) block
+     (lines 518-539). This duplicate rule has been removed to avoid conflicts. */
+  
+  /* Use specificity #hud-container #hud-small-panel instead of !important */
+  #hud-container #hud-small-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Keep Prev/Next in one row on tablet */
+  /* Use specificity #hud-small-panel .hud-section-nav instead of !important */
+  #hud-small-panel .hud-section-nav {
+    flex-wrap: nowrap;
+  }
+  
+  #hud-small-panel .hud-section-nav a {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    line-height: 1.4;
+    font-size: 16px;
+    font-weight: var(--font-weight-light);
+  }
+  
   /* Hide tagline on mobile */
   .header-logo .tagline {
     display: none;
+  }
+
+  /* Hide mode banner on mobile */
+  #mode-banner {
+    display: none !important;
+  }
+
+  /* Grid canvas mobile adjustments */
+  .hud-active #grid-canvas {
+    z-index: 1100 !important; /* Edge lines ABOVE panels (1000) and overlay */
+  }
+
+  .links-active #grid-canvas {
+    z-index: 1845;
+  }
+
+  /* Tour grid visibility - base rule defined below (line 1319), applies to all screen sizes */
+
+  #grid-canvas-bg {
+    z-index: 930 !important; /* Full grid BELOW backdrop (940) */
+  }
+
+  /* Ensure panels remain above base lines, but below header */
+  .hud-active #hud-container,
+  .hud-active #hud-big-panel,
+  .hud-active #hud-small-panel {
+    z-index: 1150; /* Above edge grid lines (1100) for readable text */
+  }
+  
+  /* HUD mode: header adjustments for mobile/tablet */
+  /* Base styles already ensure visibility - no overrides needed */
+
+  .links-active #links-panel {
+    z-index: 1850;
   }
 
   /* Links panel mobile adjustments */
@@ -449,73 +1673,340 @@ textarea:focus,
     width: calc(100% - 16px);
     max-width: 320px;
   }
+}
 
-  /* Tour cards: single column on mobile */
-  .tour-card {
-    width: calc(100vw - 40px) !important;
+/* === Mobile-specific adjustments (max-width: 479px) === */
+/* Orbit mode toggle */
+/* PHASE 3E: Moved from index.html to main.css to eliminate duplication */
+#mobile-orbit-toggle {
+  position: fixed;
+  bottom: 20px; /* Фиксированный отступ снизу */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2400; /* Выше HUD (1150), на уровне header (2400), но ниже tour (2500) */
+  display: flex; /* Показываем на десктопе */
+}
+
+#toggle-orbit-btn {
+  /* Transparent glass effect */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  background: rgba(15, 25, 45, 0.15);
+  border: none;
+  border-radius: var(--radius-none);
+  padding: 8px 14px;
+  color: var(--text);
+  font-size: 16px;
+  font-weight: 400;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  box-shadow: none;
+  white-space: nowrap;
+}
+
+#toggle-orbit-btn.active {
+  color: var(--color-accent-primary);
+}
+
+/* Hide orbit toggle when tour or HUD is active */
+html.tour-active #mobile-orbit-toggle,
+html.hud-active #mobile-orbit-toggle {
+  display: none !important;
+}
+
+#toggle-orbit-icon {
+  width: 24px;
+  height: 24px;
+  display: block;
+  filter: brightness(0) saturate(100%) invert(65%) sepia(8%) saturate(443%) hue-rotate(177deg) brightness(94%) contrast(92%);
+  transition: filter 200ms ease;
+}
+
+/* Active orbit mode: tint icon to accent blue */
+#toggle-orbit-btn.active #toggle-orbit-icon {
+  filter: brightness(0) saturate(100%) invert(42%) sepia(66%) saturate(1675%) hue-rotate(189deg) brightness(101%) contrast(98%);
+}
+
+@media (max-width: 767px) {
+  /* Show orbit toggle on mobile and tablet */
+  #mobile-orbit-toggle {
+    display: flex;
+  }
+  
+  /* Hide when tour or HUD is active */
+  html.tour-active #mobile-orbit-toggle,
+  html.hud-active #mobile-orbit-toggle {
+    display: none !important;
+  }
+}
+
+@media (max-width: 479px) {
+  /* Show orbit toggle on mobile */
+  #mobile-orbit-toggle {
+    display: flex;
+    bottom: 16px;
+  }
+  
+  /* Hide when tour or HUD is active */
+  html.tour-active #mobile-orbit-toggle,
+  html.hud-active #mobile-orbit-toggle {
+    display: none !important;
+  }
+  
+  /* HUD container mobile adjustments - override tablet styles */
+  /* Header height on mobile: ~56px, so HUD starts at 64px */
+  /* Use specificity .hud-active #hud-container instead of !important */
+  .hud-active #hud-container {
+    top: 64px;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(100% - 24px);
+    max-width: calc(100vw - 24px);
+    height: auto;
+    max-height: none;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-bottom: 24px;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    scrollbar-width: none;
+    flex-direction: column;
+    gap: 12px; /* Равный gap между small-panel и big-panel */
+  }
+  
+  /* Scrollbar styles already defined above in @media (max-width: 767px) block */
+  
+  /* Use specificity #hud-container #hud-big-panel instead of !important */
+  /* Mobile-specific overrides for #hud-big-panel (479px breakpoint) */
+  /* Most styles are inherited from @media (max-width: 767px) rule above */
+  body.hud-active #hud-container #hud-big-panel,
+  html.hud-active #hud-container #hud-big-panel,
+  .hud-active #hud-container #hud-big-panel,
+  #hud-container #hud-big-panel {
+    /* Override padding-bottom for mobile (40px vs 16px on tablet) */
+    padding-bottom: 40px;
+    /* All other styles (display, position, top, right, left, height, max-height, overflow, etc.)
+       are inherited from @media (max-width: 767px) rule above */
+  }
+  
+  /* Use specificity #hud-container #hud-small-panel instead of !important */
+  #hud-container #hud-small-panel {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  /* Крестик закрытия на мобильных - фиксированный размер 24x24 */
+  /* Use specificity #hud-small-panel .hud-close-btn instead of !important */
+  #hud-small-panel .hud-close-btn {
+    font-size: 20px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    line-height: 24px;
+    text-align: center;
+    /* Позиция согласована с padding .hud-section-header */
+    position: absolute;
+    top: 16px;
+    right: 16px;
+  }
+  
+  /* Mobile header: hide logo, center buttons evenly */
+  /* Header height on mobile: ~52px (padding 4px*2 + button 36px + gap 6px) */
+  header#site-header {
+    justify-content: space-evenly; /* Равномерное распределение */
+    align-items: center;
+    gap: 0; /* gap не нужен при space-evenly */
+    padding: 4px 8px;
+  }
+  
+  header#site-header .header-logo {
+    display: none;
+  }
+  
+  header#site-header .header-spacer {
+    display: none;
+  }
+  
+  /* Use specificity @media (max-width: 479px) .header-btn instead of !important */
+  .header-btn {
+    padding: 8px 12px;
+    height: 36px;
+    flex: 0 1 auto; /* Не растягивать кнопки */
+  }
+  
+  /* Keep btn-demo visible - это кнопка "Демо" для быстрого доступа к контенту */
+  /* Use specificity @media (max-width: 479px) #btn-demo instead of !important */
+  #btn-demo {
+    display: inline-flex;
+  }
+  
+  /* HUD mode: header adjustments for mobile */
+  /* Base styles already ensure visibility - no overrides needed */
+  
+  /* Размер шрифта кнопок навигации для мобильных (переопределяет планшетный стиль) */
+  /* Use specificity @media (max-width: 479px) #hud-small-panel .hud-section-nav a instead of !important */
+  #hud-small-panel .hud-section-nav a {
+    font-size: 16px;
+    font-weight: var(--font-weight-light);
+    white-space: nowrap;
+    flex: 0 0 auto;
+    line-height: 1.4;
+  }
+}
+
+/* === Ultra-narrow safeguard (max-width: 360px) === */
+@media (max-width: 360px) {
+  /* Use specificity @media (max-width: 360px) #hud-small-panel .hud-section-nav a instead of !important */
+  #hud-small-panel .hud-section-nav a {
+    font-size: 16px;
+    font-weight: var(--font-weight-light);
+  }
+}
+
+/* === Tablet header adjustments (min-width: 480px and max-width: 767px) === */
+@media (min-width: 480px) and (max-width: 767px) {
+  header#site-header {
+    justify-content: space-between;
+    gap: 12px;
+  }
+  
+  header#site-header .header-logo {
+    display: flex;
+    align-items: center;
+  }
+  
+  header#site-header .header-logo .tagline {
+    display: none; /* убрать подзаголовок */
+  }
+  
+  /* Кнопки в одну строку, компактные отступы */
+  /* Use specificity @media (min-width: 480px) and (max-width: 767px) .header-btn instead of !important */
+  .header-btn {
+    padding: 8px 12px;
+    height: 36px;
+  }
+  
+  /* #btn-demo — кнопка "Демо" для быстрого доступа к контенту, всегда видна */
+  /* Use specificity @media (min-width: 480px) and (max-width: 767px) #btn-demo instead of !important */
+  #btn-demo {
+    display: inline-flex;
+  }
+  
+  /* Tablet: keep desktop glass style for header panel */
+  #hud-small-panel .hud-section-header {
+    padding: 16px;
+    position: relative;
+  }
+  
+  /* Вкладки на планшетах тоже горизонтально */
+  .hud-tabs-container button[data-index] {
+    flex: 1;
+    width: auto;
+  }
+}
+
+/* === HUD Scroll Lock === */
+/* PHASE C3.5: Moved from index.html - Disable page scroll when HUD is active */
+/* Use specificity body.hud-active and html.hud-active instead of !important */
+body.hud-active,
+html.hud-active {
+  overflow: hidden;
+  height: 100%;
+  position: fixed;
+  width: 100%;
+}
+
+/* HUD container scroll properties already defined in main @media (max-width: 767px) block above (line 1027) */
+
+/* === Strict HUD Overrides === */
+/* PHASE C3.5: Moved from index.html - No borders on HUD controls */
+/* Use specificity #hud-small-panel .hud-section-nav a instead of !important */
+#hud-small-panel .hud-section-nav a,
+#hud-small-panel .hud-close-btn {
+  border: none;
+  box-shadow: none;
+}
+
+/* HUD navigation links - hover background */
+#hud-small-panel .hud-section-nav a:hover {
+  background: var(--hud-link-hover-bg);
+}
+
+/* === Tour Grid Visibility === */
+/* PHASE C3.5: Moved from index.html - During tour, grid should be visible through the card */
+/* Grid canvas visibility when tour overlay is visible */
+/* CRITICAL: Tour effects limited to #tour-overlay, no global classes */
+#tour-overlay:not(.hidden) ~ #grid-canvas,
+html:has(#tour-overlay:not(.hidden)) #grid-canvas {
+  z-index: 2490;
+  pointer-events: none;
+}
+
+/* === Mobile-specific tour and HUD adjustments (max-width: 479px) === */
+@media (max-width: 479px) {
+  /* Tour buttons: full width on small mobile */
+  #tour-overlay .tour-actions .btn,
+  #tour-overlay .tour-cta-btn {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+  
+  /* Links also full width on mobile */
+  #tour-overlay .tour-actions .tour-action-link {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+
+  /* Tour actions: stack buttons vertically on mobile only - rules merged with expanded version below */
+
+  /* Interactive widgets: full width */
+  #tour-overlay .tour-interactives,
+  #tour-overlay .tour-interactive,
+  /* Use specificity @media (max-width: 479px) #tour-overlay .thermometer-container instead of !important */
+  #tour-overlay .thermometer-container,
+  #tour-overlay .ttft-widget {
+    width: 100%;
     max-width: 100%;
   }
 
-  /* Ensure all CTA buttons are full width with proper touch target */
-  .tour-actions .btn,
-  .tour-cta-btn,
-  button.header-btn {
-    width: 100% !important;
-    min-height: 44px !important;
-    box-sizing: border-box;
-  }
-
-  /* Tour actions: stack buttons vertically */
-  .tour-actions {
-    flex-direction: column;
-    gap: var(--Spacing/SM);
-  }
-
-  .tour-actions .btn {
+  /* HUD panels: adapt for mobile - styles already defined above in @media (max-width: 479px) */
+  /* Removed duplicate #hud-container styles - they are now unified in the block above */
+  /* Use specificity @media (max-width: 479px) #hud-small-panel instead of !important */
+  /* NOTE: #hud-big-panel width is already overridden in #hud-container #hud-big-panel rule above (line 527) */
+  #hud-small-panel {
     width: 100%;
-  }
-
-  /* Interactive widgets: full width */
-  .tour-interactives,
-  .tour-interactive,
-  .thermometer-container,
-  .ttft-widget {
-    width: 100% !important;
-    max-width: 100% !important;
-  }
-
-  /* HUD panels: adapt for mobile */
-  #hud-container {
-    flex-direction: column;
-    width: calc(100% - 24px);
-    padding: 12px;
-  }
-
-  #hud-small-panel,
-  #hud-big-panel {
-    width: 100% !important;
+    max-width: 100%;
   }
 
   /* Prevent text from being cut off */
-  .tour-header h2,
-  .tour-body p,
+  #tour-overlay .tour-header h2,
+  #tour-overlay .tour-body p,
   .hud-big-panel * {
     word-wrap: break-word;
     overflow-wrap: anywhere;
   }
 }
 
-/* Small mobile devices */
+/* === Additional mobile adjustments (max-width: 479px) === */
+/* NOTE: Main mobile styles are in the block above. This block contains only additional overrides. */
 @media (max-width: 479px) {
-  /* Even more compact spacing */
+  /* Even more compact spacing for very small screens */
   header#site-header {
     padding: 4px 8px;
     gap: 6px;
   }
 
+  /* Use specificity @media (max-width: 360px) .header-btn instead of !important */
   .header-btn {
-    padding: 6px 8px !important;
-    font-size: 13px;
+    padding: 6px 8px;
+    font-size: 16px;
   }
 
   /* Tour overlay: full viewport */
@@ -524,8 +2015,1306 @@ textarea:focus,
     padding: 12px;
   }
 
-  #tour-overlay .tour-card {
-    width: calc(100vw - 24px) !important;
-    min-height: calc(100dvh - 80px);
+  /* Tour card width already defined in main @media (max-width: 479px) block above */
+}
+
+/* PHASE 3: Removed duplicate styles - base .header-btn styles already use tokens that switch automatically */
+
+/* === Tour Overlay Styles === */
+/* PHASE C4: Moved from index.html inline styles */
+#tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
+/* Use specificity .hidden class instead of !important */
+#tour-overlay.hidden { display: none; }
+#tour-overlay .tour-backdrop { position:absolute; inset:0; background: var(--panel-overlay-bg, rgba(7, 10, 15, 0.25)); backdrop-filter: blur(4px); z-index: 1; }
+@media (max-width: 767px) {
+  /* Mobile: keep desktop glass style, only adjust size */
+  #tour-overlay .tour-card { 
+    /* Mobile: full width with margins */
+    width: calc(100vw - 40px);
+    max-width: calc(100vw - 40px);
+    position: relative;
   }
+}
+/* HUD-like styling: straight corners; no inner grid - grid visible through card */
+/* Desktop: fixed max width, mobile: full width via media queries */
+#tour-overlay .tour-card { 
+  position: relative; 
+  width: min(720px, 92vw);
+  max-width: 720px;
+  /* FAUX GLASS - same as #hud-big-panel */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  border: none;
+  border-radius: 0;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  padding: 20px; 
+  color: var(--tour-text); 
+  z-index: 2; 
+}
+/* Disable per-card grid to keep through-grid effect like HUD */
+#tour-overlay .tour-frame-lines { display:none; }
+/* Close link inside actions */
+#tour-overlay .tour-actions .close-link { 
+  background: transparent; border: none; color: #9CA3AF; text-decoration: none; 
+  padding: 10px 14px; height: 44px; display:inline-flex; align-items:center; justify-content:center;
+  font: 400 18px/1 ui-sans-serif, system-ui; box-sizing: border-box;
+  opacity: 0.5;
+}
+#tour-overlay .tour-actions .close-link:hover { color: #58A6FF; opacity: 1; }
+
+/* Light theme overrides for close link */
+.theme-light #tour-overlay .tour-actions .close-link,
+html.theme-light #tour-overlay .tour-actions .close-link { color: #0B0F14; }
+.theme-light #tour-overlay .tour-actions .close-link:hover,
+html.theme-light #tour-overlay .tour-actions .close-link:hover { color: #58A6FF; }
+/* Desktop: ensure horizontal button layout (base rule applies, this ensures it for all desktop sizes) */
+@media (min-width: 480px) {
+  #tour-overlay .tour-actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+  
+  #tour-overlay .tour-actions .close-link { 
+    margin-left: auto; 
+  }
+}
+#tour-overlay .tour-header h2 { margin: 0 0 32px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color: var(--hud-text-base); white-space: pre-line; }
+#tour-overlay .tour-header .tour-sub { margin: 0 0 32px 0; color: var(--hud-text-muted); font: 400 18px/1.3 ui-sans-serif, system-ui; }
+/* Reduce sub margin when followed by links list (step 2) */
+/* Use specificity #tour-overlay .tour-card.tour-step-2 .tour-header .tour-sub instead of !important */
+#tour-overlay .tour-card.tour-step-2 .tour-header .tour-sub { margin-bottom: 8px; }
+/* Ensure consistent spacing: sub → content (16px), content → buttons (32px) */
+#tour-overlay .tour-body { margin-top: 0; }
+#tour-overlay .tour-body p { margin: 0 0 32px 0; color: var(--hud-text-muted); font: 400 18px/1.3 ui-sans-serif, system-ui; }
+/* Icon color - primary blue */
+#tour-overlay .tour-body p img { 
+  filter: invert(56%) sepia(98%) saturate(1000%) hue-rotate(195deg) brightness(100%) contrast(96%);
+}
+
+/* Generic text links inside tour body */
+/* CRITICAL FIX: Hardcoded fallback for browsers that don't support slash-named CSS vars */
+#tour-overlay .tour-body a {
+  color: #9CA3AF; /* Fallback - gray interactive */
+  text-decoration: none;
+  border-bottom: 1px solid rgba(154, 166, 178, 0.3);
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+
+#tour-overlay .tour-body a:hover {
+  color: #58A6FF; /* Fallback - blue interactive */
+  border-bottom-color: #58A6FF;
+  background: transparent;
+}
+
+#tour-overlay .tour-body a:visited {
+  color: #9CA3AF; /* Fallback */
+}
+
+/* Light theme overrides for tour links */
+.theme-light #tour-overlay .tour-body a,
+html.theme-light #tour-overlay .tour-body a {
+  color: #0B0F14;
+  border-bottom-color: rgba(107, 114, 128, 0.3);
+}
+
+.theme-light #tour-overlay .tour-body a:hover,
+html.theme-light #tour-overlay .tour-body a:hover {
+  color: #58A6FF;
+  border-bottom-color: #58A6FF;
+  background: transparent;
+}
+
+.theme-light #tour-overlay .tour-body a:visited,
+html.theme-light #tour-overlay .tour-body a:visited {
+  color: #0B0F14;
+}
+
+/* Tour case links styled like HUD "contacts" links */
+#tour-overlay .tour-body .tour-list { 
+  margin: 0 0 px 0; 
+  padding: 0; 
+  list-style: none; 
+  display: flex; 
+  flex-direction: column; 
+  gap: 0; 
+  align-items: flex-start; 
+}
+/* When list is inside p, remove p's margin and let list handle spacing */
+#tour-overlay .tour-body p:has(.tour-list) { margin: 0; }
+#tour-overlay .tour-body .tour-list li { margin: 0; line-height: 1; }
+#tour-overlay .tour-body .tour-list a {
+  display: flex; 
+  align-items: center;
+  gap: 8px;
+  text-decoration: none; 
+  font: 400 18px/1 ui-sans-serif, system-ui;
+  color: #CFE8FF; /* Светлый - кликабельный */
+  background: transparent; 
+  border: none; 
+  border-radius: 0;
+  transition: color 0.2s, background 0.2s;
+}
+/* Icon color - primary blue */
+#tour-overlay .tour-body .tour-list a img {
+  filter: invert(56%) sepia(98%) saturate(1000%) hue-rotate(195deg) brightness(100%) contrast(96%);
+  transition: filter 0.2s;
+}
+/* Use specificity #tour-overlay .tour-body .tour-list a:hover instead of !important */
+#tour-overlay .tour-body .tour-list a:hover { 
+  color: #58A6FF; /* Fallback - blue interactive */
+  background: transparent; 
+}
+/* Icon color on hover - match accent color */
+#tour-overlay .tour-body .tour-list a:hover img {
+  filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(2000%) hue-rotate(200deg);
+}
+/* Use specificity #tour-overlay .tour-body .tour-list a:visited instead of !important */
+#tour-overlay .tour-body .tour-list a:visited { color: #CFE8FF; }
+#tour-overlay .tour-body .tour-list a:visited:hover { color: #58A6FF; }
+
+/* Light theme overrides for tour list links */
+.theme-light #tour-overlay .tour-body .tour-list a,
+html.theme-light #tour-overlay .tour-body .tour-list a {
+  color: #0B0F14;
+}
+
+.theme-light #tour-overlay .tour-body .tour-list a:hover,
+html.theme-light #tour-overlay .tour-body .tour-list a:hover {
+  color: #58A6FF;
+  background: transparent;
+}
+/* Links container in tour-body for step 2 */
+#tour-overlay .tour-body .tour-body-links {
+  margin: 0 0 32px 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+#tour-overlay .tour-body .tour-body-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  font: 400 18px/1 ui-sans-serif, system-ui;
+  color: var(--link-base);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-none);
+  transition: color 0.2s, background 0.2s;
+  padding: 0;
+}
+#tour-overlay .tour-body .tour-body-link:hover {
+  color: var(--link-hover-text);
+  background: transparent;
+}
+
+/* Links in tour-actions (styled as links, not buttons) */
+#tour-overlay .tour-actions .tour-action-link {
+  display: inline-flex;
+  align-items: center;
+  padding: 12px 0;
+  text-decoration: none;
+  font: 400 18px/1 ui-sans-serif, system-ui;
+  color: var(--link-base);
+  background: transparent;
+  border: none;
+  transition: color 0.2s;
+}
+
+#tour-overlay .tour-actions .tour-action-link:hover {
+  color: var(--link-hover-text);
+}
+
+.theme-light #tour-overlay .tour-actions .tour-action-link {
+  color: var(--link-base);
+}
+
+.theme-light #tour-overlay .tour-actions .tour-action-link:hover {
+  color: var(--color-light-brand-primary, #58A6FF);
+}
+
+#tour-overlay .tour-actions { 
+  display: flex; 
+  flex-direction: row; /* Явно указать row для десктопа */
+  flex-wrap: wrap; 
+  gap: 10px; 
+  margin-top: 0;
+  align-items: center;
+}
+
+/* Links have larger gap */
+#tour-overlay .tour-actions .tour-action-link {
+  margin-left: 14px;
+}
+
+/* Close button aligned to right on desktop */
+@media (min-width: 768px) {
+  #tour-overlay .tour-actions .btn:last-child {
+    margin-left: auto;
+  }
+}
+
+#tour-overlay .tour-actions .btn { 
+  padding: 12px 16px; 
+  border-radius: var(--radius-none); 
+  border: none; 
+  /* FAUX GLASS - same as HUD buttons */
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 20%,
+      transparent 40%
+    ),
+    rgba(15, 25, 45, 0.35);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+  color: #CFE8FF; /* Светлый текст */
+  font: 400 18px/1 ui-sans-serif, system-ui; 
+  text-decoration: none; 
+  cursor: pointer; 
+  transition: background .2s, color .2s; 
+  display: inline-flex; 
+  align-items: center; 
+  justify-content: center; 
+  height: 44px; 
+  box-sizing: border-box;
+  /* Критично для мобильных - улучшение отклика */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
+  /* Use specificity #tour-overlay .tour-actions .btn instead of !important */
+  pointer-events: auto;
+  position: relative;
+  z-index: 2503;
+}
+
+/* Tour button hover styles */
+#tour-overlay .tour-actions .btn:hover {
+  color: var(--link-hover-text, #58A6FF);
+  background: var(--color-state-hover-bg, rgba(88, 166, 255, 0.10));
+}
+
+/* Light theme: tour buttons match HUD buttons style */
+.theme-light #tour-overlay .tour-actions .btn {
+  background: 
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.5) 0%,
+      rgba(255, 255, 255, 0.2) 20%,
+      transparent 40%
+    ),
+    rgba(240, 245, 255, 0.4);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  color: #0B0F14;
+}
+
+.theme-light #tour-overlay .tour-actions .btn:hover {
+  color: var(--color-light-brand-primary, #58A6FF);
+  background: var(--color-state-hover-bg, rgba(88, 166, 255, 0.08));
+}
+@media (max-width: 479px) {
+  #tour-overlay { 
+    align-items: flex-start; 
+    padding-top: 20px; 
+    padding-bottom: 40px;
+    /* Исправление проблем с зависанием */
+    /* Use specificity @media (max-width: 479px) #tour-overlay instead of !important */
+    position: fixed;
+    z-index: 2500;
+    /* Removed will-change - not needed for static overlay */
+  }
+  /* Card fills the viewport height with 20px top and 40px bottom gutters; buttons at bottom */
+  #tour-overlay .tour-card {
+    padding: 16px;
+    margin-left: auto; 
+    margin-right: auto;
+    display: flex; 
+    flex-direction: column;
+    width: calc(100vw - 40px);
+    max-height: calc(100dvh - 60px);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Исправление проблем с откликом */
+    position: relative;
+    z-index: 2501;
+    /* Предотвращение проблем с масштабированием и GPU acceleration */
+    /* Use specificity #tour-overlay .tour-card instead of !important */
+    transform: scale(1) translateZ(0);
+    transform-origin: top center;
+    /* Removed will-change: scroll-position - browser optimizes scrolling automatically */
+  }
+  #tour-overlay .tour-body { 
+    flex: 0 0 auto; 
+    overflow-y: visible;
+    -webkit-overflow-scrolling: auto;
+  }
+  /* Tour actions: vertical layout on mobile */
+  #tour-overlay .tour-actions { 
+    flex-direction: column;
+    gap: 10px;
+    margin-top: auto;
+    /* Улучшение отклика кнопок */
+    position: relative;
+    z-index: 2502;
+  }
+  #tour-overlay .tour-actions .btn { 
+    width: 100%;
+    margin-left: 0;
+  }
+  #tour-overlay .tour-actions .tour-action-link {
+    width: 100%;
+    margin-left: 0;
+    justify-content: center;
+  }
+  #tour-overlay .tour-actions .btn { 
+    /* Критично для мобильных - улучшение отклика */
+    min-height: 44px;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
+    /* Предотвращение проблем с кликами */
+    pointer-events: auto;
+    position: relative;
+    z-index: 2503;
+    /* Remove transitions on mobile for instant feedback */
+    transition: none;
+    /* Prevent text selection during touch */
+    -webkit-user-select: none;
+    user-select: none;
+  }
+}
+/* Block page scroll when tour overlay is visible, but allow scrolling inside tour card */
+/* CRITICAL: Tour effects limited to #tour-overlay, no global classes on html/body */
+/* Overlay itself blocks interaction with page through z-index and backdrop */
+/* Scrolling is handled by overlay's own structure - no need to block body scroll */
+/* Разрешить скролл только внутри карточки тура */
+#tour-overlay:not(.hidden) .tour-card,
+#tour-overlay:not(.hidden) .tour-body {
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+/* В обычном режиме (не тур, не HUD) - разрешить скролл для 3D-сцены */
+/* CRITICAL: Tour effects limited to #tour-overlay, check overlay visibility instead of classes */
+@media (max-width: 767px) {
+  /* Use :not(:has()) to check if tour overlay is hidden */
+  html:not(:has(#tour-overlay:not(.hidden))):not(.hud-active):not(.orbit-active) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Fallback for browsers without :has() support - check if tour overlay exists and is hidden */
+  html:not(.hud-active):not(.orbit-active) {
+    overflow-x: hidden;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* Use specificity @media (max-width: 767px) body:not(.hud-active):not(.orbit-active) instead of !important */
+  body:not(.hud-active):not(.orbit-active) {
+    overflow-x: hidden;
+    /* navigation.js управляет скроллом */
+    overflow-y: auto;
+    position: relative;
+    /* Убрал touch-action - скролл управляется через navigation.js */
+    -webkit-overflow-scrolling: touch;
+    /* НЕ устанавливаем height - navigation.js устанавливает высоту динамически */
+  }
+  /* Не блокируем touch-action для #three-container - navigation.js управляет этим */
+}
+/* Allow scrolling inside tour card - only on mobile */
+/* Desktop: no overflow, content fits naturally */
+@media (max-width: 479px) {
+  #tour-overlay .tour-card {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    max-height: calc(100dvh - 60px);
+  }
+}
+
+/* Tour Interactives Styles */
+#tour-overlay .tour-interactives {
+  margin-top: 32px;
+  margin-bottom: 40px;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+#tour-overlay .tour-interactives.loaded {
+  opacity: 1;
+}
+
+/* Skeleton loaders */
+#tour-overlay .tour-interactives-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+#tour-overlay .skeleton-header,
+#tour-overlay .skeleton-status {
+  height: 24px;
+  background: var(--skeleton-bg-dark);
+  border-radius: var(--radius-none);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+#tour-overlay .skeleton-header {
+  width: 60%;
+}
+
+#tour-overlay .skeleton-status {
+  width: 80%;
+  height: 16px;
+}
+
+#tour-overlay .skeleton-interactives {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+#tour-overlay .skeleton-item {
+  height: 200px;
+  background: var(--skeleton-bg-dark);
+  border-radius: var(--radius-none);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+#tour-overlay .skeleton-cta {
+  height: 44px;
+  width: 60%;
+  margin: 0 auto;
+  background: var(--skeleton-bg-dark);
+  border-radius: var(--radius-none);
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 0.8; }
+}
+
+#tour-overlay .tour-interactives-wrapper {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Section header */
+#tour-overlay .tour-interactives-header {
+  margin: 0 0 20px 0;
+  font: 600 20px/1.3 ui-sans-serif, system-ui;
+  color: #CFE8FF;
+}
+
+/* Status bar */
+#tour-overlay .tour-status-bar {
+  padding: 8px 0;
+  font: 400 16px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-muted);
+  border-bottom: 1px solid var(--hud-panel-border);
+}
+
+/* Interactives layout - single column */
+
+#tour-overlay .tour-interactive {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Interactive A - left aligned, vertical layout */
+/* Use specificity #tour-overlay .tour-interactive-a instead of !important */
+#tour-overlay .tour-interactive-a {
+  align-items: flex-start;
+  display: flex;
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+/* Thermometer widget container */
+#tour-overlay .thermometer-widget-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  background: transparent;
+  border: none;
+  padding: 0;
+}
+
+/* Thermometer widget header */
+#tour-overlay .thermometer-widget-header {
+  margin: 0 0 12px 0;
+  font: 600 24px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  text-align: left;
+  width: 100%;
+  flex-shrink: 0;
+  display: block;
+}
+
+/* Thermometer widget description */
+#tour-overlay .thermometer-widget-description {
+  margin: 0 0 32px 0;
+  font: 400 18px/1.3 ui-sans-serif, system-ui;
+  color: var(--hud-text-muted);
+  text-align: left;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Thermometer container */
+#tour-overlay .thermometer-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: flex-start;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+/* Override gap between segments and user feeling text */
+#tour-overlay .thermometer-segments-container + .thermometer-user-feeling {
+  margin-top: -12px;
+}
+
+#tour-overlay .thermometer-container:focus {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Placeholder (top right corner) */
+#tour-overlay .readout-placeholder {
+  position: absolute;
+  top: 0;
+  right: 0;
+  max-width: 300px;
+  width: 300px;
+  font: 400 18px/1.3 ui-sans-serif, system-ui;
+  color: #CFE8FF;
+  transition: color 0.3s ease;
+  text-align: right;
+  word-wrap: break-word;
+  white-space: pre-line;
+}
+
+/* Readout (above buttons, left-aligned) */
+#tour-overlay .thermometer-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+#tour-overlay .readout-value {
+  font: 600 56px/1 ui-sans-serif, system-ui;
+  color: var(--hud-text-base);
+  transition: color 0.3s ease;
+}
+
+#tour-overlay .readout-status {
+  font: 400 16px/1.3 ui-sans-serif, system-ui;
+  color: #CFE8FF;
+  transition: color 0.3s ease;
+}
+
+/* User feeling text (under buttons) */
+#tour-overlay .thermometer-user-feeling {
+  margin: 4px 0 0 0;
+  font: 400 18px/1.3 ui-sans-serif, system-ui;
+  color: #CFE8FF;
+  text-align: left;
+  width: 100%;
+}
+
+/* Segments container (horizontal row) */
+#tour-overlay .thermometer-segments-container {
+  display: flex;
+  flex-direction: row;
+  gap: 8px;
+  flex-wrap: nowrap;
+  width: 100%;
+}
+
+/* Thermometer segments - no borders, color via background */
+#tour-overlay .thermometer-segment {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 8px;
+  background: var(--hud-panel-bg);
+  border: none;
+  border-radius: 4px;
+  color: var(--hud-text-muted);
+  font: 400 16px/1 ui-sans-serif, system-ui;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: var(--radius-none);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Default zone colors (dim) - no borders */
+#tour-overlay .thermometer-segment.zone-1 {
+  background: var(--color-state-success-bg);
+}
+
+#tour-overlay .thermometer-segment.zone-2 {
+  background: var(--color-state-success-bg);
+}
+
+#tour-overlay .thermometer-segment.zone-3 {
+  background: var(--color-state-warning-bg);
+}
+
+#tour-overlay .thermometer-segment.zone-4 {
+  background: var(--color-state-warning-bg);
+}
+
+#tour-overlay .thermometer-segment.zone-5 {
+  background: var(--color-state-error-bg);
+}
+
+#tour-overlay .thermometer-segment:hover {
+  background: var(--color-state-hover-bg);
+  transform: translateY(-1px);
+}
+
+#tour-overlay .thermometer-segment:focus {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+/* Active state - saturated background, no border */
+#tour-overlay .thermometer-segment.active {
+  color: var(--hud-text-base);
+  font-weight: 600;
+  opacity: 1;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px var(--tour-shadow-active);
+}
+
+#tour-overlay .thermometer-segment.zone-1.active {
+  background: var(--color-state-success-bg-active);
+}
+
+#tour-overlay .thermometer-segment.zone-2.active {
+  background: var(--color-state-success-bg-active);
+}
+
+#tour-overlay .thermometer-segment.zone-3.active {
+  background: var(--color-state-warning-bg-active);
+}
+
+#tour-overlay .thermometer-segment.zone-4.active {
+  background: var(--color-state-warning-bg-active);
+}
+
+#tour-overlay .thermometer-segment.zone-5.active {
+  background: var(--color-state-error-bg-active);
+}
+
+
+/* CTA Container */
+#tour-overlay .tour-cta-container {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#tour-overlay .tour-cta-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 12px 8px;
+  background: var(--color-state-active-bg);
+  border: none;
+  color: var(--hud-text-base);
+  font: 400 16px/1 ui-sans-serif, system-ui;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-none);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#tour-overlay .tour-cta-btn:hover {
+  background: var(--color-state-selected-bg);
+}
+
+#tour-overlay .tour-cta-btn:focus {
+  outline: 2px solid var(--color-accent-primary);
+  outline-offset: 2px;
+}
+
+#tour-overlay .tour-cta-subtext {
+  margin: 0;
+  color: var(--hud-text-muted);
+  font: 400 16px/1.3 ui-sans-serif, system-ui;
+  text-align: center;
+}
+
+/* Desktop and Tablet styles (>=768px) */
+@media (min-width: 768px) {
+  /* Desktop header: ensure visibility and proper layout */
+  /* Base styles already defined above (line 542), only add desktop-specific overrides */
+  header#site-header {
+    justify-content: space-between;
+  }
+  
+  #tour-overlay .thermometer-widget-description {
+    max-width: 100%;
+  }
+  
+  #tour-overlay .thermometer-container {
+    max-width: 100%;
+  }
+  
+  #tour-overlay .thermometer-segments-container {
+    max-width: 100%;
+  }
+  
+  #tour-overlay .thermometer-user-feeling {
+    max-width: 100%;
+  }
+  
+  #tour-overlay .readout-value {
+    font-size: 61px;
+  }
+  
+  #tour-overlay .readout-status {
+    font-size: 19px;
+  }
+  
+  #tour-overlay .readout-placeholder {
+    font-size: 18px;
+    max-width: 400px;
+    width: auto;
+  }
+}
+
+/* Mobile Responsive */
+@media (max-width: 767px) {
+  
+  #tour-overlay .thermometer-widget-header {
+    font-size: 20px;
+  }
+  
+  #tour-overlay .readout-value {
+    font-size: 42px;
+  }
+  
+  #tour-overlay .readout-placeholder {
+    font-size: 16px;
+  }
+  
+  #tour-overlay .thermometer-segments-container {
+    max-width: 352px;
+  }
+  
+  #tour-overlay .skeleton-interactives {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 479px) {
+  #tour-overlay .tour-cta-btn {
+    width: 100%;
+  }
+}
+
+/* Light theme support */
+.theme-light #tour-overlay .skeleton-header,
+.theme-light #tour-overlay .skeleton-status,
+.theme-light #tour-overlay .skeleton-item,
+.theme-light #tour-overlay .skeleton-cta {
+  background: var(--skeleton-bg-light);
+}
+
+.theme-light #tour-overlay .tour-interactives-header {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .tour-status-bar {
+  color: var(--hud-text-muted);
+  border-bottom-color: var(--color-light-border-base);
+}
+
+.theme-light #tour-overlay .thermometer-widget-header {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .thermometer-widget-description {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .thermometer-segment {
+  background: var(--tour-thermometer-segment-bg-light);
+  color: var(--hud-text-muted);
+}
+
+/* Light theme zone colors - no borders */
+.theme-light #tour-overlay .thermometer-segment.zone-1 {
+  background: var(--color-state-success-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-2 {
+  background: var(--color-state-success-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-3 {
+  background: var(--color-state-warning-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-4 {
+  background: var(--color-state-warning-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-5 {
+  background: var(--color-state-error-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment:hover {
+  background: var(--color-state-hover-bg);
+}
+
+.theme-light #tour-overlay .thermometer-segment.active {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-1.active {
+  background: var(--color-state-success-bg-active);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-2.active {
+  background: var(--color-state-success-bg-active);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-3.active {
+  background: var(--color-state-warning-bg-active);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-4.active {
+  background: var(--color-state-warning-bg-active);
+}
+
+.theme-light #tour-overlay .thermometer-segment.zone-5.active {
+  background: var(--color-state-error-bg-active);
+}
+
+.theme-light #tour-overlay .readout-value {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .readout-placeholder {
+  color: var(--hud-text-muted);
+}
+
+.theme-light #tour-overlay .readout-example {
+  color: var(--hud-text-muted);
+}
+
+.theme-light #tour-overlay .thermometer-user-feeling {
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .readout-status {
+  color: var(--hud-text-muted);
+}
+
+.theme-light #tour-overlay .tour-cta-subtext {
+  color: var(--hud-text-muted);
+}
+
+.theme-light #tour-overlay .tour-cta-btn {
+  background: var(--tour-cta-bg-light);
+  color: var(--hud-text-base);
+}
+
+.theme-light #tour-overlay .tour-cta-btn:hover {
+  background: var(--tour-cta-bg-light-hover);
+}
+
+/* HUD big panel headings - tour style (highest priority, at end of CSS) */
+/* Duplicate removed - using base styles from lines 273-343 */
+
+/* === Preloader === */
+/* Refactored: moved from iframe to inline HTML */
+/* PHASE 3E: Preloader tokens moved to styles/tokens.css */
+/* Using tokens from tokens.css: --Preloader/* */
+
+#preloader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  /* PHASE 3E: Use tokens from tokens.css */
+  background: var(--color-dark-bg-primary, var(--preloader-bg)); /* match theme bg to avoid flash */
+  color: var(--preloader-text);
+  display: grid;
+  place-items: center;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+#preloader-overlay.hidden {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.6s ease, visibility 0.6s ease;
+}
+
+/* Lock scroll during preload */
+html.ux4ai-preload-lock,
+body.ux4ai-preload-lock {
+  overflow: hidden;
+}
+
+/* Preloader inner container */
+#preloader-overlay .preloader-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 32px;
+}
+
+#preloader-overlay .preloader-logo {
+  position: relative;
+  width: min(66vw, 700px);
+}
+
+/* Shared glyph metrics (IDENTICAL for base and glitch) */
+#preloader-overlay .ux4ai-glyph {
+  font-family: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Ubuntu, Arial;
+  font-weight: 800;
+  font-size: 155px;
+  line-height: 1;
+  letter-spacing: 0.012em;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+
+/* SVG word */
+#preloader-overlay svg.ux4ai-logo {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+#preloader-overlay .ux4ai-text {
+  fill: transparent;
+  stroke: var(--preloader-accent);
+  stroke-width: 3;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-dasharray: 1800;
+  stroke-dashoffset: 1800;
+  filter: drop-shadow(0 0 0 rgba(127, 215, 255, 0));
+}
+
+#preloader-overlay .ux4ai-text.shadow {
+  stroke: var(--preloader-accent-shadow);
+  filter: blur(2px);
+}
+
+#preloader-overlay .preloader-caption {
+  text-align: center;
+  color: var(--preloader-muted);
+  font: 400 16px/1.3 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  opacity: 0.95;
+}
+
+/* Streaming list */
+#preloader-overlay .preloader-stream-wrap {
+  width: min(74vw, 760px);
+}
+
+#preloader-overlay .preloader-stream {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--preloader-stream-border);
+  background: var(--preloader-stream-bg);
+  border-radius: var(--radius-none);
+  box-shadow: 0 8px 26px var(--preloader-stream-shadow) inset;
+  max-height: 260px;
+  overflow: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+#preloader-overlay .preloader-stream::-webkit-scrollbar {
+  display: none;
+}
+
+#preloader-overlay .preloader-stream li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--preloader-stream-item-border);
+  font: 400 16px/1.6 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Arial;
+}
+
+#preloader-overlay .preloader-stream li:last-child {
+  border-bottom: none;
+}
+
+#preloader-overlay .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--preloader-stream-mono);
+}
+
+#preloader-overlay .text {
+  white-space: pre-wrap;
+}
+
+#preloader-overlay .tail {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 32px;
+  justify-content: flex-end;
+}
+
+#preloader-overlay .spinner {
+  width: 16px;
+  height: 16px;
+  border-radius: 0;
+  border: 2px solid transparent;
+  border-top-color: var(--preloader-spin);
+  border-right-color: var(--preloader-spin);
+  animation: preloader-spin 800ms linear infinite;
+}
+
+@keyframes preloader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+#preloader-overlay .ok {
+  width: 18px;
+  height: 18px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--preloader-ok);
+}
+
+#preloader-overlay .ok svg {
+  display: block;
+}
+
+/*
+ * NOTE: This global rule was removed as it duplicated styles from media queries.
+ * All breakpoints are now covered by:
+ * - @media (max-width: 767px) for tablets
+ * - @media (max-width: 479px) for mobile
+ * - #hud-container #hud-big-panel for desktop (default)
+ */
+
+/* === CTA ROW CONTAINER === */
+.hud-cta-row {
+  display: flex;
+  gap: var(--spacing-sm);
+  flex-wrap: wrap;
+  margin-top: var(--spacing-xxl);
+}
+
+/* === HUD Object Icon === */
+/* PHASE AUDIT: Moved from index.html inline styles */
+#hud-object-icon {
+  position: fixed;
+  top: 200px;
+  left: 450px;
+  right: auto;
+  width: 200px;
+  height: 200px;
+  border-radius: var(--radius-round);
+  background: var(--color-accent-primary);
+  box-shadow: 0 0 20px var(--hud-icon-shadow);
+  border: 3px solid var(--color-dark-border-default);
+  display: none;
+  z-index: var(--z-index-hud-panel);
+}
+
+/* === HUD Grid Hologram Effect === */
+/* PHASE AUDIT: Moved from index.html inline styles */
+.grid-line {
+  pointer-events: none;
+  will-change: opacity, filter, transform, background-position;
+  /* Dashed via repeating gradient; color set via --c */
+  --c: var(--grid-color);
+  --dash: 10px;
+  --gap: 8px;
+  --phase: 0px;
+  background: none;
+  box-shadow:
+    0 0 3px var(--grid-color),
+    0 0 8px var(--grid-color);
+  mix-blend-mode: screen;
+  opacity: var(--grid-opacity);
+  filter: hue-rotate(var(--grid-hue, 0deg)) saturate(var(--grid-sat, 1.1));
+}
+
+.grid-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.grid-line.h {
+  background-image: repeating-linear-gradient(
+    90deg,
+    var(--c) 0 calc(var(--dash)),
+    rgba(255, 255, 255, 0) calc(var(--dash)) calc(calc(var(--dash) + var(--gap)))
+  );
+  background-size: calc(var(--dash) + var(--gap)) 100%;
+  background-position: var(--phase, 0px) 0;
+}
+
+.grid-line.h::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, var(--grid-shimmer-color) 50%, rgba(255, 255, 255, 0) 100%);
+  background-size: 220% 100%;
+  background-position: var(--shimmerH, 0%) 0;
+}
+
+.grid-line.v {
+  background-image: repeating-linear-gradient(
+    180deg,
+    var(--c) 0 calc(var(--dash)),
+    rgba(255, 255, 255, 0) calc(var(--dash)) calc(calc(var(--dash) + var(--gap)))
+  );
+  background-size: 100% calc(var(--dash) + var(--gap));
+  background-position: 0 var(--phase, 0px);
+}
+
+.grid-line.v::after {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, var(--grid-shimmer-color) 50%, rgba(255, 255, 255, 0) 100%);
+  background-size: 100% 220%;
+  background-position: 0 var(--shimmerV, 0%);
+}
+
+/* Mobile performance: remove will-change on mobile */
+@media (max-width: 767px) {
+  .grid-line {
+    will-change: auto;
+  }
+}
+
+/* === Dark Theme Headings Color === */
+/* All headings in dark theme should be #CFE8FF */
+#hud-big-panel h1,
+#hud-big-panel h2,
+#hud-big-panel h3,
+#hud-big-panel h4,
+#hud-big-panel h5,
+#hud-big-panel h6,
+#hud-container #hud-big-panel h1,
+#hud-container #hud-big-panel h2,
+#hud-container #hud-big-panel h3,
+#hud-container #hud-big-panel h4,
+#hud-container #hud-big-panel h5,
+#hud-container #hud-big-panel h6,
+.hud-active #hud-big-panel h1,
+.hud-active #hud-big-panel h2,
+.hud-active #hud-big-panel h3,
+.hud-active #hud-big-panel h4,
+.hud-active #hud-big-panel h5,
+.hud-active #hud-big-panel h6,
+.hud-active #hud-container #hud-big-panel h1,
+.hud-active #hud-container #hud-big-panel h2,
+.hud-active #hud-container #hud-big-panel h3,
+.hud-active #hud-container #hud-big-panel h4,
+.hud-active #hud-container #hud-big-panel h5,
+.hud-active #hud-container #hud-big-panel h6,
+#hud-small-panel .hud-section-title,
+#tour-overlay .tour-header h2 {
+  color: #CFE8FF;
+}
+
+/* Tour step 2 links (Figma demos) - dark theme */
+#tour-overlay .tour-card .tour-body .tour-body-link,
+#tour-overlay .tour-body .tour-body-links .tour-body-link {
+  color: #CFE8FF;
+}
+#tour-overlay .tour-card .tour-body .tour-body-link:hover,
+#tour-overlay .tour-body .tour-body-links .tour-body-link:hover {
+  color: #58A6FF;
+}
+
+/* Tour step 3 thermometer widget - dark theme */
+#tour-overlay .thermometer-widget-header {
+  color: #CFE8FF;
+}
+#tour-overlay .readout-value {
+  color: #CFE8FF;
+}
+#tour-overlay .thermometer-segment {
+  color: #CFE8FF;
+}
+
+/* === Light Theme Text Colors === */
+/* Headings: #0B0F14 */
+.theme-light #hud-big-panel h1,
+.theme-light #hud-big-panel h2,
+.theme-light #hud-big-panel h3,
+.theme-light #hud-big-panel h4,
+.theme-light #hud-big-panel h5,
+.theme-light #hud-big-panel h6,
+.theme-light #hud-container #hud-big-panel h1,
+.theme-light #hud-container #hud-big-panel h2,
+.theme-light #hud-container #hud-big-panel h3,
+.theme-light #hud-container #hud-big-panel h4,
+.theme-light #hud-container #hud-big-panel h5,
+.theme-light #hud-container #hud-big-panel h6,
+.theme-light #hud-small-panel .hud-section-title,
+.theme-light #tour-overlay .tour-header h2,
+.theme-light #tour-overlay .tour-interactives-header,
+.theme-light #tour-overlay .thermometer-widget-header,
+.theme-light #tour-overlay .readout-placeholder,
+.theme-light #tour-overlay .thermometer-user-feeling {
+  color: #0B0F14;
+}
+
+/* Body text: #4B5563 */
+.theme-light #hud-big-panel p,
+.theme-light #hud-container #hud-big-panel p,
+.theme-light #hud-small-panel .hud-section-summary,
+.theme-light #tour-overlay .tour-body p,
+.theme-light #tour-overlay .tour-header .tour-sub,
+.theme-light #tour-overlay .readout-status,
+.theme-light #tour-overlay .thermometer-widget-description,
+.theme-light #tour-overlay .thermometer-segment {
+  color: #4B5563;
+}
+
+/* Readout value (big number) - should be heading color */
+.theme-light #tour-overlay .readout-value {
+  color: #0B0F14;
 }

@@ -4,7 +4,8 @@
  */
 
 // Версия билда - обновлять при каждом деплое
-const BUILD_VERSION = '1.0.0';
+// Phase: preloader refactored to inline HTML, script moved to HEAD for early execution
+const BUILD_VERSION = '1.13.3'; // Add tour-active class for orbit button hiding
 const CACHE_NAME = `ux4ai-v${BUILD_VERSION}`;
 
 // Стратегии кеширования
@@ -18,25 +19,35 @@ const CACHE_STRATEGY = {
 };
 
 // Ресурсы для предварительного кеширования
+// ФАЗА B: Обновлено - использование относительных путей для корректной работы при разном корне сервера
+// Service Worker автоматически разрешает пути относительно своего scope
 const PRECACHE_URLS = [
-  '/',
-  '/index.html',
-  '/styles/tokens.css',
-  '/styles/main.css',
-  '/styles/variables.css',
-  '/favicon.png',
-  '/android-chrome-192x192.png',
-  '/android-chrome-512x512.png'
+  './',                        // Корень (index.html)
+  './index.html',
+  './styles/tokens.css',        // Основные CSS-токены
+  './styles/main.css',          // Основные стили
+  './favicon.png',
+  './android-chrome-192x192.png',
+  './android-chrome-512x512.png'
+  // Preloader removed: now inline HTML in index.html, no longer a separate file
 ];
 
 // Ресурсы для кеширования по требованию (по паттерну)
+// ФАЗА 4: Обновлено - финализация, актуальная структура проекта
 const CACHE_PATTERNS = {
-  static: /\.(js|css|svg|png|jpg|jpeg|webp|gif|woff2?|ttf|eot)$/i,
+  // Статические файлы (изображения, шрифты, SVG)
+  static: /\.(js|css|svg|png|jpg|jpeg|webp|gif|woff2?|ttf|eot|pdf|html)$/i,
+  // Модули данных
   data: /\/data\/.*\.js$/i,
+  // Ядро 3D-движка
   core: /\/core\/.*\.js$/i,
+  // 3D-сцены
   scenes: /\/scenes\/.*\.js$/i,
+  // Конфигурации тем (только JS, не CSS)
   themes: /\/themes\/.*\.js$/i,
-  utils: /\/utils\/.*\.js$/i
+  // UI контроллеры
+  ui: /\/ui\/.*\.js$/i
+  // ФАЗА 5: Удалён паттерн utils - каталог utils/ больше не существует
 };
 
 // Максимальный возраст кеша (7 дней)
@@ -52,7 +63,19 @@ self.addEventListener('install', (event) => {
     caches.open(CACHE_NAME)
       .then((cache) => {
         console.log('[SW] Precaching resources');
-        return cache.addAll(PRECACHE_URLS);
+        // PHASE B: Use relative paths - SW will resolve them relative to its location
+        // This ensures preloader and other resources are cached correctly regardless of server root
+        // Service Worker location determines the base path for relative URLs
+        const swLocation = self.location;
+        const baseUrl = new URL(swLocation.pathname.replace(/\/[^\/]*$/, '/'), swLocation.origin);
+        console.log('[SW] Base URL for precaching:', baseUrl.href);
+        
+        return cache.addAll(PRECACHE_URLS.map(url => {
+          // Convert relative paths to absolute paths relative to SW directory
+          const absoluteUrl = new URL(url, baseUrl.href);
+          console.log('[SW] Precaching:', url, '->', absoluteUrl.href);
+          return absoluteUrl.href;
+        }));
       })
       .then(() => {
         console.log('[SW] Installation complete');
@@ -61,6 +84,10 @@ self.addEventListener('install', (event) => {
       })
       .catch((error) => {
         console.error('[SW] Installation failed:', error);
+        // Don't fail installation if some resources can't be cached
+        // This allows SW to work even if some precache URLs are unavailable
+        console.warn('[SW] Some resources failed to precache, but continuing installation');
+        return self.skipWaiting();
       })
   );
 });
@@ -103,12 +130,22 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   
   // Игнорировать запросы не к нашему домену
-  if (url.origin !== location.origin) {
+  // PHASE B: Use self.location.origin for Service Worker context
+  if (url.origin !== self.location.origin) {
     return;
   }
   
   // Игнорировать аналитику и внешние ресурсы
   if (url.pathname.includes('/watch/') || url.pathname.includes('/metrika/')) {
+    return;
+  }
+  
+  // Игнорировать запросы к старому прелоадеру (больше не используется)
+  // Preloader is now inline in index.html, no separate file needed
+  if (url.pathname.includes('ux4ai-preloader-loop-outline-noise') && 
+      !url.pathname.endsWith('.html')) {
+    // Return 404 to prevent errors in console
+    event.respondWith(new Response('', { status: 404, statusText: 'Not Found' }));
     return;
   }
   
@@ -124,15 +161,37 @@ self.addEventListener('fetch', (event) => {
 
 /**
  * Определить стратегию кеширования для URL
+ * ФАЗА 4: Обновлено - финализация, актуальная структура проекта
  */
 function getStrategy(url) {
-  // HTML - всегда network-first
+  // HTML - всегда network-first (для получения актуальных версий)
   if (url.pathname.endsWith('.html') || url.pathname === '/') {
     return 'network-first';
   }
   
-  // Статические ресурсы - cache-first
+  // CSS файлы - network-first для получения актуальных версий
+  // Это гарантирует, что новые версии CSS применяются сразу, даже при версионировании
+  if (url.pathname.endsWith('.css')) {
+    return 'network-first';
+  }
+  
+  // SVG - network-first (чтобы ошибки загрузки не блокировали приложение)
+  // Это позволяет браузеру самому обработать ошибки загрузки SVG
+  if (url.pathname.endsWith('.svg')) {
+    return 'network-first';
+  }
+  
+  // Статические ресурсы - cache-first (изображения, PDF, шрифты, но не SVG и не CSS)
   if (CACHE_PATTERNS.static.test(url.pathname)) {
+    return 'cache-first';
+  }
+  
+  // JS модули (core, scenes, themes, ui, data) - cache-first (версионируются через query params)
+  if (CACHE_PATTERNS.core.test(url.pathname) ||
+      CACHE_PATTERNS.scenes.test(url.pathname) ||
+      CACHE_PATTERNS.themes.test(url.pathname) ||
+      CACHE_PATTERNS.ui.test(url.pathname) ||
+      CACHE_PATTERNS.data.test(url.pathname)) {
     return 'cache-first';
   }
   
@@ -220,26 +279,50 @@ async function networkFirst(request) {
  * Стратегия: кеш первым (с fallback на сеть)
  */
 async function cacheFirst(request) {
-  const cachedResponse = await caches.match(request);
-  
-  // Проверить возраст кеша
-  if (cachedResponse) {
-    const dateHeader = cachedResponse.headers.get('date');
-    if (dateHeader) {
-      const cacheAge = Date.now() - new Date(dateHeader).getTime();
-      
-      // Если кеш старый - обновить в фоне
-      if (cacheAge > MAX_CACHE_AGE) {
-        console.log('[SW] Cache is old, updating:', request.url);
-        fetchAndCache(request);
+  try {
+    const cachedResponse = await caches.match(request);
+    
+    // Проверить возраст кеша
+    if (cachedResponse) {
+      const dateHeader = cachedResponse.headers.get('date');
+      if (dateHeader) {
+        const cacheAge = Date.now() - new Date(dateHeader).getTime();
+        
+        // Если кеш старый - обновить в фоне (не блокируя ответ)
+        if (cacheAge > MAX_CACHE_AGE) {
+          console.log('[SW] Cache is old, updating in background:', request.url);
+          fetchAndCache(request).catch(() => {
+            // Ignore background update errors
+          });
+        }
       }
+      
+      return cachedResponse;
     }
     
-    return cachedResponse;
+    // Если нет в кеше - запросить из сети
+    try {
+      return await fetchAndCache(request);
+    } catch (error) {
+      // Если сеть недоступна и кеша нет - вернуть 404 для статики
+      // Это лучше, чем бросить ошибку, которая может сломать загрузку
+      console.warn('[SW] Resource not available (cache miss + network fail):', request.url);
+      return new Response('', { 
+        status: 404, 
+        statusText: 'Not Found',
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
+  } catch (error) {
+    // Fallback: вернуть 404 вместо ошибки
+    // Это предотвращает "Failed to fetch" ошибки в консоли
+    console.warn('[SW] cacheFirst failed for:', request.url, error.message);
+    return new Response('', { 
+      status: 404, 
+      statusText: 'Not Found',
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
-  
-  // Если нет в кеше - запросить из сети
-  return fetchAndCache(request);
 }
 
 /**
@@ -252,12 +335,19 @@ async function fetchAndCache(request) {
     if (networkResponse && networkResponse.status === 200) {
       const cache = await caches.open(CACHE_NAME);
       cache.put(request, networkResponse.clone());
+    } else if (networkResponse && networkResponse.status !== 200) {
+      // Don't cache non-200 responses, but don't throw error either
+      console.warn('[SW] Non-200 response for:', request.url, networkResponse.status);
+      return networkResponse;
     }
     
     return networkResponse;
   } catch (error) {
-    console.error('[SW] Fetch failed:', request.url, error);
-    throw error;
+    // Don't throw error - let the request fail gracefully
+    // This allows the app to work even if SW can't fetch some resources
+    console.warn('[SW] Fetch failed (non-critical):', request.url, error.message);
+    // Return a rejected promise so the caller can handle it
+    return Promise.reject(error);
   }
 }
 

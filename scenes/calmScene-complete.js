@@ -1,19 +1,25 @@
 /**
  * Calm Scene Plugin - ПОЛНАЯ ВЕРСИЯ
  * Все эффекты из index.html: beamGroups, hologram, nebula, mist, stars, orbits
+ * 
+ * PHASE CSS-TOKENS: All colors are read from CSS tokens via getSceneColors()
+ * Scene subscribes to themeChanged event for dynamic color updates
  */
 
 // THREE.js will be imported via importmap
 import * as THREE from 'three';
 import { SECTIONS, SECTION_NAMES } from '../core/sections.js';
+import { getSceneColors, toThreeColor } from '../core/theme-colors.js';
+import { on } from '../core/state.js';
 
 export function calmSceneCompleteFactory(config) {
-  const NODE_PALETTE = config?.colors?.nodePalette || [
-    '#5B9CFF', '#22C55E', '#F59E0B', '#EF4444',
-    '#8B5CF6', '#14B8A6', '#E11D48', '#A3E635'
-  ];
-
-  const IMPULSE_IN_COLOR = config?.colors?.impulseColor || '#5B9CFF';
+  // Get colors from theme system (CSS tokens are the single source of truth)
+  // These will be re-read on theme change
+  let sceneColors = getSceneColors();
+  
+  // Node palette and impulse color from CSS tokens (not hardcoded)
+  const getNodePalette = () => getSceneColors().nodePalette;
+  const getImpulseColor = () => getSceneColors().impulseColor;
 
   // Node definitions - равномерное распределение по 3D пространству
   const nodeDefs = [
@@ -111,7 +117,7 @@ export function calmSceneCompleteFactory(config) {
       side: THREE.BackSide,
       transparent: true,
       depthWrite: false,
-      uniforms: { time: { value: 0 }, opacity: { value: 0.6 }, scale: { value: 0.6 }, drift: { value: 0.05 }, color: { value: new THREE.Color('#A8D0FF') } },
+      uniforms: { time: { value: 0 }, opacity: { value: 0.6 }, scale: { value: 0.6 }, drift: { value: 0.05 }, color: { value: toThreeColor(sceneColors.mist) } },
       vertexShader: `varying vec3 vPos; void main(){ vPos=position; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
       fragmentShader: `uniform float time; uniform float opacity; uniform float scale; uniform float drift; uniform vec3 color;
         varying vec3 vPos;
@@ -156,8 +162,10 @@ export function calmSceneCompleteFactory(config) {
       return new THREE.Points(g, m);
     }
     const group = new THREE.Group();
-    const far = starLayer(1200, 220, 0.04, '#9AA6B2', 0.38);
-    const near = starLayer(700, 150, 0.06, '#5B9CFF', 0.28);
+    // Use theme colors for stars
+    const currentSceneColors = getSceneColors();
+    const far = starLayer(1200, 220, 0.04, currentSceneColors.starFar, 0.38);
+    const near = starLayer(700, 150, 0.06, currentSceneColors.starNear, 0.28);
     group.add(far);
     group.add(near);
     group.userData.update = (t) => { far.rotation.y += 0.0002; near.rotation.y -= 0.00035; };
@@ -187,8 +195,57 @@ export function calmSceneCompleteFactory(config) {
         (Math.random() - 0.5) * 0.3,
         (Math.random() - 0.5) * 0.5
       ).normalize();
+      // Get current scene colors from theme (will be updated on theme change)
+      let currentSceneColors = getSceneColors();
+      
+      // ============================================================
+      // PHASE CSS-TOKENS: Dynamic color update system
+      // ============================================================
+      // Store all materials that need color updates on theme change
+      const themeColorMaterials = [];
+      
+      // Function to update all material colors when theme changes
+      function updateSceneColors() {
+        currentSceneColors = getSceneColors();
+        console.log('[CalmScene] 🎨 Updating scene colors for theme change');
+        
+        // Update each registered material
+        themeColorMaterials.forEach(({ material, uniforms }) => {
+          if (material && material.uniforms) {
+            Object.entries(uniforms).forEach(([key, colorGetter]) => {
+              if (material.uniforms[key]) {
+                const newColor = colorGetter();
+                material.uniforms[key].value = toThreeColor(newColor);
+              }
+            });
+            material.needsUpdate = true;
+          }
+        });
+        
+        // Update scene background
+        scene.background = toThreeColor(currentSceneColors.background);
+        
+        // Update lights
+        scene.children.forEach(child => {
+          if (child instanceof THREE.HemisphereLight) {
+            child.color = toThreeColor(currentSceneColors.lightHemi);
+            child.groundColor = toThreeColor(currentSceneColors.lightHemiGround);
+          } else if (child instanceof THREE.DirectionalLight) {
+            child.color = toThreeColor(currentSceneColors.lightDir);
+          }
+        });
+        
+        console.log('[CalmScene] 🎨 Scene colors updated successfully');
+      }
+      
+      // Subscribe to theme changes
+      const unsubscribeThemeChanged = on('themeChanged', () => {
+        updateSceneColors();
+      });
+      // ============================================================
+      
       // Core wireframe pulse (rendered when impulse reaches the core)
-      const coreWireMat = new THREE.MeshBasicMaterial({ color: new THREE.Color('#ffffff'), wireframe: true, transparent: true, opacity: 0.0, depthWrite: false });
+      const coreWireMat = new THREE.MeshBasicMaterial({ color: toThreeColor(currentSceneColors.wire), wireframe: true, transparent: true, opacity: 0.0, depthWrite: false });
       // Reduce wireframe density ~3x
       const coreWire = new THREE.Mesh(new THREE.SphereGeometry(1.05, 8, 6), coreWireMat);
       coreWire.position.set(0, 0, 0);
@@ -196,15 +253,19 @@ export function calmSceneCompleteFactory(config) {
       coreWire.renderOrder = 4;
       coreWire.visible = false;
       scene.add(coreWire);
-      let coreWireState = { active: false, lastSeenTime: 0, color: new THREE.Color('#ffffff'), lastHue: 200 };
+      let coreWireState = { active: false, lastSeenTime: 0, color: toThreeColor(currentSceneColors.wire), lastHue: 200 };
 
-      // Background
-      scene.background = new THREE.Color(config?.background || '#0B0F14');
+      // Background - use theme color
+      scene.background = toThreeColor(config?.background || currentSceneColors.background);
 
-      // Lights
-      const hemi = new THREE.HemisphereLight(0xbfd4ff, 0x0e1219, 0.6);
+      // Lights - use theme colors
+      const hemi = new THREE.HemisphereLight(
+        currentSceneColors.lightHemi, 
+        currentSceneColors.lightHemiGround, 
+        0.6
+      );
       scene.add(hemi);
-      const dir = new THREE.DirectionalLight(0xffffff, 0.9);
+      const dir = new THREE.DirectionalLight(toThreeColor(currentSceneColors.lightDir), 0.9);
       dir.position.set(3, 6, 8);
       scene.add(dir);
 
@@ -225,9 +286,10 @@ export function calmSceneCompleteFactory(config) {
         const y = Math.sin(phi) * def.radius;
         const z = Math.cos(phi) * Math.sin(theta) * def.radius;
 
-        const SPACE_COLOR = '#1B2B47';
-        const CORE_COLOR = '#3dbfff';
-        const NODE_COLOR = NODE_PALETTE[idx % NODE_PALETTE.length];
+        // Use theme colors for space, core, and nodes (currentSceneColors already declared in mount())
+        const SPACE_COLOR = currentSceneColors.space;
+        const CORE_COLOR = currentSceneColors.core;
+        const NODE_COLOR = getNodePalette()[idx % getNodePalette().length];
 
         const pNode = new THREE.Vector3(x, y, z);
         const dir = pNode.clone().normalize();
@@ -239,7 +301,7 @@ export function calmSceneCompleteFactory(config) {
 
         const beamRadius = 0.018;
         
-        const matSpaceToNode = makeBeamMaterial(SPACE_COLOR, NODE_COLOR, IMPULSE_IN_COLOR);
+        const matSpaceToNode = makeBeamMaterial(SPACE_COLOR, NODE_COLOR, getImpulseColor());
         const beamSpaceToNode = makeBeamMesh(pSpace, pNode, beamRadius, matSpaceToNode, -1);
         scene.add(beamSpaceToNode);
 
@@ -251,7 +313,7 @@ export function calmSceneCompleteFactory(config) {
         const beamCoreToNode = makeBeamMesh(pCore, pNode, beamRadius * 0.85, matCoreToNode, 1);
         scene.add(beamCoreToNode);
 
-        const matNodeToSpace = makeBeamMaterial(NODE_COLOR, SPACE_COLOR, IMPULSE_IN_COLOR);
+        const matNodeToSpace = makeBeamMaterial(NODE_COLOR, SPACE_COLOR, getImpulseColor());
         const beamNodeToSpace = makeBeamMesh(pNode, pSpace, beamRadius * 0.9, matNodeToSpace, -1);
         scene.add(beamNodeToSpace);
 
@@ -268,13 +330,13 @@ export function calmSceneCompleteFactory(config) {
         beamGroups.push({
           beams: [
             // Space → Node (inbound): move packet forward 0 → 1
-            { mesh: beamSpaceToNode, material: matSpaceToNode, defaultColor: IMPULSE_IN_COLOR, forward: true },
+            { mesh: beamSpaceToNode, material: matSpaceToNode, defaultColor: getImpulseColor(), forward: true },
             // Node → Core (inbound): forward 0 → 1
             { mesh: beamNodeToCore, material: matNodeToCore, defaultColor: NODE_COLOR, forward: true },
             // Core → Node (outbound): reverse 1 → 0
             { mesh: beamCoreToNode, material: matCoreToNode, defaultColor: NODE_COLOR, forward: false },
             // Node → Space (outbound): reverse 1 → 0
-            { mesh: beamNodeToSpace, material: matNodeToSpace, defaultColor: IMPULSE_IN_COLOR, forward: false }
+            { mesh: beamNodeToSpace, material: matNodeToSpace, defaultColor: getImpulseColor(), forward: false }
           ],
           durations,
           nodeColor: NODE_COLOR
@@ -283,7 +345,7 @@ export function calmSceneCompleteFactory(config) {
 
         const sphere = new THREE.Mesh(
           new THREE.SphereGeometry(0.15, 16, 16),
-          makeFresnel(NODE_PALETTE[idx % NODE_PALETTE.length])
+          makeFresnel(getNodePalette()[idx % getNodePalette().length])
         );
         sphere.position.set(x, y, z);
         sphere.name = def.name;
@@ -319,12 +381,13 @@ export function calmSceneCompleteFactory(config) {
       const gOuter = new THREE.SphereGeometry(1.08, 64, 64);
       const gInner = new THREE.SphereGeometry(1.04, 64, 64);
       
+      // Use theme colors for hologram (currentSceneColors already declared in mount())
       const holoMat = new THREE.ShaderMaterial({
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
         uniforms: { 
           time: { value: 0 },
-          base: { value: new THREE.Color('#6fb6ff') },
-          line: { value: new THREE.Color('#c9ecff') },
+          base: { value: toThreeColor(currentSceneColors.beamBase) },
+          line: { value: toThreeColor(currentSceneColors.beamLine) },
           speed: { value: 0.012 },
           gridScale: { value: new THREE.Vector2(28.0, 14.0) },
           gridBoost: { value: 1.05 }, baseBoost: { value: 0.45 } 
@@ -339,6 +402,14 @@ export function calmSceneCompleteFactory(config) {
             float grid=max(gx,gy)*gridBoost; float fr=fresnel(N,V)*baseBoost;
             vec3 col=base*fr + line*grid; float a=clamp(fr+grid,0.0,0.9); gl_FragColor=vec4(col,a); }`
       });
+      // Register for theme updates
+      themeColorMaterials.push({
+        material: holoMat,
+        uniforms: {
+          base: () => getSceneColors().beamBase,
+          line: () => getSceneColors().beamLine
+        }
+      });
       const shell = new THREE.Mesh(gOuter, holoMat);
       shell.renderOrder = 2;
       scene.add(shell);
@@ -347,8 +418,8 @@ export function calmSceneCompleteFactory(config) {
         transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
         uniforms: { 
           time: { value: 0 },
-          colorInner: { value: new THREE.Color('#a5f0ff') },
-          colorOuter: { value: new THREE.Color('#58b7ff') },
+          colorInner: { value: toThreeColor(currentSceneColors.beamInner) },
+          colorOuter: { value: toThreeColor(currentSceneColors.beamOuter) },
           opacity: { value: 0.55 },
           warpAmp: { value: 1.10 }, warpScale: { value: 3.50 }, warpSpeed: { value: 0.60 }, flicker: { value: 0.25 }, chaos: { value: 0.62 } 
         },
@@ -381,17 +452,26 @@ export function calmSceneCompleteFactory(config) {
             gl_FragColor = vec4(col, a);
           }`
       });
+      // Register for theme updates
+      themeColorMaterials.push({
+        material: swirlMat,
+        uniforms: {
+          colorInner: () => getSceneColors().beamInner,
+          colorOuter: () => getSceneColors().beamOuter
+        }
+      });
       const core = new THREE.Mesh(gInner, swirlMat);
       core.renderOrder = 3;
       scene.add(core);
       
       // Inner nebula (inner core inside the hollow sphere)
+      // Use theme colors for inner nebula (currentSceneColors already declared in mount())
       const innerNebulaMat = new THREE.ShaderMaterial({
         transparent: true, depthWrite: false, depthTest: true, side: THREE.BackSide, blending: THREE.AdditiveBlending,
         uniforms: { 
           time: { value: 0 }, 
-          colorA: { value: new THREE.Color('#7cd4ff') }, 
-          colorB: { value: new THREE.Color('#9ecbff') },
+          colorA: { value: toThreeColor(currentSceneColors.beamA) }, 
+          colorB: { value: toThreeColor(currentSceneColors.beamB) },
           opacity: { value: 0.18 }, 
           scale: { value: 2.6 }, 
           drift: { value: 0.22 }, 
@@ -424,6 +504,14 @@ export function calmSceneCompleteFactory(config) {
             gl_FragColor = vec4(col, a);
           }`
       });
+      // Register for theme updates
+      themeColorMaterials.push({
+        material: innerNebulaMat,
+        uniforms: {
+          colorA: () => getSceneColors().beamA,
+          colorB: () => getSceneColors().beamB
+        }
+      });
       const innerNebula = new THREE.Mesh(new THREE.SphereGeometry(1.06, 128, 128), innerNebulaMat);
       innerNebula.renderOrder = 2;
       scene.add(innerNebula);
@@ -433,12 +521,13 @@ export function calmSceneCompleteFactory(config) {
       
       // Data Stream rings - электрический голографический эффект
       function makeStreamMat() {
-        return new THREE.ShaderMaterial({
+        // Use theme colors for stream (currentSceneColors already declared in mount() scope)
+        const mat = new THREE.ShaderMaterial({
           transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
           uniforms: { 
             time: { value: 0 }, 
-            color: { value: new THREE.Color('#2d5a7f') }, 
-            colorB: { value: new THREE.Color('#3d7ab3') },
+            color: { value: toThreeColor(currentSceneColors.pulse) }, 
+            colorB: { value: toThreeColor(currentSceneColors.pulseB) },
             opacity: { value: 1.0 }, 
             segs: { value: 6.0 }, 
             speed: { value: 2.5 }, 
@@ -446,7 +535,7 @@ export function calmSceneCompleteFactory(config) {
             fresnelBoost: { value: 2.0 },
             blinkSpeed: { value: 15.0 },
             noiseAmount: { value: 0.3 },
-            pulseColor: { value: new THREE.Color('#2d5a7f') },
+            pulseColor: { value: toThreeColor(currentSceneColors.pulse) },
             pulseIntensity: { value: 0.0 }
           },
           vertexShader: `varying vec2 vUv2; varying vec3 vN; varying vec3 vV; varying vec3 vPos; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vPos=position; vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz); vUv2=uv; gl_Position=projectionMatrix*mv; }`,
@@ -492,6 +581,16 @@ export function calmSceneCompleteFactory(config) {
               gl_FragColor = vec4(col, a);
             }`
         });
+        // Register for theme updates
+        themeColorMaterials.push({
+          material: mat,
+          uniforms: {
+            color: () => getSceneColors().pulse,
+            colorB: () => getSceneColors().pulseB,
+            pulseColor: () => getSceneColors().pulse
+          }
+        });
+        return mat;
       }
       
       const streamGroup = new THREE.Group();
@@ -521,7 +620,8 @@ export function calmSceneCompleteFactory(config) {
           transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
           uniforms: { 
             time: { value: 0 }, 
-            color: { value: new THREE.Color('#cfefff') }, 
+            // Use theme color for label highlight
+            color: { value: toThreeColor(getSceneColors().beamLine) }, 
             opacity: { value: 0.30 }, 
             speed: { value: 0.005 }, 
             freqA: { value: 22.0 }, 
@@ -606,7 +706,7 @@ export function calmSceneCompleteFactory(config) {
               const dirForward = (beamObj.forward !== false);
               const pos = dirForward ? local : (1.0 - local);
               beamObj.material.uniforms.packetPos.value = pos;
-              const packetColorHex = (j === 0 || j === 3) ? IMPULSE_IN_COLOR : group.nodeColor;
+              const packetColorHex = (j === 0 || j === 3) ? getImpulseColor() : group.nodeColor;
               beamObj.material.uniforms.packetColor.value.set(packetColorHex);
               
               // КОГДА ИМПУЛЬС ИДЕТ К ЦЕНТРУ (segIdx === 1), РАСКРАСИМ МАЛЕНЬКИЕ ОРБИТЫ
@@ -660,7 +760,7 @@ export function calmSceneCompleteFactory(config) {
             coreWireState.lastSeenTime = time;
             if (group && group.beams && group.beams.length > 0) {
               // Use packet color for visibility
-              const packetColorHex = IMPULSE_IN_COLOR;
+              const packetColorHex = getImpulseColor();
               coreWireState.color.set(packetColorHex);
             }
             break;
@@ -908,6 +1008,14 @@ export function calmSceneCompleteFactory(config) {
       }
 
       function dispose() {
+        // Unsubscribe from theme changes
+        if (unsubscribeThemeChanged) {
+          unsubscribeThemeChanged();
+        }
+        
+        // Clear theme color materials array
+        themeColorMaterials.length = 0;
+        
         // Dispose background cores
         // Background cores and inter-core impulses removed
         
@@ -1034,7 +1142,8 @@ export function calmSceneCompleteFactory(config) {
         update,
         resize,
         dispose,
-        getWireframeState
+        getWireframeState,
+        updateColors: updateSceneColors  // Exposed for manual theme updates
       };
     }
   };

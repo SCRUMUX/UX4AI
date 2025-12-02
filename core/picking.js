@@ -10,18 +10,32 @@ let targets = [];
 let mouse = null;
 let currentCamera = null;
 
+// Store references to handlers for cleanup
+let clickHandler = null;
+let mousemoveHandler = null;
+let currentRendererElement = null;
+
 export function initPicking(renderer, camera) {
+  // Clean up previous handlers if reinitializing
+  if (currentRendererElement && clickHandler) {
+    currentRendererElement.removeEventListener('click', clickHandler);
+    currentRendererElement.removeEventListener('mousemove', mousemoveHandler);
+  }
+  
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
   currentCamera = camera;
+  currentRendererElement = renderer.domElement;
   
-  renderer.domElement.addEventListener('click', onClick);
-  
-  // Update mouse position on move (for hover effects)
-  renderer.domElement.addEventListener('mousemove', (event) => {
+  // Store handler reference for cleanup
+  clickHandler = onClick;
+  mousemoveHandler = (event) => {
     mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
     mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-  });
+  };
+  
+  renderer.domElement.addEventListener('click', clickHandler);
+  renderer.domElement.addEventListener('mousemove', mousemoveHandler);
 }
 
 function onClick(event) {
@@ -54,6 +68,32 @@ export function setTargets(newTargets) {
 
 export function updateCamera(camera) {
   currentCamera = camera;
+}
+
+/**
+ * Dispose picking system - remove event listeners and clear state
+ * Call this when disposing the engine or switching scenes
+ */
+export function disposePicking() {
+  if (currentRendererElement) {
+    if (clickHandler) {
+      currentRendererElement.removeEventListener('click', clickHandler);
+    }
+    if (mousemoveHandler) {
+      currentRendererElement.removeEventListener('mousemove', mousemoveHandler);
+    }
+  }
+  
+  // Clear state
+  targets = [];
+  currentCamera = null;
+  raycaster = null;
+  mouse = null;
+  clickHandler = null;
+  mousemoveHandler = null;
+  currentRendererElement = null;
+  
+  console.log('[Picking] Disposed picking system');
 }
 
 export { raycaster, mouse };
