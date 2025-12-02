@@ -181,6 +181,13 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
         document.documentElement.classList.add('orbit-active');
       }
     } catch {}
+    
+    // Start WASD loop only when entering orbit mode (memory optimization)
+    if (!wasdLoopId) {
+      wasdLoopStopped = false;
+      wasdLoop();
+      console.log('[Navigation] WASD loop started');
+    }
   }
 
   function exitOrbitMode() {
@@ -194,6 +201,14 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
         document.documentElement.classList.remove('orbit-active');
       }
     } catch {}
+    
+    // Stop WASD loop when exiting orbit mode (memory optimization)
+    wasdLoopStopped = true;
+    if (wasdLoopId !== null) {
+      cancelAnimationFrame(wasdLoopId);
+      wasdLoopId = null;
+      console.log('[Navigation] WASD loop stopped');
+    }
   }
 
   function clampOrbit() {
@@ -458,14 +473,21 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     }
   }
   
-  // Start WASD update loop
+  // WASD update loop - started/stopped on orbit mode enter/exit (memory optimization)
+  let wasdLoopId = null;
+  let wasdLoopStopped = true; // Start stopped - will be started when entering orbit mode
+  
   function wasdLoop() {
+    if (wasdLoopStopped) {
+      wasdLoopId = null;
+      return;
+    }
     if (!navDisabled() && orbitMode) {
       updateWASDNavigation();
     }
-    requestAnimationFrame(wasdLoop);
+    wasdLoopId = requestAnimationFrame(wasdLoop);
   }
-  wasdLoop();
+  // NOTE: wasdLoop() is NOT called here - it's started in enterOrbitMode() instead
   
   function navigateToNextNode() {
     if (!targets.length) return;
@@ -484,18 +506,18 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
   }
 
   // Mobile orbit toggle - show for Calm scene (global navigation)
+  // CSS controls visibility via media queries (@media max-width: 767px)
+  // CSS also hides when html.tour-active or html.hud-active
   console.log('[Navigation] Setting up mobile orbit toggle for global navigation');
   const orbitContainer = document.getElementById('mobile-orbit-toggle');
   if (orbitContainer) {
-    orbitContainer.style.display = 'flex';
-    // Mark as controlled by global navigation
+    // Don't set inline style.display - let CSS handle visibility
     orbitContainer.dataset.controller = 'global';
   }
   
   const mobileToggleBtn = document.getElementById('toggle-orbit-btn');
   if (mobileToggleBtn) {
-    mobileToggleBtn.style.display = 'flex';
-    // Mark as controlled by global navigation
+    // Don't set inline style.display - let CSS handle visibility
     mobileToggleBtn.dataset.controller = 'global';
     
     const onBtnClick = () => {
@@ -527,6 +549,13 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     // Exit orbit mode if active
     if (orbitMode) exitOrbitMode();
     
+    // Stop WASD loop to prevent memory leak
+    wasdLoopStopped = true;
+    if (wasdLoopId !== null) {
+      cancelAnimationFrame(wasdLoopId);
+      wasdLoopId = null;
+    }
+    
     // remove all listeners
     for (const off of listeners) { try { off(); } catch {} }
     // hide banner
@@ -538,7 +567,7 @@ export function initNavigation(camera, nodes, modeBanner, canvas) {
     }
     const orbitContainer = document.getElementById('mobile-orbit-toggle');
     if (orbitContainer) {
-      orbitContainer.style.display = 'none';
+      // Don't set inline style.display - let CSS handle visibility
       delete orbitContainer.dataset.controller;
     }
     // restore body height

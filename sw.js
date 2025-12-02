@@ -4,8 +4,8 @@
  */
 
 // Версия билда - обновлять при каждом деплое
-// Phase: unified tokens, moved panel styles to main.css, fixed specificity, removed !important
-const BUILD_VERSION = '1.8.0'; // bumped version after major CSS refactoring
+// Phase: preloader refactored to inline HTML, script moved to HEAD for early execution
+const BUILD_VERSION = '1.13.3'; // Add tour-active class for orbit button hiding
 const CACHE_NAME = `ux4ai-v${BUILD_VERSION}`;
 
 // Стратегии кеширования
@@ -26,11 +26,10 @@ const PRECACHE_URLS = [
   './index.html',
   './styles/tokens.css',        // Основные CSS-токены
   './styles/main.css',          // Основные стили
-  './styles/variables.css',    // Legacy alias-слой (используется для обратной совместимости)
   './favicon.png',
   './android-chrome-192x192.png',
-  './android-chrome-512x512.png',
-  './ux4ai-preloader-loop-outline-noise.html'  // Прелоадер - относительный путь для корректной работы
+  './android-chrome-512x512.png'
+  // Preloader removed: now inline HTML in index.html, no longer a separate file
 ];
 
 // Ресурсы для кеширования по требованию (по паттерну)
@@ -141,6 +140,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
+  // Игнорировать запросы к старому прелоадеру (больше не используется)
+  // Preloader is now inline in index.html, no separate file needed
+  if (url.pathname.includes('ux4ai-preloader-loop-outline-noise') && 
+      !url.pathname.endsWith('.html')) {
+    // Return 404 to prevent errors in console
+    event.respondWith(new Response('', { status: 404, statusText: 'Not Found' }));
+    return;
+  }
+  
   // Определить стратегию кеширования
   const strategy = getStrategy(url);
   
@@ -161,13 +169,19 @@ function getStrategy(url) {
     return 'network-first';
   }
   
+  // CSS файлы - network-first для получения актуальных версий
+  // Это гарантирует, что новые версии CSS применяются сразу, даже при версионировании
+  if (url.pathname.endsWith('.css')) {
+    return 'network-first';
+  }
+  
   // SVG - network-first (чтобы ошибки загрузки не блокировали приложение)
   // Это позволяет браузеру самому обработать ошибки загрузки SVG
   if (url.pathname.endsWith('.svg')) {
     return 'network-first';
   }
   
-  // Статические ресурсы - cache-first (изображения, PDF, шрифты, но не SVG)
+  // Статические ресурсы - cache-first (изображения, PDF, шрифты, но не SVG и не CSS)
   if (CACHE_PATTERNS.static.test(url.pathname)) {
     return 'cache-first';
   }
@@ -287,12 +301,27 @@ async function cacheFirst(request) {
     }
     
     // Если нет в кеше - запросить из сети
-    return await fetchAndCache(request);
+    try {
+      return await fetchAndCache(request);
+    } catch (error) {
+      // Если сеть недоступна и кеша нет - вернуть 404 для статики
+      // Это лучше, чем бросить ошибку, которая может сломать загрузку
+      console.warn('[SW] Resource not available (cache miss + network fail):', request.url);
+      return new Response('', { 
+        status: 404, 
+        statusText: 'Not Found',
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
   } catch (error) {
-    // If both cache and network fail, return the error
-    // The app should handle this gracefully
+    // Fallback: вернуть 404 вместо ошибки
+    // Это предотвращает "Failed to fetch" ошибки в консоли
     console.warn('[SW] cacheFirst failed for:', request.url, error.message);
-    throw error;
+    return new Response('', { 
+      status: 404, 
+      statusText: 'Not Found',
+      headers: { 'Content-Type': 'text/plain' }
+    });
   }
 }
 

@@ -25,18 +25,16 @@ export const calm = {
   cssVars: {},
   
   // Scene configuration
-  // Colors will be read from getSceneColors() in the scene plugin itself
+  // ALL colors are read from CSS tokens via getSceneColors() in the scene plugin
   config: {
-    // Background will be overridden by getSceneColors() based on current UI theme
-    background: null, // Will use getSceneColors().background
+    // Background will be read from getSceneColors().background
+    background: null,
     
-    // Node palette (same for both themes)
+    // Colors are NO LONGER hardcoded here - they come from CSS tokens
+    // See styles/tokens.css for --Scene/Node/* variables
     colors: {
-      nodePalette: [
-        '#5B9CFF', '#22C55E', '#F59E0B', '#EF4444',
-        '#8B5CF6', '#14B8A6', '#E11D48', '#A3E635'
-      ],
-      impulseColor: null // Will use getSceneColors().impulseColor
+      nodePalette: null,    // Will use getSceneColors().nodePalette from CSS
+      impulseColor: null    // Will use getSceneColors().impulseColor from CSS
     },
     speeds: {
       swirl: 0.6

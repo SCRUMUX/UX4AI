@@ -28,7 +28,8 @@ export const TOUR_STEPS = {
     actions: [
       { type:'button', primary:true, label:'Кейсы', on:'next' },
       { type:'link', label:'Резюме', href:'./Vladimir_Kostyal_Resume.pdf' },
-      { type:'link', label:'UX4AI (PDF гайд + ссылки)', href:'https://t.me/...' }
+      { type:'link', label:'UX4AI (PDF гайд)', href:'https://t.me/...' },
+      { type:'link', label:'Написать в TG', href:'https://t.me/scrumux' }
     ]
   },
   2: {
@@ -48,8 +49,7 @@ export const TOUR_STEPS = {
     text: 'Если верить исследованию, первых 2 экранов должно было хватить  для принятия решения. Если нет... ну что же, это не единственная точка входа, а метрики дадут точную картину. Далее углубляемся непосредственно в тему UX для AI. Разбираемся в проблемах и исследуем решения ;)',
     actions: [
       { type:'button', primary:false, label:'Назад', on:'back' },
-      { type:'button', primary:true, label:'К обзору', on:'finish' },
-      { type:'link', label:'Написать в TG', href:'https://t.me/scrumux' }
+      { type:'button', primary:true, label:'К обзору', on:'finish' }
     ]
   }
 };
@@ -120,6 +120,33 @@ export function initTour(options = {}) {
   const textEl = document.getElementById('tour-text');
   const actionsEl = document.getElementById('tour-actions');
   const interactivesEl = document.getElementById('tour-interactives');
+  
+  // Handler registry for memory leak prevention (memory optimization)
+  // Stores { element, handler, eventType } objects for later cleanup
+  const registeredHandlers = [];
+  
+  /**
+   * Register an event handler for later cleanup
+   */
+  function registerHandler(element, eventType, handler, options) {
+    element.addEventListener(eventType, handler, options);
+    registeredHandlers.push({ element, eventType, handler, options });
+  }
+  
+  /**
+   * Cleanup all registered handlers (memory optimization)
+   */
+  function cleanupHandlers() {
+    while (registeredHandlers.length > 0) {
+      const { element, eventType, handler, options } = registeredHandlers.pop();
+      try {
+        element.removeEventListener(eventType, handler, options);
+      } catch (e) {
+        // Element might be removed from DOM, ignore
+      }
+    }
+    console.log('[Tour] Cleaned up event handlers');
+  }
   
   // Validate required DOM elements
   if (!overlay) {
@@ -219,62 +246,72 @@ export function initTour(options = {}) {
       interactivesEl.classList.remove('loaded');
     }
     
-    // Render actions
-    s.actions.forEach(a => {
-      if (a.type === 'link') {
-        const link = document.createElement('a');
-        link.className = 'btn';
-        link.href = a.href;
-        const isPdf = a.href.toLowerCase().endsWith('.pdf');
-        if (isPdf) {
-          link.target = '_blank';
-          link.addEventListener('click', (e) => {
-            setTimeout(() => {
-              const downloadLink = document.createElement('a');
-              downloadLink.href = a.href;
-              downloadLink.download = a.href.split('/').pop() || 'download.pdf';
-              downloadLink.style.display = 'none';
-              document.body.appendChild(downloadLink);
-              downloadLink.click();
-              document.body.removeChild(downloadLink);
-            }, 100);
-          });
-        } else {
-          link.target = a.href.startsWith('http') ? '_blank' : '_self';
-        }
-        link.textContent = a.label;
-        actionsEl.appendChild(link);
-      } else {
-        const btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
-        btn.textContent = a.label;
-        
-        const isMobile = window.innerWidth <= 767;
-        let handler;
-        
-        if (a.on === 'next') {
-          handler = createHandler(() => setStep(Math.min(3, step + 1)), isMobile);
-        } else if (a.on === 'back') {
-          handler = createHandler(() => setStep(Math.max(1, step - 1)), isMobile);
-        } else if (a.on === 'finish') {
-          handler = createHandler(() => finishTour(), isMobile);
-        }
-        
-        if (handler) {
-          if (isMobile) {
-            btn.addEventListener('touchstart', handler, { passive: false });
-          } else {
-            btn.addEventListener('click', handler);
-          }
-        }
-        
-        actionsEl.appendChild(btn);
-      }
-    });
+    // Remove existing links container if any (cleanup from previous steps)
+    const existingLinksContainer = textEl.parentElement.querySelector('.tour-body-links');
+    if (existingLinksContainer) {
+      existingLinksContainer.remove();
+    }
     
-    // Add "План оптимизации" button for step 3
+    // All steps: buttons and links go in tour-actions
+    {
+      // Standard logic for steps 1 and 3 - links styled as links, not buttons
+      s.actions.forEach(a => {
+        if (a.type === 'link') {
+          const link = document.createElement('a');
+          link.className = 'btn';
+          link.href = a.href;
+          const isPdf = a.href.toLowerCase().endsWith('.pdf');
+          if (isPdf) {
+            link.target = '_blank';
+            link.addEventListener('click', (e) => {
+              setTimeout(() => {
+                const downloadLink = document.createElement('a');
+                downloadLink.href = a.href;
+                downloadLink.download = a.href.split('/').pop() || 'download.pdf';
+                downloadLink.style.display = 'none';
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+              }, 100);
+            });
+          } else {
+            link.target = a.href.startsWith('http') ? '_blank' : '_self';
+          }
+          link.textContent = a.label;
+          actionsEl.appendChild(link);
+        } else {
+          const btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'btn' + (a.primary ? ' btn-primary' : '');
+          btn.textContent = a.label;
+          
+          const isMobile = window.innerWidth <= 767;
+          let handler;
+          
+          if (a.on === 'next') {
+            handler = createHandler(() => setStep(Math.min(3, step + 1)), isMobile);
+          } else if (a.on === 'back') {
+            handler = createHandler(() => setStep(Math.max(1, step - 1)), isMobile);
+          } else if (a.on === 'finish') {
+            handler = createHandler(() => finishTour(), isMobile);
+          }
+          
+          if (handler) {
+            if (isMobile) {
+              registerHandler(btn, 'touchstart', handler, { passive: false });
+            } else {
+              registerHandler(btn, 'click', handler);
+            }
+          }
+          
+          actionsEl.appendChild(btn);
+        }
+      });
+    }
+    
+    // Add "План оптимизации" and "Написать в TG" links for step 3
     if (step === 3) {
+      // План оптимизации link
       const planButton = document.createElement('a');
       planButton.href = '/assets/UX4AI_90day_plan.pdf';
       planButton.className = 'btn';
@@ -296,33 +333,44 @@ export function initTour(options = {}) {
       }, isMobilePlan);
       
       if (isMobilePlan) {
-        planButton.addEventListener('touchstart', handlePlanAction, { passive: false });
+        registerHandler(planButton, 'touchstart', handlePlanAction, { passive: false });
       } else {
-        planButton.addEventListener('click', handlePlanAction);
+        registerHandler(planButton, 'click', handlePlanAction);
       }
       actionsEl.appendChild(planButton);
+      
+      // Написать в TG link (last link before Close button)
+      const tgLink = document.createElement('a');
+      tgLink.href = 'https://t.me/scrumux';
+      tgLink.className = 'btn';
+      tgLink.target = '_blank';
+      tgLink.textContent = 'Написать в TG';
+      actionsEl.appendChild(tgLink);
     }
     
-    // Add close link
-    const closeA = document.createElement('a');
-    closeA.href = '#';
-    closeA.className = 'close-link';
-    closeA.textContent = 'Закрыть';
+    // Add close button (styled as button, not link)
+    const closeBtn = document.createElement('button');
+    closeBtn.type = 'button';
+    closeBtn.className = 'btn';
+    closeBtn.textContent = 'Закрыть';
     
     const isMobileClose = window.innerWidth <= 767;
     const handleCloseAction = createHandler(() => dismissTour(), isMobileClose);
     
     if (isMobileClose) {
-      closeA.addEventListener('touchstart', handleCloseAction, { passive: false });
+      registerHandler(closeBtn, 'touchstart', handleCloseAction, { passive: false });
     } else {
-      closeA.addEventListener('click', handleCloseAction);
+      registerHandler(closeBtn, 'click', handleCloseAction);
     }
-    actionsEl.appendChild(closeA);
+    actionsEl.appendChild(closeBtn);
     
     // Add interactives for step 3
     if (step === 3 && interactivesEl) {
       initTourInteractives(interactivesEl);
     }
+    
+    // CLEAN ARCHITECTURE: No inline styles - CSS handles all states via :hover, :active
+    // Tour buttons and links are styled in main.css
     
     // Update hash
     try { history.replaceState(null, '', `#tour/${step}`); } catch {}
@@ -345,7 +393,7 @@ export function initTour(options = {}) {
     overlay.classList.remove('hidden');
     overlay.setAttribute('aria-hidden', 'false');
     overlay.removeAttribute('inert');
-    document.body.classList.add('tour-active');
+    // Add tour-active class for CSS targeting (needed for hiding orbit button, etc.)
     document.documentElement.classList.add('tour-active');
     
     // Hide tour restart button (tour manages ONLY this button)
@@ -372,8 +420,11 @@ export function initTour(options = {}) {
     overlay.classList.add('hidden');
     overlay.setAttribute('aria-hidden', 'true');
     overlay.setAttribute('inert', '');
-    document.body.classList.remove('tour-active');
+    // Remove tour-active class
     document.documentElement.classList.remove('tour-active');
+    
+    // Cleanup registered event handlers to prevent memory leaks (memory optimization)
+    cleanupHandlers();
     
     // Show tour restart button (tour manages ONLY this button)
     try {
@@ -489,17 +540,20 @@ export function initTour(options = {}) {
       // Continue anyway - localStorage is not critical
     }
     
+    // CRITICAL: Show overlay BEFORE creating elements to ensure CSS media queries apply
+    // This unifies logic for all steps and fixes step 2 button visibility issue
+    // When overlay is visible, browser applies media queries immediately to newly created elements
+    showTour();
+    
     // Set step (will fallback to step 1 if requested step doesn't exist)
     const stepSet = setStep(normalizedStep);
     
-    // Only show tour if setStep succeeded
+    // If setStep failed, hide overlay to prevent empty display
     if (stepSet === false) {
-      console.error('[Tour] CRITICAL: setStep failed. Tour will not open to prevent empty overlay.');
+      console.error('[Tour] CRITICAL: setStep failed. Hiding overlay to prevent empty display.');
+      hideTour();
       return false;
     }
-    
-    // All validations passed - safe to show tour
-    showTour();
     
     return true;
   }

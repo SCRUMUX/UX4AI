@@ -6,14 +6,28 @@
 // THREE.js will be imported via importmap
 import * as THREE from 'three';
 
-import { initPicking, setTargets, updateCamera as updatePickingCamera } from './picking.js';
+import { initPicking, setTargets, updateCamera as updatePickingCamera, disposePicking } from './picking.js';
 import { initLabels, setAnchorsGetter, updatePositions, clearLabels } from './labels.js';
 import { validateAnchors } from './sections.js';
 import { emit } from './state.js';
-import { initNavigation, resetNavigationState } from './navigation.js?v=35';
+import { initNavigation, resetNavigationState } from './navigation.js?v=36';
 import { initHUD } from './hud-manager.js';
 // PHASE C2: Import theme-colors for fallback values
-import { getThemeColors } from './theme-colors.js';
+import { getThemeColors, getSceneColors } from './theme-colors.js';
+
+/**
+ * Convert hex color to RGB components
+ * @param {string} hex - Hex color string (e.g., '#8B98A5' or '8B98A5')
+ * @returns {{r: number, g: number, b: number}} RGB components (0-255)
+ */
+function hexToRgb(hex) {
+  // Remove # if present
+  const cleanHex = hex.replace('#', '');
+  const r = parseInt(cleanHex.substring(0, 2), 16);
+  const g = parseInt(cleanHex.substring(2, 4), 16);
+  const b = parseInt(cleanHex.substring(4, 6), 16);
+  return { r, g, b };
+}
 
 export function createEngine({ canvasParent, labelsElement }) {
   // THREE.js setup
@@ -40,17 +54,17 @@ export function createEngine({ canvasParent, labelsElement }) {
   camera.position.set(0, 1.2, 12);
 
   const scene = new THREE.Scene();
-  // Use CSS variable for scene background (theme-aware)
-  // Engine does NOT read theme from localStorage or classes - it relies on CSS variables
-  // CSS variables are set by theme-controller.js, which is the single source of truth
-  let sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--scene-bg').trim();
+  // Use CSS token for scene background (theme-aware)
+  // Primary source: --Scene/Background from tokens.css
+  // Fallback: getSceneColors().background from theme-colors.js
+  let sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--Scene/Background').trim();
   if (!sceneBg || sceneBg === '') {
-    // PHASE C2: Fallback to theme-colors.js instead of hardcoded hex
-    // This should rarely happen, as theme-controller initializes theme before engine creation
-    console.warn('[Engine] --scene-bg CSS variable not available, using theme-colors.js fallback');
-    const themeColors = getThemeColors();
-    sceneBg = themeColors.bgBase; // Use bgBase from theme-colors.js
+    // Fallback to theme-colors.js (reads CSS tokens internally)
+    console.warn('[Engine] --Scene/Background CSS token not available, using getSceneColors() fallback');
+    const sceneColors = getSceneColors();
+    sceneBg = sceneColors.background;
   }
+  console.log('[Engine] Scene background from CSS token:', sceneBg);
   scene.background = new THREE.Color(sceneBg);
 
   // Initialize systems
@@ -63,10 +77,21 @@ export function createEngine({ canvasParent, labelsElement }) {
   let navigation = null;
   let hud = null;
   let gridDebug = null;
+  
+  // Grid overlay throttle and cache (20 FPS = 50ms interval)
+  let lastGridUpdateTime = 0;
+  const GRID_UPDATE_INTERVAL = 50;
+  let cachedGridOverlay = null;
+  let cachedGridLines = null;
 
   async function mount(sceneConfig) {
     // sceneConfig is a scene plugin configuration (e.g., calm), NOT a UI theme
     console.log('[Engine] Mounting scene:', sceneConfig.id);
+
+    // Clear grid caches to prevent memory leaks (memory optimization)
+    cachedGridOverlay = null;
+    cachedGridLines = null;
+    window._gridCacheInvalid = true;
 
     // Dispose previous scene
     if (navigation && typeof navigation.dispose === 'function') {
@@ -165,14 +190,14 @@ export function createEngine({ canvasParent, labelsElement }) {
         }
       } catch (e) {
         console.warn('[Engine] Could not update scene background after mount:', e);
-        // Fallback: read from CSS variable only (no theme class checking)
+        // Fallback: read from CSS token directly
         try {
-          const sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--scene-bg').trim();
+          const sceneBg = getComputedStyle(document.documentElement).getPropertyValue('--Scene/Background').trim();
           if (sceneBg && scene.background) {
             scene.background = new THREE.Color(sceneBg);
-            console.log('[Engine] Fallback: scene background set from CSS variable:', sceneBg);
+            console.log('[Engine] Fallback: scene background set from CSS token:', sceneBg);
           } else {
-            console.warn('[Engine] Fallback: --scene-bg CSS variable not available');
+            console.warn('[Engine] Fallback: --Scene/Background CSS token not available');
           }
         } catch (e2) {
           console.warn('[Engine] Fallback scene background update also failed:', e2);
@@ -211,11 +236,12 @@ export function createEngine({ canvasParent, labelsElement }) {
       // Pause 3D rendering only when tour is active on mobile devices
       // This improves mobile performance while keeping desktop and HUD functionality intact
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
-      const tourActive = typeof document !== 'undefined' && 
-        (document.body.classList.contains('tour-active') || 
-         document.documentElement.classList.contains('tour-active'));
+      // CRITICAL: Check tour overlay visibility instead of global classes
+      // Tour no longer modifies global classes, so check overlay directly
+      const tourOverlay = typeof document !== 'undefined' ? document.getElementById('tour-overlay') : null;
+      const tourActive = tourOverlay && !tourOverlay.classList.contains('hidden');
       
-      // Only pause rendering on mobile when tour is active
+      // Only pause rendering on mobile when tour overlay is visible
       // Desktop: always render (even in tour/HUD)
       // Mobile: pause only in tour mode, continue in HUD and normal mode
       const shouldRender = !(isMobile && tourActive);
@@ -248,101 +274,153 @@ export function createEngine({ canvasParent, labelsElement }) {
         }
       } catch(_) {}
 
-      // Sync CSS HUD grid pulse with engine time
-      try {
-        const root = document.documentElement;
-        if (root && root.style) {
-          // Prefer scene-provided core pulse (sync with central sphere)
-          const corePulse = (typeof window !== 'undefined' && typeof window._corePulse === 'number')
-            ? window._corePulse
-            : (0.5 + 0.5 * Math.sin(t * 0.9));
-          // Soft breathing derived from corePulse
-          const op = 0.60 + 0.40 * corePulse; // заметнее дыхание 0.6..1.0
-          // Hue wobble заметнее
-          const hue = 18 * (corePulse - 0.5);
-          // Slow phase scroll for dashed pattern and shimmer
-          const phase = ((t * 24) % 24).toFixed(2) + 'px';
-          const shimmerH = ((t * -6 * 10) % 220) + '%';
-          const shimmerV = ((t * -6 * 10) % 220) + '%';
-          root.style.setProperty('--grid-opacity', op.toFixed(3));
-          root.style.setProperty('--grid-hue', hue.toFixed(2) + 'deg');
-          const sat = (1.0 + 0.4 * corePulse).toFixed(2);
-          root.style.setProperty('--grid-sat', sat);
-          // direct color drive for dashed paint
-          // Stronger visible colour cycling (HSV→RGBapprox)
-          const H = ( (corePulse * 360) % 360 );
-          const S = 0.85; const V = 1.0;
-          const C = V*S; const X = C*(1-Math.abs(((H/60)%2)-1)); const m = V-C;
-          let r=0,g=0,b=0; const hSeg = Math.floor(H/60);
-          if (hSeg===0){r=C;g=X;b=0;} else if (hSeg===1){r=X;g=C;b=0;} else if (hSeg===2){r=0;g=C;b=X;} else if (hSeg===3){r=0;g=X;b=C;} else if (hSeg===4){r=X;g=0;b=C;} else {r=C;g=0;b=X;}
-          const R = Math.round((r+m)*255), G = Math.round((g+m)*255), B = Math.round((b+m)*255);
-          // Theme-aware grid opacity: softer in light theme
-          // PHASE C3.2: Even softer grid in light theme for better visibility
-          const isLightTheme = document.documentElement.classList.contains('theme-light') ||
-                               document.body.classList.contains('theme-light');
-          let baseAlpha = 0.18;
-          let pulseAlpha = 0.32;
-          if (isLightTheme) {
-            baseAlpha = 0.06;
-            pulseAlpha = 0.12;
-          }
-          const a = (baseAlpha + pulseAlpha * corePulse).toFixed(3);
-          const col = `rgba(${R}, ${G}, ${B}, ${a})`;
-          root.style.setProperty('--grid-color', col);
-          root.style.setProperty('--phase', phase);
-          root.style.setProperty('--shimmerH', shimmerH);
-          root.style.setProperty('--shimmerV', shimmerV);
+      // Sync CSS HUD grid pulse with engine time (throttled to 20 FPS for performance)
+      if (now - lastGridUpdateTime >= GRID_UPDATE_INTERVAL) {
+        lastGridUpdateTime = now;
+        try {
+          const root = document.documentElement;
+          if (root && root.style) {
+            // Prefer scene-provided core pulse (sync with central sphere)
+            const corePulse = (typeof window !== 'undefined' && typeof window._corePulse === 'number')
+              ? window._corePulse
+              : (0.5 + 0.5 * Math.sin(t * 0.9));
+            // Soft breathing derived from corePulse
+            const op = 0.60 + 0.40 * corePulse; // заметнее дыхание 0.6..1.0
+            // Hue wobble заметнее
+            const hue = 18 * (corePulse - 0.5);
+            // Slow phase scroll for dashed pattern and shimmer
+            const phase = ((t * 24) % 24).toFixed(2) + 'px';
+            const shimmerH = ((t * -6 * 10) % 220) + '%';
+            const shimmerV = ((t * -6 * 10) % 220) + '%';
+            root.style.setProperty('--grid-opacity', op.toFixed(3));
+            root.style.setProperty('--grid-hue', hue.toFixed(2) + 'deg');
+            const sat = (1.0 + 0.4 * corePulse).toFixed(2);
+            root.style.setProperty('--grid-sat', sat);
+            // PHASE 3: Use grid color from theme tokens instead of hardcoded RGB
+            // Get base grid color from theme tokens
+            const sceneColors = getSceneColors();
+            const gridColorHex = sceneColors.grid; // e.g., '#8B98A5' for Dark, '#A0A9B8' for Light
+            const gridColorRgb = hexToRgb(gridColorHex);
+            
+            // OPTIMIZATION: Use real core hue from scene instead of hardcoded 200
+            // window._coreHueDeg is set by calmScene when impulse hits the core
+            const coreHue = (typeof window !== 'undefined' && typeof window._coreHueDeg === 'number')
+              ? window._coreHueDeg
+              : 200; // Fallback to cyan if not available
+            const hueShift = (corePulse - 0.5) * 10; // Small hue shift: -5 to +5 degrees
+            const H = (coreHue + hueShift + 360) % 360; // Use real core hue, shifted by pulse
+            const S = 0.6 + 0.2 * corePulse; // Higher saturation for Primary blue: 0.6 to 0.8
+            const V = 0.4 + 0.15 * corePulse; // Lower brightness to avoid whitish look: 0.4 to 0.55
+            const C = V*S; const X = C*(1-Math.abs(((H/60)%2)-1)); const m = V-C;
+            let r=0,g=0,b=0; const hSeg = Math.floor(H/60);
+            if (hSeg===0){r=C;g=X;b=0;} else if (hSeg===1){r=X;g=C;b=0;} else if (hSeg===2){r=0;g=C;b=X;} else if (hSeg===3){r=0;g=X;b=C;} else if (hSeg===4){r=X;g=0;b=C;} else {r=C;g=0;b=X;}
+            
+            // Theme-aware grid opacity and blending: softer in light theme
+            // PHASE 3: Use theme-appropriate opacity values and blending weights
+            const isLightTheme = document.documentElement.classList.contains('theme-light') ||
+                                 document.body.classList.contains('theme-light');
+            
+            // Blend theme color with dynamic effect
+            // In light theme, use more theme color (90%) and less dynamic effect (10%) for softer appearance
+            // In dark theme, use balanced blend (70% theme, 30% dynamic) for more visible effect
+            const themeWeight = isLightTheme ? 0.9 : 0.7;
+            const dynamicWeight = isLightTheme ? 0.1 : 0.3;
+            const R = Math.round(gridColorRgb.r * themeWeight + (r+m)*255 * dynamicWeight);
+            const G = Math.round(gridColorRgb.g * themeWeight + (g+m)*255 * dynamicWeight);
+            const B = Math.round(gridColorRgb.b * themeWeight + (b+m)*255 * dynamicWeight);
+            let baseAlpha = 0.18;
+            let pulseAlpha = 0.32;
+            if (isLightTheme) {
+              baseAlpha = 0.10;
+              pulseAlpha = 0.28;
+            }
+            const a = (baseAlpha + pulseAlpha * corePulse).toFixed(3);
+            const col = `rgba(${R}, ${G}, ${B}, ${a})`;
+            root.style.setProperty('--grid-color', col);
+            root.style.setProperty('--phase', phase);
+            root.style.setProperty('--shimmerH', shimmerH);
+            root.style.setProperty('--shimmerV', shimmerV);
 
-          // Fallback: directly apply to grid lines to ensure visibility
-          const overlayEl = document.getElementById('grid-overlay');
-          if (overlayEl && overlayEl.children && overlayEl.children.length) {
-            for (let i = 0; i < overlayEl.children.length; i++) {
-              const lineEl = overlayEl.children[i];
-              if (!lineEl || !lineEl.style) continue;
-              lineEl.style.opacity = op.toFixed(3);
-              lineEl.style.filter = `hue-rotate(${hue.toFixed(2)}deg) saturate(${sat})`;
-              // drive dash paint colour directly to bypass cascade issues
-              lineEl.style.setProperty('--c', col);
-              // Also rebuild repeating-gradient explicitly to ensure re-render
-              const dashStr = lineEl.style.getPropertyValue('--dash') || '10px';
-              const gapStr  = lineEl.style.getPropertyValue('--gap')  || '8px';
-              const dash = parseFloat(dashStr) || 10;
-              const gap  = parseFloat(gapStr)  || 8;
-              const isH = lineEl.classList && lineEl.classList.contains('h');
-              if (isH) {
-                lineEl.style.backgroundImage = `repeating-linear-gradient(90deg, ${col} 0 ${dash}px, rgba(255,255,255,0) ${dash}px ${dash+gap}px)`;
-                lineEl.style.backgroundPosition = `${phase} 0`;
-                lineEl.style.backgroundSize = `${dash+gap}px 100%`;
-              } else {
-                lineEl.style.backgroundImage = `repeating-linear-gradient(180deg, ${col} 0 ${dash}px, rgba(255,255,255,0) ${dash}px ${dash+gap}px)`;
-                lineEl.style.backgroundPosition = `0 ${phase}`;
-                lineEl.style.backgroundSize = `100% ${dash+gap}px`;
-              }
-              // Fallback solid background to confirm colour change (overridden by gradient but ensures paint)
-              lineEl.style.backgroundColor = col;
-              // Boost visibility via dynamic glow synced to pulse
-              const glowA = (0.15 + 0.45 * corePulse).toFixed(3);
-              const glowB = (0.10 + 0.30 * corePulse).toFixed(3);
-              lineEl.style.boxShadow = `0 0 6px rgba(92,182,255,${glowA}), 0 0 16px rgba(92,182,255,${glowB})`;
-              // Force composition: toggle blend mode and thickness at peaks
-              lineEl.style.mixBlendMode = (corePulse > 0.65 ? 'normal' : 'screen');
-              if (isH) {
-                lineEl.style.height = (corePulse > 0.8 ? '2px' : '1px');
-              } else {
-                lineEl.style.width  = (corePulse > 0.8 ? '2px' : '1px');
-              }
-              if (lineEl.classList && lineEl.classList.contains('h')) {
-                lineEl.style.backgroundPosition = `${phase} 0`;
-              } else {
-                lineEl.style.backgroundPosition = `0 ${phase}`;
+            // Use cached grid overlay element (performance optimization)
+            // Check if cache needs to be invalidated (buildGrid was called)
+            if (typeof window !== 'undefined' && window._gridCacheInvalid) {
+              cachedGridOverlay = null;
+              cachedGridLines = null;
+              window._gridCacheInvalid = false;
+            }
+            if (!cachedGridOverlay) {
+              cachedGridOverlay = document.getElementById('grid-overlay');
+              if (cachedGridOverlay) {
+                cachedGridLines = Array.from(cachedGridOverlay.children);
               }
             }
-            if (gridDebug) {
-              gridDebug.textContent = `lines:${overlayEl.children.length} pulse:${corePulse.toFixed(3)} op:${op.toFixed(2)} hue:${hue.toFixed(1)} sat:${sat}`;
+            
+            if (cachedGridLines && cachedGridLines.length) {
+              // Compute glow color from coreHue (dynamic instead of hardcoded cyan)
+              const glowH = coreHue;
+              const glowS = 0.8;
+              const glowL = 0.50;
+              const glowC = (1 - Math.abs(2 * glowL - 1)) * glowS;
+              const glowX = glowC * (1 - Math.abs((glowH / 60) % 2 - 1));
+              const glowM = glowL - glowC / 2;
+              let glowR, glowG, glowB;
+              const glowSeg = Math.floor(glowH / 60) % 6;
+              if (glowSeg === 0) { glowR = glowC; glowG = glowX; glowB = 0; }
+              else if (glowSeg === 1) { glowR = glowX; glowG = glowC; glowB = 0; }
+              else if (glowSeg === 2) { glowR = 0; glowG = glowC; glowB = glowX; }
+              else if (glowSeg === 3) { glowR = 0; glowG = glowX; glowB = glowC; }
+              else if (glowSeg === 4) { glowR = glowX; glowG = 0; glowB = glowC; }
+              else { glowR = glowC; glowG = 0; glowB = glowX; }
+              const glowRgb = `${Math.round((glowR + glowM) * 255)}, ${Math.round((glowG + glowM) * 255)}, ${Math.round((glowB + glowM) * 255)}`;
+              
+              for (let i = 0; i < cachedGridLines.length; i++) {
+                const lineEl = cachedGridLines[i];
+                if (!lineEl || !lineEl.style) continue;
+                lineEl.style.opacity = op.toFixed(3);
+                lineEl.style.filter = `hue-rotate(${hue.toFixed(2)}deg) saturate(${sat})`;
+                // drive dash paint colour directly to bypass cascade issues
+                lineEl.style.setProperty('--c', col);
+                // Also rebuild repeating-gradient explicitly to ensure re-render
+                const dashStr = lineEl.style.getPropertyValue('--dash') || '10px';
+                const gapStr  = lineEl.style.getPropertyValue('--gap')  || '8px';
+                const dash = parseFloat(dashStr) || 10;
+                const gap  = parseFloat(gapStr)  || 8;
+                const isH = lineEl.classList && lineEl.classList.contains('h');
+                if (isH) {
+                  lineEl.style.backgroundImage = `repeating-linear-gradient(90deg, ${col} 0 ${dash}px, rgba(255,255,255,0) ${dash}px ${dash+gap}px)`;
+                  lineEl.style.backgroundPosition = `${phase} 0`;
+                  lineEl.style.backgroundSize = `${dash+gap}px 100%`;
+                } else {
+                  lineEl.style.backgroundImage = `repeating-linear-gradient(180deg, ${col} 0 ${dash}px, rgba(255,255,255,0) ${dash}px ${dash+gap}px)`;
+                  lineEl.style.backgroundPosition = `0 ${phase}`;
+                  lineEl.style.backgroundSize = `100% ${dash+gap}px`;
+                }
+                // Fallback solid background to confirm colour change (overridden by gradient but ensures paint)
+                lineEl.style.backgroundColor = col;
+                // Boost visibility via dynamic glow synced to pulse (using core hue color)
+                const glowA = (0.15 + 0.45 * corePulse).toFixed(3);
+                const glowB = (0.10 + 0.30 * corePulse).toFixed(3);
+                lineEl.style.boxShadow = `0 0 6px rgba(${glowRgb},${glowA}), 0 0 16px rgba(${glowRgb},${glowB})`;
+                // Force composition: toggle blend mode and thickness at peaks
+                lineEl.style.mixBlendMode = (corePulse > 0.65 ? 'normal' : 'screen');
+                if (isH) {
+                  lineEl.style.height = (corePulse > 0.8 ? '2px' : '1px');
+                } else {
+                  lineEl.style.width  = (corePulse > 0.8 ? '2px' : '1px');
+                }
+                if (lineEl.classList && lineEl.classList.contains('h')) {
+                  lineEl.style.backgroundPosition = `${phase} 0`;
+                } else {
+                  lineEl.style.backgroundPosition = `0 ${phase}`;
+                }
+              }
+              if (gridDebug) {
+                gridDebug.textContent = `lines:${cachedGridLines.length} pulse:${corePulse.toFixed(3)} op:${op.toFixed(2)} hue:${coreHue.toFixed(1)} sat:${sat}`;
+              }
             }
           }
-        }
-      } catch (_) {}
+        } catch (_) {}
+      }
 
       // Skip 3D updates and rendering when tour is active on mobile to improve performance
       if (shouldRender) {
@@ -466,6 +544,7 @@ export function createEngine({ canvasParent, labelsElement }) {
       });
       // ФАЗА A: Логирование после инициализации HUD
       console.log('[Bootstrap] After initHUD', { hudApiKeys: hud && Object.keys(hud || {}) });
+      
       // Expose HUD globally for tour integration and other modules
       try {
         if (typeof window !== 'undefined') {
@@ -513,6 +592,13 @@ export function createEngine({ canvasParent, labelsElement }) {
       currentPlugin.dispose();
     }
 
+    // Dispose picking system to remove event listeners (memory optimization)
+    disposePicking();
+
+    // Clear grid caches to prevent memory leaks (memory optimization)
+    cachedGridOverlay = null;
+    cachedGridLines = null;
+
     scene.clear();
     renderer.dispose();
     clearLabels();
@@ -536,8 +622,12 @@ export function createEngine({ canvasParent, labelsElement }) {
     mount: async (theme) => {
       const result = await mount(theme);
       // Trigger event
+      // PHASE 3: Added logging for debugging
       if (eventListeners.themeMounted) {
+        console.log('[Engine] Emitting themeMounted event for theme:', theme.id);
         eventListeners.themeMounted.forEach(fn => fn({ themeId: theme.id }));
+      } else {
+        console.warn('[Engine] No listeners for themeMounted event');
       }
       return result;
     },

@@ -9,6 +9,13 @@ import { on } from './state.js';
 // PHASE C2: Import theme-colors for fallback values
 import { getThemeColors } from './theme-colors.js';
 
+// CLEAN ARCHITECTURE: Links are styled via CSS only
+// No inline styles needed - CSS handles :hover, :active states
+function applyUnifiedLinkStyles(container) {
+  // This function is now a no-op - CSS handles all link styling
+  // Kept for backwards compatibility with existing calls
+}
+
 // Map ABOUT_DATA to format expected by HUD - lazy initialization to ensure ABOUT_DATA and LINKS are loaded
 function getABOUT() {
   return {
@@ -89,33 +96,29 @@ export function initHUD(options) {
       }
     });
     
-    // PHASE C2: Add hover effects for tab links (using CSS variables with theme-colors fallback)
+    // PHASE C2: Hover effects for tab links - CSS handles colors, JS only manages border
     hudBigPanel.addEventListener('mouseenter', (e) => {
       const tabLink = e.target.closest('.hud-tab-link');
       if (tabLink) {
-        // PHASE C2: Get colors from CSS variables, fallback to theme-colors.js (not hardcoded hex)
-        const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || 
-                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Primary').trim();
-        const accentHover = getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Hover').trim() || accentColor;
-        // PHASE C2: Fallback to theme-colors.js if CSS variables not available
         const themeColors = getThemeColors();
-        tabLink.style.borderBottomColor = accentHover || themeColors.accentPrimaryHover || themeColors.accentPrimary;
-        tabLink.style.color = accentColor || themeColors.accentPrimary;
+        const accentHover = getComputedStyle(document.documentElement).getPropertyValue('--color-accent-hover').trim() || 
+                            themeColors.accentPrimaryHover || themeColors.accentPrimary;
+        tabLink.style.borderBottomColor = accentHover;
+        // Let CSS handle color - remove inline style
+        tabLink.style.color = '';
       }
     }, true);
     
     hudBigPanel.addEventListener('mouseleave', (e) => {
       const tabLink = e.target.closest('.hud-tab-link');
       if (tabLink) {
-        // PHASE C2: Get colors from CSS variables, fallback to theme-colors.js (not hardcoded hex)
-        const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
-                          getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim();
-        const borderSubtle = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Subtle').trim() ||
-                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim();
-        // PHASE C2: Fallback to theme-colors.js if CSS variables not available
         const themeColors = getThemeColors();
-        tabLink.style.borderBottomColor = borderSubtle || themeColors.borderSubtle || themeColors.borderBase;
-        tabLink.style.color = mutedColor || themeColors.textMuted;
+        const borderSubtle = getComputedStyle(document.documentElement).getPropertyValue('--color-dark-border-subtle').trim() ||
+                            getComputedStyle(document.documentElement).getPropertyValue('--color-light-border-base').trim() ||
+                            themeColors.borderSubtle || themeColors.borderBase;
+        tabLink.style.borderBottomColor = borderSubtle;
+        // Let CSS handle color - remove inline style
+        tabLink.style.color = '';
       }
     }, true);
     
@@ -131,6 +134,8 @@ export function initHUD(options) {
   let navDebounceTimer = null;
   // Save scroll position when opening HUD
   let savedScrollPosition = 0;
+  // Timer cleanup: store timer IDs to prevent memory leaks on re-init
+  let demoButtonTimerIds = [];
 
   // Build SECTION_ORDER: explicit order as specified
   const nodesDataKeys = Object.keys(NODES_DATA);
@@ -151,7 +156,7 @@ export function initHUD(options) {
     ...(efficiencyKey ? [efficiencyKey] : []),
     ...(securityKey ? [securityKey] : []),
     ...(playbooksKey ? [playbooksKey] : []),
-    '👤 Автор'  // Автор is last
+    '🎸 Владимир Костял'  // Автор is last
   ];
   
   console.log('[HUD] SECTION_ORDER initialized:', SECTION_ORDER);
@@ -167,6 +172,30 @@ export function initHUD(options) {
     }
   })();
 
+  // Wrap tab buttons in container for horizontal layout on mobile
+  (function() {
+    const buttons = Array.from(hudSmallPanel.querySelectorAll('button[data-index]'));
+    if (buttons.length > 0) {
+      const firstButton = buttons[0];
+      const parent = firstButton.parentElement;
+      
+      // Check if buttons are already wrapped (idempotent)
+      if (parent === hudSmallPanel && !hudSmallPanel.querySelector('.hud-tabs-container')) {
+        const tabsContainer = document.createElement('div');
+        tabsContainer.className = 'hud-tabs-container';
+        
+        // Move all buttons into container
+        buttons.forEach(btn => {
+          parent.removeChild(btn);
+          tabsContainer.appendChild(btn);
+        });
+        
+        // Add container to hud-small-panel
+        hudSmallPanel.appendChild(tabsContainer);
+      }
+    }
+  })();
+
   function renderHudSectionHeader(name) {
     const data = NODES_DATA[name] || {};
     let header = hudSmallPanel.querySelector('.hud-section-header');
@@ -174,16 +203,44 @@ export function initHUD(options) {
     if (!header) {
       header = document.createElement('div');
       header.className = 'hud-section-header';
+      
+      // Обертка для заголовка
+      const titleWrapper = document.createElement('div');
+      titleWrapper.className = 'hud-title-wrapper';
+      
       const titleEl = document.createElement('div');
       titleEl.className = 'hud-section-title';
+      
+      // Добавляем заголовок в обертку
+      titleWrapper.appendChild(titleEl);
+      
       const summaryEl = document.createElement('div');
       summaryEl.className = 'hud-section-summary';
       const navEl = document.createElement('div');
       navEl.className = 'hud-section-nav';
-      header.appendChild(titleEl);
+      
+      // Кнопка закрытия создается сразу для правильного позиционирования
+      const closeBtn = document.createElement('button');
+      closeBtn.className = 'hud-close-btn';
+      closeBtn.type = 'button';
+      closeBtn.textContent = '✕';
+      closeBtn.setAttribute('aria-label', 'Закрыть');
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        hideOverlay();
+      });
+      
+      // Порядок элементов: обертка заголовка → описание → навигация → кнопка закрытия
+      header.appendChild(titleWrapper);
       header.appendChild(summaryEl);
       header.appendChild(navEl);
-      hudSmallPanel.insertBefore(header, hudSmallPanel.firstChild);
+      header.appendChild(closeBtn);
+      
+      // Safe insertBefore: firstChild can be null, which will append to end
+      // Also check that header is not already a child to prevent errors
+      if (!hudSmallPanel.contains(header)) {
+        hudSmallPanel.insertBefore(header, hudSmallPanel.firstChild);
+      }
     }
     
     // Always recreate navigation buttons to ensure handlers are fresh
@@ -235,6 +292,7 @@ export function initHUD(options) {
       navEl.appendChild(nextA);
     }
     
+    // Обновление содержимого заголовка (работает с новой структурой)
     const titleEl = header.querySelector('.hud-section-title');
     const summaryEl = header.querySelector('.hud-section-summary');
     if (titleEl) titleEl.textContent = name;
@@ -242,19 +300,20 @@ export function initHUD(options) {
     const summaryText = data.summary || '';
     if (summaryEl) summaryEl.textContent = summaryText;
 
-    // Close button
-    let closeBtn = header.querySelector('.hud-close-btn');
+    // Кнопка закрытия уже создана при создании header, проверяем только наличие
+    const closeBtn = header.querySelector('.hud-close-btn');
     if (!closeBtn) {
-      closeBtn = document.createElement('button');
-      closeBtn.className = 'hud-close-btn';
-      closeBtn.type = 'button';
-      closeBtn.textContent = '✕';
-      closeBtn.setAttribute('aria-label', 'Закрыть');
-      closeBtn.addEventListener('click', (e) => {
+      // Fallback: если кнопка по какой-то причине отсутствует, создаем её
+      const newCloseBtn = document.createElement('button');
+      newCloseBtn.className = 'hud-close-btn';
+      newCloseBtn.type = 'button';
+      newCloseBtn.textContent = '✕';
+      newCloseBtn.setAttribute('aria-label', 'Закрыть');
+      newCloseBtn.addEventListener('click', (e) => {
         e.preventDefault();
         hideOverlay();
       });
-      header.appendChild(closeBtn);
+      header.appendChild(newCloseBtn);
     }
   }
 
@@ -278,7 +337,7 @@ export function initHUD(options) {
     let nextName = SECTION_ORDER[nextIdx];
     
     // Special case: if we're on "Автор" (last) and clicking "Next", go to first section
-    if (currentNodeName === '👤 Автор' && delta > 0) {
+    if (currentNodeName === '🎸 Владимир Костял' && delta > 0) {
       nextIdx = 0;
       nextName = SECTION_ORDER[0];
     }
@@ -451,22 +510,22 @@ export function initHUD(options) {
           let problemText = (data.problem || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
           // Prepare links row (placed at the end for all tabs)
-          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
-          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div class="hud-cta-row">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         } else if (idx === 1) {
           let solutionText = (data.solution || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, false);
           // Prepare links row
-          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
-          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div class="hud-cta-row">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         } else {
           let uiText = (data.ui || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(uiText, false);
           // Prepare links row
-          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
-          const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+          const linksRow = getABOUT().ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn">${c.label}</a>`).join('');
+          const linksRowWrapped = `<div class="hud-cta-row">${linksRow}</div>`;
           content = headingHtml + bodyText + linksRowWrapped;
         }
       } else {
@@ -475,27 +534,15 @@ export function initHUD(options) {
           let problemText = (data.problem || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(problemText, false);
           // PHASE C2: Add link to "Исследования" tab at the end
-          // Use CSS variables with theme-colors fallback (not hardcoded hex)
-          const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() ||
-                             getComputedStyle(document.documentElement).getPropertyValue('--Color/Accent/Primary').trim() ||
-                             getThemeColors().accentPrimary;
-          const accentBorder = getComputedStyle(document.documentElement).getPropertyValue('--Color/State/Hover/Background').trim() ||
-                              getThemeColors().stateHoverBackground;
-          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="1" style="color: ${accentColor}; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid ${accentBorder}; transition: border-color 0.2s, color 0.2s; cursor: pointer;">Исследования →</a>`;
+          // Colors are now controlled by CSS tokens via .hud-tab-link class
+          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="1">Исследования →</a>`;
         } else if (idx === 1) {
           // Allow links in solution text
           let solutionText = (data.solution || '—');
           const { headingHtml, bodyText } = processTextWithSubheadings(solutionText, true);
           // Add link to "Решения" tab at the end
-          // Use CSS variables for theme support
-          // PHASE C2: Use CSS variables with theme-colors fallback (not hardcoded hex)
-          const mutedColor = getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() ||
-                            getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Text/Muted').trim() ||
-                            getThemeColors().textMuted;
-          const borderSubtle = getComputedStyle(document.documentElement).getPropertyValue('--Color/Dark/Border/Subtle').trim() ||
-                              getComputedStyle(document.documentElement).getPropertyValue('--Color/Light/Border/Base').trim() ||
-                              getThemeColors().borderSubtle || getThemeColors().borderBase;
-          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="2" style="color: ${mutedColor}; text-decoration: none; font-weight: 200 !important; border-bottom: 1px solid ${borderSubtle}; transition: border-color 0.2s, color 0.2s; cursor: pointer;">Решения →</a>`;
+          // Colors are now controlled by CSS tokens via .hud-tab-link class
+          content = headingHtml + bodyText + `<br/><a href="#" class="hud-tab-link" data-tab-index="2">Решения →</a>`;
         } else {
           const html = [];
           let uiText = (data.ui || '—');
@@ -510,7 +557,7 @@ export function initHUD(options) {
         }
       }
       
-      hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
+      hudBigPanel.innerHTML = '<div style="padding-bottom:24px;">' + content + '</div>';
 
       // Scroll to top when switching tabs (mobile, tablet, and desktop)
       // Use triple RAF to ensure content is fully rendered and layout is complete
@@ -543,6 +590,9 @@ export function initHUD(options) {
           btn.classList.add('active-tab');
           renderTab(idx);
           
+          // UNIFIED STYLE: Apply styles to links after rendering new tab
+          applyUnifiedLinkStyles(hudBigPanel);
+          
           // Ensure scroll happens after render (triple RAF for maximum reliability)
           // This ensures buttons (Проблема, Исследования, Решения) always scroll to top
           requestAnimationFrame(() => {
@@ -564,14 +614,18 @@ export function initHUD(options) {
         };
         btn._tabHandlerSet = true;
       });
+      
+      // CLEAN ARCHITECTURE: No inline styles - CSS handles all states via :hover, :active, .active-tab
+      // This ensures proper state management without style conflicts
     }
 
     // Show HUD elements
     if (hudObjectIcon) hudObjectIcon.style.display = 'none';
-    // Show the HUD container so panels appear centred and responsive
-    if (hudContainer) hudContainer.style.display = 'flex';
-    hudBigPanel.style.display = 'block';
-    hudSmallPanel.style.display = 'flex';
+    // HUD container and panels visibility is controlled by CSS class .hud-active
+    // CSS rules: .hud-active #hud-container { display: flex; }
+    //            #hud-container #hud-big-panel { display: block; }
+    //            #hud-container #hud-small-panel { display: flex; }
+    
     // Ensure scroll works inside big panel - stop event propagation
     const onBigPanelWheel = (e) => {
       // Allow native scroll inside the panel
@@ -584,6 +638,8 @@ export function initHUD(options) {
     hudBigPanel._wheelHandlers.push({ handler: onBigPanelWheel, options: { passive: true } });
     // Render section header (title, summary, nav)
     renderHudSectionHeader(node.name);
+    // UNIFIED STYLE: Apply styles to nav links in header
+    applyUnifiedLinkStyles(hudSmallPanel);
     // Activate overlay backdrop
     overlay.classList.add('active');
     activeOverlay = true;
@@ -601,6 +657,9 @@ export function initHUD(options) {
     hudButtons.forEach(b => b.classList.remove('active-tab'));
     if (hudButtons[0]) hudButtons[0].classList.add('active-tab');
     renderTab(0);
+    
+    // UNIFIED STYLE: Apply gray default, blue hover to all HUD links
+    applyUnifiedLinkStyles(hudBigPanel);
 
     // Scroll to top when opening overlay (mobile and desktop)
     const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
@@ -621,9 +680,8 @@ export function initHUD(options) {
     currentNodeName = '';
     currentInfo = [];
     hudObjectIcon.style.display = 'none';
-    hudBigPanel.style.display = 'none';
-    hudSmallPanel.style.display = 'none';
-    if (hudContainer) hudContainer.style.display = 'none';
+    // HUD container and panels visibility is controlled by CSS class .hud-active
+    // Removing .hud-active class will hide panels via CSS rules
     // Hide HUD backdrop
     if (hudBackdrop) hudBackdrop.classList.add('hidden');
     // Remove scroll redirection if installed
@@ -656,7 +714,7 @@ export function initHUD(options) {
     
     overlay.classList.add('active');
     activeOverlay = true;
-    currentNodeName = '👤 Автор';
+    currentNodeName = '🎸 Владимир Костял';
     // Автор is last in SECTION_ORDER
     currentNodeIndex = SECTION_ORDER.length - 1;
     
@@ -666,13 +724,15 @@ export function initHUD(options) {
       hudObjectIcon.innerHTML = '';
     }
     
-    // Show HUD container
-    if (hudContainer) hudContainer.style.display = 'flex';
-    hudBigPanel.style.display = 'block';
-    hudSmallPanel.style.display = 'flex';
+    // HUD container and panels visibility is controlled by CSS class .hud-active
+    // CSS rules: .hud-active #hud-container { display: flex; }
+    //            #hud-container #hud-big-panel { display: block; }
+    //            #hud-container #hud-small-panel { display: flex; }
     
     // Render header
-    renderHudSectionHeader('👤 Автор');
+    renderHudSectionHeader('🎸 Владимир Костял');
+    // UNIFIED STYLE: Apply styles to nav links in header
+    applyUnifiedLinkStyles(hudSmallPanel);
     
     // Set tab names for About panel
     const setAboutTabNames = () => {
@@ -696,8 +756,8 @@ export function initHUD(options) {
       let content = '';
       // Prepare links row (placed at the end for all tabs)
       const about = getABOUT();
-      const linksRow = about.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn" style="text-decoration:none; display:inline-block;">${c.label}</a>`).join('');
-      const linksRowWrapped = `<div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:20px;">${linksRow}</div>`;
+      const linksRow = about.ctas.map(c => `<a href="${c.href}" target="_blank" class="header-btn">${c.label}</a>`).join('');
+      const linksRowWrapped = `<div class="hud-cta-row">${linksRow}</div>`;
       
       if (idx === 0) {
         const { headingHtml, bodyText } = processTextWithSubheadings(about.text || '', false);
@@ -714,7 +774,7 @@ export function initHUD(options) {
         console.log('[HUD] About tab 2:', { hasContacts: !!about.contacts, contactsLength: about.contacts?.length, headingHtml, bodyTextLength: bodyText?.length, contentLength: content.length });
       }
       
-      hudBigPanel.innerHTML = '<div style="white-space:pre-line; padding-bottom:24px;">' + content + '</div>';
+      hudBigPanel.innerHTML = '<div style="padding-bottom:24px;">' + content + '</div>';
       
       // Scroll to top when switching About tabs (mobile and desktop)
       const isMobile = typeof window !== 'undefined' && window.innerWidth <= 767;
@@ -778,7 +838,10 @@ export function initHUD(options) {
     
     // Show HUD backdrop (similar to tour backdrop)
     if (hudBackdrop) hudBackdrop.classList.remove('hidden');
-    if (linksPanel) linksPanel.style.display = 'block';
+    if (linksPanel) {
+      linksPanel.style.display = 'block';
+      // PHASE AUDIT: Removed inline styles - CSS handles colors via tokens
+    }
     // Mark links-active so grid can stay visible in links mode
     document.documentElement.classList.add('links-active');
     // Install outside-click handler
@@ -834,6 +897,9 @@ export function initHUD(options) {
     });
   }
 
+  // CLEAN ARCHITECTURE: No inline styles for header buttons - CSS handles all states
+  // States are managed via :hover, :active pseudo-classes in main.css
+
   // PHASE 3B: Setup Demo button handler with protection against tour interference
   if (btnDemo) {
     // Mark button to prevent tour from modifying it
@@ -888,8 +954,12 @@ export function initHUD(options) {
     
     // PHASE 3B: Protect button from tour interference
     // Verify handler is still attached after delays (in case tour removes it)
+    // Clear any existing timers to prevent memory leaks on re-init
+    demoButtonTimerIds.forEach(id => clearTimeout(id));
+    demoButtonTimerIds = [];
+    
     [500, 1000, 2000].forEach(delay => {
-      setTimeout(() => {
+      const timerId = setTimeout(() => {
         const btn = document.getElementById('btn-demo');
         if (btn && !btn._demoClickHandler) {
           console.warn('[HUD] Demo button handler was removed, reattaching...');
@@ -897,6 +967,7 @@ export function initHUD(options) {
           btn._demoClickHandler = demoClickHandler;
         }
       }, delay);
+      demoButtonTimerIds.push(timerId);
     });
   }
   
@@ -905,7 +976,7 @@ export function initHUD(options) {
   // КОНТРАКТ:
   //   - Создаётся ТОЛЬКО здесь (createThemeToggleButton)
   //   - Управляется ТОЛЬКО через ensureThemeButton() и setupThemeToggleButton()
-  //   - Живёт в #theme-toggle-container или #site-header (по единому правилу)
+  //   - Живёт в #site-header напрямую (без промежуточного контейнера)
   //   - Вся логика тем (toggle, title, состояние) идёт через HUD → ThemeSwitcher → ThemeController
   //
   // ЖЁСТКИЕ ЗАПРЕТЫ ДЛЯ ДРУГИХ МОДУЛЕЙ:
@@ -929,7 +1000,7 @@ export function initHUD(options) {
     }
     
     // ФАЗА A: Логирование создания кнопки
-    const parentId = (document.getElementById('theme-toggle-container') || document.getElementById('site-header'))?.id || 'unknown';
+    const parentId = document.getElementById('site-header')?.id || 'unknown';
     console.log('[HUD][ThemeButton] created', { parent: parentId, time: Date.now() });
     
     console.log('[HUD] Creating theme toggle button (PHASE TT1: isolated creation)...');
@@ -945,71 +1016,34 @@ export function initHUD(options) {
     themeToggleBtn.style.zIndex = '2001';
     themeToggleBtn.style.position = 'relative';
     
-    // PHASE TT1: Insert theme toggle button into theme-toggle-container
-    // CRITICAL: This button must NEVER be removed by other code (tour, bootstrap, etc.)
-    // CRITICAL: Does NOT touch #tour-restart-btn or any other children
-    const themeToggleContainer = document.getElementById('theme-toggle-container');
-    if (themeToggleContainer) {
-      // PHASE TT1: Check if button already exists in container
+    // Добавляем кнопку темы напрямую в header
+    const header = document.getElementById('site-header');
+    if (header) {
+      // Check if button already exists in header
       const existingBtn = document.getElementById('theme-toggle-btn');
-      if (existingBtn && existingBtn.parentNode === themeToggleContainer) {
-        console.log('[HUD] Theme toggle button already in container (PHASE TT1: isolated check)');
-        // Ensure it's visible and has handlers
+      if (existingBtn && existingBtn.parentNode === header) {
+        console.log('[HUD] Theme toggle button already in header');
         existingBtn.style.display = 'inline-flex';
         existingBtn.style.visibility = 'visible';
         existingBtn.style.opacity = '1';
         existingBtn.style.pointerEvents = 'auto';
         return existingBtn;
       }
-      // PHASE TT1: Only remove from old location if it's NOT in theme-toggle-container
-      // CRITICAL: Only touches theme-toggle-btn, never touches tour-restart-btn or other children
-      if (existingBtn && existingBtn.parentNode && existingBtn.parentNode !== themeToggleContainer) {
-        console.log('[HUD] Moving theme toggle button from', existingBtn.parentNode.id || 'unknown', 'to container (PHASE TT1: isolated move)');
+      // Remove from old location if needed
+      if (existingBtn && existingBtn.parentNode && existingBtn.parentNode !== header) {
         existingBtn.parentNode.removeChild(existingBtn);
       }
-      // PHASE TT1: Append ONLY theme-toggle-btn to container
-      // CRITICAL: Does NOT remove, clear, or touch other children (e.g., tour-restart-btn)
-      themeToggleContainer.appendChild(themeToggleBtn);
+      // Append to header
+      header.appendChild(themeToggleBtn);
       themeToggleBtn.style.display = 'inline-flex';
       themeToggleBtn.style.visibility = 'visible';
       themeToggleBtn.style.opacity = '1';
       themeToggleBtn.style.pointerEvents = 'auto';
-      // Mark button as protected from removal
       themeToggleBtn.setAttribute('data-protected', 'true');
-      console.log('[HUD] Theme toggle button created and added to container (PHASE TT1: isolated creation)');
+      console.log('[HUD] Theme toggle button added to header');
     } else {
-      console.warn('[HUD] theme-toggle-container not found, appending to header');
-      const header = document.getElementById('site-header');
-      if (header) {
-        // PHASE TT1: Check if button already exists in header
-        const existingBtn = document.getElementById('theme-toggle-btn');
-        if (existingBtn && existingBtn.parentNode === header) {
-          console.log('[HUD] Theme toggle button already in header (PHASE TT1: isolated check)');
-          // Ensure it's visible
-          existingBtn.style.display = 'inline-flex';
-          existingBtn.style.visibility = 'visible';
-          existingBtn.style.opacity = '1';
-          existingBtn.style.pointerEvents = 'auto';
-          return existingBtn;
-        }
-        // PHASE TT1: Only remove from old location if it's NOT in header
-        // CRITICAL: Only touches theme-toggle-btn, never touches tour-restart-btn
-        if (existingBtn && existingBtn.parentNode && existingBtn.parentNode !== header) {
-          console.log('[HUD] Moving theme toggle button from', existingBtn.parentNode.id || 'unknown', 'to header (PHASE TT1: isolated move)');
-          existingBtn.parentNode.removeChild(existingBtn);
-        }
-        header.appendChild(themeToggleBtn);
-        themeToggleBtn.style.display = 'inline-flex';
-        themeToggleBtn.style.visibility = 'visible';
-        themeToggleBtn.style.opacity = '1';
-        themeToggleBtn.style.pointerEvents = 'auto';
-        // Mark button as protected from removal
-        themeToggleBtn.setAttribute('data-protected', 'true');
-        console.log('[HUD] Theme toggle button added to header (PHASE TT1: isolated creation)');
-      } else {
-        console.error('[HUD] Neither theme-toggle-container nor site-header found!');
-        return null;
-      }
+      console.error('[HUD] site-header not found!');
+      return null;
     }
     
     return themeToggleBtn;
@@ -1229,21 +1263,28 @@ export function initHUD(options) {
       }
     }
     
-    // Ensure button is in correct container
-    const container = document.getElementById('theme-toggle-container') || document.getElementById('site-header');
-    if (container && btn.parentNode !== container) {
-      // Move to correct container if needed
+    // Ensure button is in header (idempotent: only move if needed)
+    const header = document.getElementById('site-header');
+    if (header && btn.parentNode !== header) {
+      // Move to header if needed
       if (btn.parentNode) {
         btn.parentNode.removeChild(btn);
       }
-      container.appendChild(btn);
+      header.appendChild(btn);
     }
     
-    // Ensure visibility
-    btn.style.display = 'inline-flex';
-    btn.style.visibility = 'visible';
-    btn.style.opacity = '1';
-    btn.style.pointerEvents = 'auto';
+    // Ensure visibility (idempotent: only set if button is hidden)
+    const computedDisplay = getComputedStyle(btn).display;
+    const computedVisibility = getComputedStyle(btn).visibility;
+    const computedOpacity = getComputedStyle(btn).opacity;
+    
+    // Only set inline styles if button is actually hidden
+    if (computedDisplay === 'none' || computedVisibility === 'hidden' || computedOpacity === '0') {
+      btn.style.display = 'inline-flex';
+      btn.style.visibility = 'visible';
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+    }
     
     // Setup handlers idempotently (only if not already set up)
     if (!btn._themeToggleSetup) {
@@ -1255,7 +1296,9 @@ export function initHUD(options) {
       exists: !!btn,
       parent: btn && btn.parentNode && btn.parentNode.id,
       display: btn && btn.style.display,
-      visibility: btn && btn.style.visibility
+      visibility: btn && btn.style.visibility,
+      computedDisplay,
+      computedVisibility
     });
     
     return btn;

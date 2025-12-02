@@ -28,7 +28,7 @@
  * - 1.3 Статусные цвета (требуется добавление)
  */
 const PALETTE = {
-  // PHASE C3: Dark theme base - tuned to match UI tokens
+  // Dark theme base (synced with tokens.css)
   darkBg: '#0D1117',
   darkBgSecondary: '#161B22',
   darkBgTertiary: '#0F1419',
@@ -39,7 +39,7 @@ const PALETTE = {
   darkSurfacePanelMobile: 'rgba(22, 27, 34, 0.55)',
   darkSurfaceOverlay: 'rgba(7, 10, 15, 0.65)',
   
-  // PHASE C3: Light theme base - tuned to match UI tokens
+  // Light theme base (synced with tokens.css)
   lightBg: '#FAFBFC',
   lightBgMuted: '#F6F8FA',
   lightSurface1: '#FFFFFF',
@@ -48,45 +48,45 @@ const PALETTE = {
   lightSurfacePanel: 'rgba(255, 255, 255, 0.95)',
   lightSurfacePanelMobile: 'rgba(246, 248, 250, 0.95)',
   
-  // PHASE C3: Text colors - tuned to match UI tokens
-  // Dark theme uses light text
+  // Text colors (dark theme uses light text)
   textLightPrimary: '#F0F6FC',
   textLightSecondary: '#D4E4F7',
   textLightTertiary: '#A5B4C6',
   textLightMuted: '#8B98A5',
   
-  // Light theme uses dark text
+  // Text colors (light theme uses dark text)
   textDarkBase: '#1F2328',
   textDarkMuted: '#656D76',
   textOnBrand: '#FFFFFF',
   
-  // PHASE C3: Accent/Brand - tuned to match UI tokens
+  // Accent/Brand colors (dark theme)
   accentPrimary: '#58A6FF',
   accentPrimaryHover: '#4493E6',
   accentPrimaryActive: '#3582D4',
   accentPrimaryPressed: '#2E71C2',
   
-  // PHASE C3: Borders - tuned to match UI tokens
+  // Borders
   borderDark: '#30363D',
   borderDarkSubtle: 'rgba(48, 54, 61, 0.5)',
   borderLight: '#D8DEE4',
   
-  // PHASE C3: States - tuned to match UI tokens
+  // States
   stateHoverBg: 'rgba(88, 166, 255, 0.10)',
   stateActiveBg: 'rgba(88, 166, 255, 0.18)',
   stateSelectedBg: 'rgba(88, 166, 255, 0.14)',
   stateHoverSurface: 'rgba(48, 54, 61, 0.95)',
   
-  // PHASE C3: Effects - tuned to match UI tokens
+  // Effects
   effectGlow: 'rgba(88, 166, 255, 0.45)',
   effectShadowSoft: 'rgba(0, 0, 0, 0.28)',
   effectShadowMedium: 'rgba(0, 0, 0, 0.48)',
   
-  // PHASE C3: 3D Scene colors (Dark theme) - tuned for harmony with UI, softer glow
+  // 3D Scene colors (Dark theme) - Blue accent system matching UI
+  // Synced with styles/tokens.css :root Scene tokens
   sceneDarkBg: '#0D1117', // Matches UI background
   sceneDarkSpace: '#1A2332', // Slightly brighter space for depth
   sceneDarkCore: '#4A9EFF', // Softer core, less "burning"
-  sceneDarkGrid: '#8B98A5', // Matches muted text
+  sceneDarkGrid: '#58A6FF', // Primary blue - same as accent
   sceneDarkAccent: '#58A6FF', // Matches UI accent
   sceneDarkStarNear: '#58A6FF', // Consistent with accent
   sceneDarkStarFar: '#6B7A8A', // Softer far stars
@@ -103,28 +103,29 @@ const PALETTE = {
   sceneDarkLightHemi: '#B8D4FF', // Softer hemisphere light
   sceneDarkLightHemiGround: '#0F1419', // Matches tertiary background
   
-  // PHASE C3: 3D Scene colors (Light theme) - tuned for harmony with UI, visible but not harsh
-  sceneLightBg: '#E6ECF5', // Matches UI background
-  sceneLightSpace: '#D5DFEB', // Slightly darker space for depth
-  sceneLightCore: '#4493E6', // Softer core, matches hover color
-  sceneLightGrid: '#A0A9B8', // Matches muted text
-  sceneLightAccent: '#58A6FF', // Matches UI accent
-  sceneLightStarNear: '#58A6FF', // Consistent with accent
-  sceneLightStarFar: '#8B98A5', // Visible but not too bright
-  sceneLightMist: '#A8D0FF', // Softer mist
-  sceneLightBeamBase: '#58A6FF', // Matches accent
-  sceneLightBeamLine: '#B8D9FF', // Softer line
-  sceneLightBeamInner: '#A8D0FF', // Balanced inner
-  sceneLightBeamOuter: '#4493E6', // Consistent outer
-  sceneLightBeamA: '#6BB0FF', // Balanced beam A
-  sceneLightBeamB: '#8BC5FF', // Balanced beam B
-  sceneLightPulse: '#3582D4', // Softer pulse
-  sceneLightPulseB: '#4493E6', // Softer pulse B
-  sceneLightWire: '#1F2328', // Matches primary text
-  sceneLightLightHemi: '#E6F2FF', // Soft hemisphere light
-  sceneLightLightHemiGround: '#F6F8FA', // Matches muted background
+  // 3D Scene colors (Light theme) - Primary blue spectrum matching dark theme
+  // Synced with styles/tokens.css .theme-light Scene tokens
+  sceneLightBg: '#B8D4FF',           // More saturated blue background
+  sceneLightSpace: '#A0C4FF',        // More saturated blue space for depth
+  sceneLightCore: '#2E7DD8',         // Deep saturated blue core
+  sceneLightGrid: '#FFFFFF',         // Pure white grid
+  sceneLightAccent: '#3B8EF0',       // More saturated primary blue
+  sceneLightStarNear: '#FFFFFF',     // White for contrast on blue bg
+  sceneLightStarFar: '#E8F4FF',      // Pale white-blue far stars
+  sceneLightMist: '#B8D9FF',         // More saturated mist
+  sceneLightBeamBase: '#3B8EF0',     // More saturated beam base
+  sceneLightBeamLine: '#8FC4FF',     // More saturated beam line
+  sceneLightBeamInner: '#A8D0FF',    // More saturated inner
+  sceneLightBeamOuter: '#2E7DD8',    // Deep saturated outer
+  sceneLightBeamA: '#4A9EFF',        // More saturated beam A
+  sceneLightBeamB: '#7AB8F0',        // More saturated beam B
+  sceneLightPulse: '#1E4F7A',        // Deeper blue pulse
+  sceneLightPulseB: '#2E6FA5',       // Deeper blue pulse B
+  sceneLightWire: '#0B0F14',         // Matches primary text (graphite)
+  sceneLightLightHemi: '#F0F7FF',    // Very pale blue hemisphere light
+  sceneLightLightHemiGround: '#F7F8FA', // Neutral ground
   
-  // PHASE C3: Node palette - tuned for better visibility and harmony
+  // Node palette - tuned for better visibility and harmony
   nodeColors: [
     '#58A6FF', // blue - matches accent
     '#2DD4BF', // green - softer, more visible
@@ -349,7 +350,7 @@ const lightTheme = {
   // Освещение (✅ Статические)
   sceneLightHemi: PALETTE.sceneLightLightHemi,  // Цвет полусферического света
   sceneLightHemiGround: PALETTE.sceneLightLightHemiGround, // Цвет земли полусферического света
-  sceneLightDir: '#1F2328',                     // Цвет направленного света (совпадает с textPrimary)
+  sceneLightDir: '#0B0F14',                     // Цвет направленного света (graphite, matches textPrimary)
   
   // Палитра узлов (📊 Динамический выбор из статической палитры)
   nodePalette: PALETTE.nodeColors               // Массив из 8 статических цветов
@@ -397,35 +398,87 @@ export function toThreeColor(colorString) {
 }
 
 /**
- * Получает цвета 3D сцены для текущей темы
+ * Читает CSS переменную из :root
+ * @param {string} name - имя CSS переменной (с --)
+ * @param {string} fallback - значение по умолчанию
+ * @returns {string}
+ */
+// Cache for CSS variable warnings - each warning shown only once
+const _cssVarWarningsShown = new Set();
+
+function getCSSVar(name, fallback = '#FF00FF') {
+  if (typeof document === 'undefined') return fallback;
+  const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  const result = value || fallback;
+  // Debug: log if using fallback (only once per variable to prevent console spam)
+  if (!value && !_cssVarWarningsShown.has(name)) {
+    _cssVarWarningsShown.add(name);
+    console.debug(`[theme-colors] CSS var ${name} not found, using fallback: ${fallback}`);
+  }
+  return result;
+}
+
+/**
+ * Получает цвета 3D сцены из CSS токенов (единственный источник истины)
+ * Все значения берутся из styles/tokens.css
  * @returns {Object} Объект с цветами для 3D сцены
  */
 export function getSceneColors() {
+  // Fallback to JS tokens if CSS not available
   const colors = getThemeColors();
-  return {
-    background: colors.sceneBg,
-    space: colors.sceneSpace,
-    core: colors.sceneCore,
-    grid: colors.sceneGrid,
-    accent: colors.sceneAccent,
-    starNear: colors.sceneStarNear,
-    starFar: colors.sceneStarFar,
-    mist: colors.sceneMist,
-    beamBase: colors.sceneBeamBase,
-    beamLine: colors.sceneBeamLine,
-    beamInner: colors.sceneBeamInner,
-    beamOuter: colors.sceneBeamOuter,
-    beamA: colors.sceneBeamA,
-    beamB: colors.sceneBeamB,
-    pulse: colors.scenePulse,
-    pulseB: colors.scenePulseB,
-    wire: colors.sceneWire,
-    lightHemi: colors.sceneLightHemi,
-    lightHemiGround: colors.sceneLightHemiGround,
-    lightDir: colors.sceneLightDir,
-    nodePalette: colors.nodePalette,
-    impulseColor: colors.impulseColor
+  
+  const result = {
+    // Background & Space
+    background: getCSSVar('--scene-background', colors.sceneBg),
+    space: getCSSVar('--scene-space', colors.sceneSpace),
+    
+    // Core & Grid
+    core: getCSSVar('--scene-core', colors.sceneCore),
+    grid: getCSSVar('--scene-grid', colors.sceneGrid),
+    accent: getCSSVar('--scene-accent', colors.sceneAccent),
+    
+    // Stars & Mist
+    starNear: getCSSVar('--scene-star-near', colors.sceneStarNear),
+    starFar: getCSSVar('--scene-star-far', colors.sceneStarFar),
+    mist: getCSSVar('--scene-mist', colors.sceneMist),
+    
+    // Beams
+    beamBase: getCSSVar('--scene-beam-base', colors.sceneBeamBase),
+    beamLine: getCSSVar('--scene-beam-line', colors.sceneBeamLine),
+    beamInner: getCSSVar('--scene-beam-inner', colors.sceneBeamInner),
+    beamOuter: getCSSVar('--scene-beam-outer', colors.sceneBeamOuter),
+    beamA: getCSSVar('--scene-beam-a', colors.sceneBeamA),
+    beamB: getCSSVar('--scene-beam-b', colors.sceneBeamB),
+    
+    // Pulse effects
+    pulse: getCSSVar('--scene-pulse', colors.scenePulse),
+    pulseB: getCSSVar('--scene-pulse-b', colors.scenePulseB),
+    
+    // Wire
+    wire: getCSSVar('--scene-wire', colors.sceneWire || colors.textPrimary),
+    
+    // Lighting
+    lightHemi: getCSSVar('--scene-light-hemi', colors.sceneLightHemi),
+    lightHemiGround: getCSSVar('--scene-light-hemi-ground', colors.sceneLightHemiGround),
+    lightDir: getCSSVar('--scene-light-dir', colors.sceneLightDir),
+    
+    // Impulse
+    impulseColor: getCSSVar('--scene-impulse', colors.impulseColor),
+    
+    // Node palette (array of 8 colors)
+    nodePalette: [
+      getCSSVar('--scene-node-1', colors.nodePalette?.[0] || '#58A6FF'),
+      getCSSVar('--scene-node-2', colors.nodePalette?.[1] || '#2DD4BF'),
+      getCSSVar('--scene-node-3', colors.nodePalette?.[2] || '#F59E0B'),
+      getCSSVar('--scene-node-4', colors.nodePalette?.[3] || '#F87171'),
+      getCSSVar('--scene-node-5', colors.nodePalette?.[4] || '#A78BFA'),
+      getCSSVar('--scene-node-6', colors.nodePalette?.[5] || '#14B8A6'),
+      getCSSVar('--scene-node-7', colors.nodePalette?.[6] || '#F472B6'),
+      getCSSVar('--scene-node-8', colors.nodePalette?.[7] || '#84CC16')
+    ]
   };
+  
+  return result;
 }
 
 // Экспорт для прямого доступа к темам (если нужно)

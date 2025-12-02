@@ -1,73 +1,18 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="ru" class="theme-dark">
 <head>
 <meta charset="utf-8"/>
-<!-- Критический CSS - предотвращает белый экран при загрузке -->
-<style>
-  /* Базовые стили для мгновенного применения - предотвращают FOUC */
-  /* PHASE C2: Critical colors now use tokens with fallback for FOUC prevention */
-  /* Default dark theme colors - will be overridden by theme-light class */
-  :root {
-    /* PHASE C2: Use tokens from styles/tokens.css with hex fallback for FOUC prevention */
-    /* DARK THEME (default) - light text on dark background */
-    --critical-bg: var(--bg, #0D1117);
-    --critical-text: var(--text, #F0F6FC);
-    --critical-header-bg: var(--Color/Dark/Surface/Ghost, rgba(18, 23, 34, 0.15));
-    /* Use semantic tokens from styles/tokens.css */
-    /* DARK THEME: light text colors as fallback */
-    --critical-logo-name: var(--Header/Logo/Name, #F0F6FC);
-    --critical-logo-tagline: var(--Header/Logo/Tagline, #A5B4C6);
-    --critical-btn: var(--Header/Button/Text, #A5B4C6);
-  }
-  :root.theme-light {
-    /* PHASE C2: Use tokens from styles/tokens.css with hex fallback for FOUC prevention */
-    --critical-bg: var(--bg, #FFFFFF);
-    --critical-text: var(--text, #0B0F14);
-    --critical-header-bg: var(--Color/Light/Surface/3, rgba(247, 248, 250, 0.95));
-    /* Use semantic tokens from styles/tokens.css */
-    --critical-logo-name: var(--Header/Logo/Name, #0B0F14);
-    --critical-logo-tagline: var(--Header/Logo/Tagline, #6B7280);
-    --critical-btn: var(--Header/Button/Text, #6B7280);
-  }
-  html {
-    background: var(--critical-bg) !important;
-    color: var(--critical-text) !important;
-    margin: 0;
-    padding: 0;
-    height: 100%;
-    overflow-x: hidden;
-  }
-  body {
-    background: transparent !important;
-    color: var(--critical-text) !important;
-    margin: 0;
-    padding: 0;
-  }
-  /* Хедер - адаптивный к теме */
-  header#site-header {
-    background: var(--critical-header-bg) !important;
-    color: var(--critical-text) !important;
-  }
-  .header-logo .name {
-    color: var(--critical-logo-name) !important;
-  }
-  .header-logo .tagline {
-    color: var(--critical-logo-tagline) !important;
-  }
-  .header-btn {
-    color: var(--critical-btn) !important;
-    background: transparent !important;
-  }
-</style>
 <meta content="width=device-width, initial-scale=1, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" name="viewport"/>
 <!-- iOS Safari: темная status bar -->
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
 <meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="mobile-web-app-capable" content="yes"/>
 <!-- Android Chrome: theme color -->
 <!-- PHASE C2: Initial value uses token fallback, will be updated dynamically via JavaScript based on current theme -->
 <!-- Theme color will be updated dynamically via JavaScript based on current theme -->
-<meta name="theme-color" content="#0B0F14" id="meta-theme-color"/>
-<meta name="msapplication-navbutton-color" content="#0B0F14" id="meta-navbutton-color"/>
+<!-- PHASE 3E: Meta theme-color will be updated dynamically via JavaScript from CSS variables -->
+<meta name="theme-color" content="var(--color-dark-bg-primary)" id="meta-theme-color"/>
+<meta name="msapplication-navbutton-color" content="var(--color-dark-bg-primary)" id="meta-navbutton-color"/>
 <title>Владимир Костял — UX4AI: UX-архитектура и интерфейсы для AI</title>
 <meta name="description" content="Владимир Костял — проектирую UX-архитектуру и интерфейсы для AI‑сервисов. UX4AI: паттерны, подходы и решения для взаимодействия с ИИ."/>
 <meta name="keywords" content="UX, AI, UX архитектура, интерфейсы, проектирование, взаимодействие с ИИ, UX4AI"/>
@@ -151,1109 +96,69 @@
 </script>
 <noscript><div><img src="https://mc.yandex.ru/watch/105120842" style="position:absolute; left:-9999px;" alt="" /></div></noscript>
 <!-- /Yandex.Metrika counter -->
+
+
 <!-- Favicons -->
 <link rel="icon" type="image/png" sizes="32x32" href="./favicon.png"/>
 <link rel="icon" type="image/png" sizes="16x16" href="./favicon.png"/>
 <link rel="apple-touch-icon" sizes="180x180" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="192x192" href="./android-chrome-192x192.png"/>
 <link rel="icon" type="image/png" sizes="512x512" href="./android-chrome-512x512.png"/>
-<link rel="stylesheet" href="./styles/tokens.css?v=43"/>
-<link rel="stylesheet" href="./styles/main.css?v=43"/>
+<link rel="stylesheet" href="./styles/tokens.css?v=111"/>
+<link rel="stylesheet" href="./styles/main.css?v=247"/>
+<!-- CRITICAL: Force theme class before any JS runs to ensure CSS variables resolve correctly -->
+<script>
+  (function() {
+    // Read saved theme or default to dark
+    var savedTheme = 'dark';
+    try { savedTheme = localStorage.getItem('colorTheme') || 'dark'; } catch(e) {}
+    if (savedTheme !== 'light' && savedTheme !== 'dark') savedTheme = 'dark';
+    // Apply theme classes immediately
+    document.documentElement.classList.add('theme-' + savedTheme);
+    console.log('[Theme Bootstrap] Applied theme class:', savedTheme);
+  })();
+</script>
 <style>
-    /* Scroll world: make body tall so camera flies segment-by-segment */
-html {
-  margin: 0;
-  padding: 0;
-  background: var(--bg);
-  height: 100%;
-  overflow-x: hidden;
-  /* Establish consistent typography across the site: the base body text
-     corresponds to Text/Body/Base (16px/24px) from the design system. */
-  font-size: 16px;
-  line-height: 1.5;
-  font-weight: 400;
-  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, 'Helvetica Neue', Arial, sans-serif;
-}
-body {
-  margin: 0;
-  padding: 0;
-  background: transparent;
-  color: var(--text);
-}
-/* While orbit is active on mobile, block browser gestures (pan/zoom) */
-.orbit-active, .orbit-active body, .orbit-active #three-container { touch-action: none; }
-/* Mobile performance optimizations */
-@media (max-width: 767px) {
-  /* Предотвращение проблем с масштабированием при перезагрузке */
-  html {
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-  }
-  
-  body {
-    -webkit-text-size-adjust: 100%;
-    -ms-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-    /* Убрал transform: scale - он ломает скролл */
-    width: 100% !important;
-    max-width: 100vw !important;
-    /* Разрешить скролл в обычном режиме */
-    overflow-x: hidden !important;
-    /* Убрал !important из overflow-y - navigation.js управляет скроллом */
-    overflow-y: auto;
-    position: relative !important;
-    /* Убрал touch-action: pan-y - он конфликтует с navigation.js */
-    /* Скролл управляется через navigation.js */
-  }
-  
-  /* Disable tap highlight for better performance */
-  * {
-    -webkit-tap-highlight-color: transparent;
-  }
-  /* Optimize touch interactions for buttons and interactive elements */
-  button, a, .btn, [role="button"], [tabindex], .tour-segment, .thermometer-segment {
-    touch-action: manipulation;
-    -webkit-touch-callout: none;
-    user-select: none;
-    -webkit-user-select: none;
-    /* Remove transitions on mobile for instant feedback */
-    transition: none !important;
-    /* Предотвращение залипаний - оптимизация отклика */
-    -webkit-tap-highlight-color: var(--Color/State/Hover/Background, rgba(91, 156, 255, 0.1));
-    /* Улучшение производительности */
-    will-change: auto;
-    transform: translateZ(0); /* GPU acceleration */
-  }
-  /* Remove transitions for tour buttons on mobile for instant response */
-  #tour-overlay .tour-actions .btn {
-    transition: none !important;
-  }
-  /* Disable hover effects on mobile - they can interfere with touch */
-  #tour-overlay .tour-actions .btn:hover {
-    background: var(--Color/State/Hover/Surface) !important;
-    color: var(--tour-text-muted) !important;
-    border-color: var(--border) !important;
-  }
-  #tour-overlay .tour-actions .btn-primary:hover {
-    background: var(--Color/State/Active/Background) !important;
-  }
-  /* Prevent text selection on interactive elements */
-  .tour-card, .hud-big-panel, .hud-small-panel {
-    -webkit-touch-callout: none;
-  }
-  /* Optimize will-change usage - only for elements that actually animate */
-  .grid-line {
-    will-change: auto; /* Remove will-change on mobile for better performance */
-  }
-}
-    /* Height is set dynamically based on segments; keep minimal here */
-    #three-container { 
-      position:fixed; 
-      inset:0; 
-      overflow:hidden; 
-      background: transparent;
-      z-index: 1;
-    }
-    #labels {
-      position: fixed; 
-      inset: 0; 
-      pointer-events: none;
-      background: transparent;
-      z-index: 900;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, 'Helvetica Neue', Arial;
-    }
-    .label {
-      position:absolute; transform:translate(-50%,-50%);
-      padding: 4px 10px;
-      pointer-events: auto;
-      font-size: 14px;
-      letter-spacing: 0.2px;
-      font-weight: 400;
-      color: var(--HUD/Text/Base);
-      background: var(--HUD/Panel/Bg);
-      border: 1px solid var(--HUD/Panel/Border);
-      border-radius: 10px;
-      box-shadow: 0 0 0 1px var(--HUD/Panel/Border) inset, 0 2px 10px var(--Color/Effect/Shadow/Soft);
-      white-space: nowrap;
-      opacity: 0.96;
-    }
+    /* PHASE C3.4: Base styles moved to main.css */
+    /* Mobile performance optimizations moved to main.css */
+    /* PHASE C3.4: #three-container, #labels, .label styles moved to main.css */
+    /* PHASE C3.4: .hud, .chip, .spacer, .hint styles moved to main.css */
 
-    .label:hover {
-      background: var(--Color/State/Hover/Background);
-      border-color: var(--Color/Accent/Primary);
-      color: var(--HUD/Text/Base);
-      cursor: pointer;
-    }
-    /* HUD chips (layer hints) preserved for orientation */
-    .hud {
-      position: fixed; left: 12px; top: 12px; right: 12px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;
-      /* PHASE C4: Use token directly instead of legacy variable */
-      background: var(--Color/Dark/Background/Secondary); border:1px solid var(--border); border-radius:12px; padding:8px 10px; backdrop-filter: blur(6px);
-      z-index:10; font-size:12px;
-    }
-    /* PHASE C4: Use token directly instead of legacy variable */
-    .chip { padding:4px 8px; border:1px solid var(--Color/Dark/Border/Default); border-radius:10px; background:var(--Color/Dark/Background/Tertiary); opacity:0.96; }
-    .spacer{flex:1}
-    .hint {opacity:0.7}
-
-    /* Overlay backdrop for node details. This layer darkens the background when a
-       node is selected and enables clicks outside of the panels to close the
-       overlay. */
-    #overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: var(--Color/Dark/Surface/Overlay, rgba(0, 0, 0, 0.45));
-      pointer-events: none; /* Always none - don't block clicks */
-      opacity: 0;
-      transition: opacity 0.3s ease;
-      z-index: 900;
-    }
-    /* In HUD we используем #hud-backdrop для затемнения, оставляем #overlay прозрачным для кликов */
-    .hud-active #overlay { 
-      background: transparent !important; 
-      pointer-events: none !important; /* Ensure overlay never blocks clicks in HUD mode */
-    }
-    /* HUD backdrop (similar to tour backdrop) - shows when HUD is active */
-    #hud-backdrop {
-      position: fixed;
-      inset: 0;
-      background: var(--hud-backdrop);
-      backdrop-filter: blur(2px) saturate(120%);
-      z-index: 940;
-      pointer-events: none;
-      opacity: 1;
-      transition: opacity 0.3s ease;
-    }
-    #hud-backdrop.hidden {
-      display: none !important;
-    }
-    /* Hide overlay on mobile when not active */
-    @media (max-width: 479px) {
-      #overlay:not(.active) {
-        display: none !important;
-      }
-      body {
-        background: transparent !important;
-      }
-    }
-    #overlay.active {
-      pointer-events: none; /* Changed from auto to none - overlay should not block clicks */
-      opacity: 1;
-    }
-    /* HUD backdrop should NOT block clicks - it's just visual */
-    #hud-backdrop {
-      pointer-events: none !important;
-    }
+    /* PHASE C3.4: #overlay and #hud-backdrop styles moved to main.css */
     /* Hide unused legacy panels by default */
     #object-icon, #big-panel, #small-panel {
       display: none;
     }
-    /* Detached HUD elements for the clicked node */
-    #hud-object-icon {
-      position: fixed;
-      top: 200px;
-      left: 450px;
-      right: auto;
-      width: 200px;
-      height: 200px;
-      border-radius: 50%;
-      background: var(--accent); /* will be overridden with the node's colour via JS */
-      box-shadow: 0 0 20px rgba(91, 156, 255, 0.5);
-      border: 3px solid var(--border);
-      display: none;
-      z-index: 1000;
-    }
-    #hud-big-panel {
-      position: fixed;
-      top: 200px;
-      right: 450px;
-      left: auto;
-      width: 580px;
-      max-height: calc(100vh - 250px) !important;  /* limit height to enable scroll */
-      height: auto !important;
-      overflow-y: auto !important;                /* enable scroll */
-      overflow-x: hidden !important;            /* avoid nested horizontal scroll */
-      overscroll-behavior: contain !important;  /* prevent scroll chaining */
-      background: var(--hud-panel-bg);
-      backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid var(--border);
-      border-top: none; /* Remove top border */
-      border-radius: 0; /* Square corners to match tour style */
-      padding: 20px;
-      color: var(--hud-text);
-      line-height: 1.5;
-      white-space: pre-line;
-      box-sizing: border-box;        /* keep padding inside bounds */
-      overflow-wrap: anywhere;       /* wrap long tokens */
-      word-break: break-word;        /* break long words */
-      font-weight: 200;
-      display: none;
-      z-index: 1000;
-    }
-    /* PHASE C3.3: Mobile styles moved to main.css */
-    /* Ensure all text in big panel has consistent weight, except headings */
-    #hud-big-panel * {
-      font-weight: 200;
-    }
-    /* Override for headings */
-    #hud-big-panel h1,
-    #hud-big-panel h2,
-    #hud-big-panel h3,
-    #hud-big-panel h4,
-    #hud-big-panel h5,
-    #hud-big-panel h6 {
-      font-weight: 600 !important;
-    }
-    /* Headings in big panel main text use tour style */
-    #hud-big-panel h1,
-    #hud-big-panel h2,
-    #hud-big-panel h3,
-    #hud-big-panel h4,
-    #hud-big-panel h5,
-    #hud-big-panel h6,
-    .hud-active #hud-big-panel h1,
-    .hud-active #hud-big-panel h2,
-    .hud-active #hud-big-panel h3,
-    .hud-active #hud-big-panel h4,
-    .hud-active #hud-big-panel h5,
-    .hud-active #hud-big-panel h6 {
-      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-    }
-    /* Main heading (h2) - 10px margin bottom to paragraph */
-    #hud-big-panel h2,
-    .hud-active #hud-big-panel h2,
-    #hud-container #hud-big-panel h2,
-    .hud-active #hud-container #hud-big-panel h2 {
-      margin: 0 0 10px 0 !important;
-    }
-    /* Subheadings (h3, h4) - smaller than main heading, no margin */
-    #hud-big-panel h3,
-    .hud-active #hud-big-panel h3,
-    #hud-container #hud-big-panel h3,
-    .hud-active #hud-container #hud-big-panel h3 {
-      font: 600 18px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-    }
-    #hud-big-panel h4,
-    .hud-active #hud-big-panel h4,
-    #hud-container #hud-big-panel h4,
-    .hud-active #hud-container #hud-big-panel h4 {
-      font: 600 16px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-    }
-    /* Paragraph spacing: 20px between paragraphs */
-    #hud-big-panel p,
-    .hud-active #hud-big-panel p,
-    #hud-container #hud-big-panel p,
-    .hud-active #hud-container #hud-big-panel p {
-      margin: 0 0 20px 0;
-      line-height: 1.5;
-    }
-    #hud-big-panel p:last-child,
-    .hud-active #hud-big-panel p:last-child,
-    #hud-container #hud-big-panel p:last-child,
-    .hud-active #hud-container #hud-big-panel p:last-child {
-      margin-bottom: 0;  /* Убрать отступ у последнего абзаца */
-    }
-    /* Remove spacing after subheadings - no margin for first paragraph after h3/h4 */
-    #hud-big-panel h3 + p,
-    #hud-big-panel h4 + p,
-    .hud-active #hud-big-panel h3 + p,
-    .hud-active #hud-big-panel h4 + p,
-    #hud-container #hud-big-panel h3 + p,
-    #hud-container #hud-big-panel h4 + p,
-    .hud-active #hud-container #hud-big-panel h3 + p,
-    .hud-active #hud-container #hud-big-panel h4 + p {
-      margin-top: 0;  /* Убрать отступ у первого абзаца после подзаголовка */
-    }
-    /* Hide scrollbar but keep scrolling */
-    #hud-big-panel {
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE and Edge */
-    }
-    #hud-big-panel::-webkit-scrollbar {
-      display: none; /* Chrome, Safari, Opera */
-    }
-    #hud-small-panel {
-      position: fixed;
-      top: 200px;
-      left: 450px;
-      right: auto;
-      width: 250px;
-      display: none;
-      flex-direction: column;
-      align-items: stretch;
-      gap: 12px;
-      background: none;
-      border: none;
-      z-index: 1000;
-    }
-    #hud-small-panel, #hud-small-panel * { box-sizing: border-box; }
-    /* Section header inside HUD (title, summary, prev/next) */
-    #hud-small-panel .hud-section-header {
-      width: 100%;
-      text-align: left;
-      color: var(--hud-text);
-      background: var(--hud-panel-bg);
-      backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid var(--border);
-      border-top: none; /* Remove top border */
-      border-radius: 0; /* Square corners to match tour style */
-      
-    }
-    /* Block B: reset positioning when panels are inside the container (desktop) */
-    #hud-container #hud-small-panel { position: static; width: 280px; }
-    #hud-container #hud-big-panel { position: static; width: 580px; }
+    /* Detached HUD elements - styles moved to main.css */
+    /* #hud-object-icon styles in main.css */
+    /* PHASE C3.4: #hud-small-panel navigation and buttons styles moved to main.css */
 
-    /* HUD Container: fixed, centered wrapper to mirror working layout */
-    #hud-container {
-      position: fixed;
-      top: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: none;              /* controlled by JS */
-      flex-direction: row;
-      gap: 24px;
-      z-index: 1000;
-    }
-    /* Inside container: refine child layouts matching working variant */
-    #hud-container #hud-small-panel {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      background: none;
-      border: none;
-    }
-    #hud-container #hud-big-panel {
-      max-height: calc(100vh - 200px) !important;  /* limit height to enable scroll */
-      height: auto !important;
-      overflow-y: auto !important;                 /* enable scroll in container mode */
-      overflow-x: hidden !important;            /* avoid nested horizontal scroll */
-      overscroll-behavior: contain !important;  /* prevent scroll chaining */
-      background: var(--hud-panel-bg);
-      backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid var(--border);
-      border-top: none; /* Remove top border */
-      border-radius: 0; /* Square corners to match tour style */
-      padding: 20px;
-      color: var(--hud-text);
-      line-height: 1.5;
-      white-space: pre-line;
-      box-sizing: border-box;        /* keep padding inside bounds */
-      overflow-wrap: anywhere;       /* wrap long tokens */
-      word-break: break-word;        /* break long words */
-      scrollbar-width: none; /* Firefox */
-      -ms-overflow-style: none; /* IE and Edge */
-    }
-    #hud-container #hud-big-panel::-webkit-scrollbar {
-      display: none; /* Chrome, Safari, Opera */
-    }
-    /* Headings in container big panel main text use tour style */
-    #hud-container #hud-big-panel h1,
-    #hud-container #hud-big-panel h2,
-    #hud-container #hud-big-panel h3,
-    #hud-container #hud-big-panel h4,
-    #hud-container #hud-big-panel h5,
-    #hud-container #hud-big-panel h6,
-    .hud-active #hud-container #hud-big-panel h1,
-    .hud-active #hud-container #hud-big-panel h2,
-    .hud-active #hud-container #hud-big-panel h3,
-    .hud-active #hud-container #hud-big-panel h4,
-    .hud-active #hud-container #hud-big-panel h5,
-    .hud-active #hud-container #hud-big-panel h6 {
-      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-    }
-    #hud-small-panel .hud-section-title {
-      margin: 0 0 6px 0;
-      
-      font-weight: 400;
-      color: var(--HUD/Text/Base);
-    }
-    #hud-small-panel .hud-section-summary {
-      margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
-      
-      line-height: 1.4;
-      color: var(--HUD/Text/Muted);
-    }
-    #hud-small-panel .hud-section-nav {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    #hud-small-panel .hud-section-nav a {
-      font-size: 16px;
-      font-weight: 200 !important;
-      color: var(--tour-text-muted) !important;  /* same color as links panel */
-      text-decoration: none;
-      padding: 4px 6px;
-      border-radius: 6px;
-      transition: background 0.2s, color 0.2s;
-    }
-    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
-    #hud-small-panel button {
-      padding: 10px;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--hud-text-muted);
-      background: var(--hud-panel-bg-mobile);
-      backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    
-    /* Desktop: vertical layout */
-    #hud-small-panel button {
-      width: 100%;
-    }
-    
-    /* Mobile: horizontal layout */
-    @media (max-width: 479px) {
-      #hud-small-panel {
-        flex-direction: row !important;
-        flex-wrap: wrap;
-      }
-      #hud-small-panel button {
-        width: auto !important;
-        flex: 1 1 auto !important;
-        min-width: 0;
-      }
-    }
-    #hud-small-panel button:hover {
-      color: var(--Color/Accent/Primary);
-      background: var(--Color/State/Hover/Background);
-    }
-    #hud-small-panel button.active-tab {
-      color: var(--HUD/Text/Base);
-      background: var(--Color/State/Active/Background);
-      border-color: var(--Color/Accent/Primary);
-      box-shadow: 0 0 0 1px var(--Color/Effect/Glow) inset;
-    }
-
-    /* === Custom header, tagline and links panel for the portfolio site === */
-    header#site-header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 2000;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 6px 14px;
-      /* Use theme-aware header variables - same layout, different colors */
-      background: var(--header-bg, var(--panel-ghost));
-      border-bottom: 1px solid var(--header-border, var(--border));
-      backdrop-filter: blur(20px) saturate(160%);
-      font-family: inherit;
-    }
-    /* Keep blur effect in HUD mode (reduced intensity for performance) */
-    .hud-active header#site-header {
-      backdrop-filter: blur(20px) saturate(160%);
-      background: var(--header-bg-hud, var(--hud-panel-bg-mobile));
-    }
-    .header-logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-    .header-logo .name {
-      font-weight: 600;
-      font-size: 18px;
-      letter-spacing: 0.2px;
-      /* Use theme-aware color variable instead of hardcoded color */
-      color: var(--Header/Logo/Name, #CFE8FF);
-      white-space: nowrap;
-    }
-    .header-logo .tagline {
-      margin-left: 12px;
-      font-size: 14px;
-      color: var(--muted);
-      font-weight: 400;
-      white-space: nowrap;
-    }
-    .header-spacer { flex: 1; }
-    .header-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 12px !important; /* unify size across viewports */
-      height: 36px; /* fixed visual height */
-      line-height: 1;
-      box-sizing: border-box;
-      font-size: 14px;
-      font-weight: 500;
-      color: var(--muted);
-      background: transparent;
-      border: 1px solid transparent; /* stabilize size on hover */
-      border-radius: 0;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s;
-    }
-    .header-btn:hover {
-      color: var(--Header/Button/HoverText);
-      background: var(--Header/Button/HoverBg);
-    }
-    .header-btn:active {
-      color: var(--Color/Accent/Hover);
-      background: var(--Color/State/Active/Background);
-    }
-    /* Normalize theme toggle container children to button size */
-    #theme-toggle-container { display: flex; align-items: center; gap: 8px; }
-    /* Normalize all header controls to identical size and states */
-    #theme-toggle-container > * {
-      width: 44px; height: 44px; padding: 10px;
-      border-radius: 0 !important;
-      display: inline-flex; align-items: center; justify-content: center;
-      box-sizing: border-box;
-      background: transparent; color: var(--muted);
-      border: 1px solid transparent; cursor: pointer;
-      line-height: 1; gap: 0;
-      pointer-events: auto !important;
-      z-index: 2001 !important;
-    }
-    /* Ensure theme toggle button is clickable */
-    #theme-toggle-btn {
-      pointer-events: auto !important;
-      z-index: 2001 !important;
-      cursor: pointer !important;
-      position: relative;
-    }
-    /* Hover/active match header buttons */
-    #theme-toggle-container > *:hover { color: var(--Color/Accent/Primary); background: var(--Color/State/Hover/Background); }
-    #theme-toggle-container > *:active { color: var(--Color/Accent/Hover); background: var(--Color/State/Active/Background); }
-    /* Icon sizes and color unification */
-    #theme-toggle-container img, #tour-restart-btn img { width: 24px; height: 24px; display: block; }
-    #theme-toggle-container svg, #tour-restart-btn svg { width: 24px; height: 24px; }
-    /* Project gray color for icons */
-    :root { --icon-gray: var(--Header/Button/Text); }
-    #theme-toggle-container svg { fill: var(--icon-gray) !important; stroke: var(--icon-gray) !important; }
-    #tour-restart-btn img { filter: brightness(0) saturate(100%) invert(73%) sepia(5%) saturate(342%) hue-rotate(176deg) brightness(92%) contrast(89%); }
-    /* Hover: accent tint, matches buttons */
-    #theme-toggle-container > *:hover svg { fill: var(--Color/Accent/Primary) !important; stroke: var(--Color/Accent/Primary) !important; }
-    #tour-restart-btn:hover img { filter: brightness(0) saturate(100%) invert(66%) sepia(58%) saturate(618%) hue-rotate(186deg) brightness(101%) contrast(101%); }
-    /* === Custom header, tagline and links panel for the portfolio site === */
-    /* Header styling improvements for the HUD */
-    #hud-small-panel .hud-section-header {
-      position: relative;
-      padding: 12px;
-      background: var(--hud-panel-bg);
-      backdrop-filter: blur(2px) saturate(140%);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-    }
-    #hud-small-panel .hud-section-title {
-      margin: 0 0 4px 0;
-      
-      font-weight: 400;
-      color: var(--HUD/Text/Base);
-    }
-    #hud-small-panel .hud-section-summary {
-      margin: 10px 0 18px 0;  /* increased top and bottom margins by 10px */
-      
-      line-height: 1.4;
-      color: var(--muted);
-    }
-    #hud-small-panel .hud-section-nav {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-start;
-    }
-    #hud-small-panel .hud-section-nav a {
-      flex: 1 1 0;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 8px;
-      font-size: 16px;
-      font-weight: 200 !important;
-      color: var(--tour-text-muted) !important;  /* same color as links panel */
-      background: var(--hud-panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      text-decoration: none;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-      cursor: pointer;
-      pointer-events: auto; /* Ensure links receive clicks */
-      touch-action: manipulation; /* Enable touch on mobile */
-    }
-    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
-    /* Close button styling for the header */
-    #hud-small-panel .hud-close-btn {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      padding: 4px 6px;
-      font-size: 16px;
-      font-weight: 600;
-      color: var(--tour-text-muted) !important;  /* same color as links panel */
-      background: var(--hud-panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      cursor: pointer;
-      transition: background 0.2s, color 0.2s, border-color 0.2s;
-
-      /* Ensure the close button remains a small icon rather than stretching like the tab buttons. */
-      width: auto !important;
-      height: auto !important;
-      flex: 0 0 auto;
-    }
-    /* PHASE C3.3: Hover styles moved to main.css with proper specificity */
-
-    /* Responsive layout for tablet screens: stack panels vertically */
-    @media (max-width: 767px) {
-      #hud-container {
-        top: 120px;
-        flex-direction: column;
-        gap: 16px;
-        width: 90%;
-        overflow-y: auto;              /* tablet: scroll container */
-      }
-      #hud-container #hud-small-panel {
-        width: 100%;
-      }
-      #hud-container #hud-big-panel { width: 100%; }
-      #hud-small-panel .hud-section-title {
-        font-size: 18px;
-      }
-      #hud-small-panel .hud-section-summary {
-        font-size: 16px;
-      }
-      #hud-small-panel button {
-        font-size: 15px;
-      }
-    }
-
-    /* Responsive layout for mobile screens: further increase text sizes and
-       allow the big panel to use more vertical space */
-    @media (max-width: 479px) {
-      #hud-container {
-        top: 72px;
-        width: 94%;
-      }
-      #hud-small-panel .hud-section-title {
-        font-size: 20px;
-      }
-      #hud-small-panel .hud-section-summary {
-        font-size: 16px;
-      }
-      #hud-small-panel .hud-section-nav a {
-        font-size: 16px !important;  /* same size as main text */
-      }
-    }
-    /* Removed floating tagline; tagline now integrated with header logo */
-    #links-panel {
-      position: fixed;
-      top: 90px;
-      right: 20px;
-      width: 420px; /* desktop: larger than before */
-      z-index: 1850;
-      display: none;
-      flex-direction: column;
-      gap: 13px; /* line spacing increased by 5px */
-      padding: 12px 12px 10px 12px;
-      /* Container stays transparent; items style themselves */
-      background: none;
-      border: none;
-      border-radius: 12px;
-    }
-    /* Mobile: full width and centered */
-    @media (max-width: 767px) {
-      #links-panel {
-        left: 20px;
-        right: 20px;
-        transform: none;
-        width: auto;
-        max-width: none;
-        top: 72px;
-      }
-    }
-    .link-row a {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      padding: 6px 12px;
-      text-decoration: none;
-      font-size: 16px !important;  /* same size as main text */
-      font-weight: 400;
-      /* Override inherited colour from body with !important to ensure the muted tone */
-      color: var(--muted) !important;
-      background: transparent;
-      border: none;
-      border-radius: 8px;
-      transition: background 0.2s, color 0.2s;
-    }
-    .link-row a:hover {
-      color: var(--Link/HoverText) !important;
-      background: var(--Link/HoverBg) !important;
-    }
-    .link-kicker {
-      font-size: 12px;
-      color: var(--HUD/Text/Muted);
-      opacity: 0.75;
-      padding: 0 12px; /* align with link rows */
-      margin-top: 10px; /* shift down by 10px */
-    }
-
-    /* Close button for links panel */
-    #links-panel .close-btn {
-      position: absolute;
-      top: 4px;
-      right: 6px;
-      font-size: 18px;
-      color: var(--HUD/Text/Muted);
-      background: none;
-      border: none;
-      cursor: pointer;
-      transition: color 0.2s;
-    }
-    #links-panel .close-btn:hover {
-      color: var(--HUD/Text/Base);
-    }
+    /* PHASE C3.4: header, header-btn, theme-toggle-container styles moved to main.css */
+    /* PHASE C3.4: #links-panel styles moved to main.css */
     /* Ensure HUD buttons look slightly bolder: we already set weight via main
        declaration. This override is removed to avoid conflicting with the
        unified button styles. */
     /* Removed redundant HUD weight override */
 
-    /* Orbit mode banner */
-    #mode-banner {
-      position: fixed;
-      top: 75px; /* 56px + 19px = 75px */
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 2100;
-      padding: 6px 12px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--tour-text-secondary);
-      background: var(--hud-panel-bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      backdrop-filter: blur(8px);
-      display: none;
-      pointer-events: none;
-    }
-    /* In HUD mode, banner should be below overlay (z-index 900) and hud-backdrop (z-index 940) */
-    .hud-active #mode-banner {
-      z-index: 800 !important;
-    }
-    /* Hide orbit banner on mobile */
-    @media (max-width: 767px) {
-      #mode-banner { display: none !important; }
-    }
-    /* Also remove blur on big HUD panels during HUD activity */
-    .hud-active #hud-big-panel,
-    .hud-active #hud-container #hud-big-panel {
-      backdrop-filter: none !important;
-    }
-    /* HUD mode: square corners everywhere */
-    .hud-active #hud-container,
-    .hud-active #hud-container *,
-    .hud-active #hud-small-panel,
-    .hud-active #hud-small-panel *,
-    .hud-active #hud-big-panel,
-    .hud-active #hud-big-panel *,
-    .hud-active .hud,
-    .hud-active .hud * {
-      border-radius: 0 !important;
-    }
-    /* Remove borders from all elements globally */
-    body * { border: none !important; }
-    /* In HUD mode render grid canvas below header and text panels, but above overlay */
-    .hud-active #grid-canvas { z-index: 950 !important; pointer-events: none; }
-    /* In Links mode raise grid above links overlay backdrop but below the panel content */
-    .links-active #grid-canvas { z-index: 1845 !important; pointer-events: none; }
-    /* Background grid under HUD overlay */
-    #grid-canvas-bg { position: fixed; inset: 0; pointer-events: none; z-index: 890; }
-    /* On mobile, keep same layering as desktop: base lines above overlay */
-    @media (max-width: 767px) {
-      .hud-active #grid-canvas { z-index: 950 !important; }
-      .links-active #grid-canvas { z-index: 1845 !important; }
-      body.tour-active #grid-canvas { z-index: 2490 !important; }
-      #grid-canvas-bg { z-index: 880; }
-      /* Ensure panels remain above base lines */
-      .hud-active #hud-container,
-      .hud-active #hud-big-panel,
-      .hud-active #hud-small-panel { z-index: 1000 !important; }
-      .links-active #links-panel { z-index: 1850 !important; }
-    }
-
-    /* Force square corners globally across states */
-    button,
-    button:hover,
-    button:active,
-    button:focus,
-    .header-btn,
-    .header-btn:hover,
-    .header-btn:active,
-    .header-btn:focus,
-    a,
-    a:hover,
-    a:active,
-    a:visited,
-    input,
-    input:hover,
-    input:focus,
-    select,
-    select:hover,
-    select:focus,
-    textarea,
-    textarea:hover,
-    textarea:focus,
-    .btn,
-    .btn:hover,
-    .btn:active,
-    .btn:focus,
-    .chip,
-    .chip:hover,
-    .chip:active,
-    .chip:focus,
-    .panel,
-    .panel:hover,
-    .panel:active,
-    .panel:focus,
-    .card,
-    .card:hover,
-    .card:active,
-    .card:focus,
-    #links-panel .link-row a,
-    #links-panel .link-row a:hover,
-    #links-panel .link-row a:active,
-    #links-panel .link-row a:visited,
-    #links-panel .close-btn,
-    #links-panel .close-btn:hover,
-    #links-panel .close-btn:active,
-    #links-panel .close-btn:focus {
-      border-radius: 0 !important;
-    }
+    /* PHASE C3.5: Global square corners moved to main.css */
+    /* NOTE: All border-radius rules are now in main.css to avoid duplication */
+    
     /* During tour, grid should be visible through the card */
     /* Grid is below card but visible through transparent card background */
-    body.tour-active #grid-canvas { z-index: 2490 !important; pointer-events: none; }
+    /* Grid canvas visibility when tour overlay is visible - handled in main.css */
+    /* Removed inline style - tour effects limited to #tour-overlay */
     /* Default browser cursors in use */
-    .hud-active button,
-    .hud-active a,
-    .hud-active input,
-    .hud-active select,
-    .hud-active textarea,
-    .hud-active .chip,
-    .hud-active .label,
-    .hud-active .link-row a,
-    .hud-active .btn,
-    .hud-active .panel,
-    .hud-active .card {
-      border-radius: 0 !important;
-    }
-
-    
-
-    
-    /* HUD mode: square corners everywhere */
-    .hud-active #hud-container,
-    .hud-active #hud-container *,
-    .hud-active #hud-small-panel,
-    .hud-active #hud-small-panel *,
-    .hud-active #hud-big-panel,
-    .hud-active #hud-big-panel *,
-    .hud-active .hud,
-    .hud-active .hud * {
-      border-radius: 0 !important;
-    }
-    .hud-active button,
-    .hud-active a,
-    .hud-active input,
-    .hud-active select,
-    .hud-active textarea,
-    .hud-active .chip,
-    .hud-active .label,
-    .hud-active .link-row a,
-    .hud-active .btn,
-    .hud-active .panel,
-    .hud-active .card {
-      border-radius: 0 !important;
-    }
-    /* Disable page scroll when HUD is active */
-    /* On mobile, allow container scroll but prevent body scroll */
-    body.hud-active,
-    html.hud-active {
-      overflow: hidden !important;
-      height: 100% !important;
-      position: fixed !important;
-      width: 100% !important;
-    }
-    /* On mobile/tablet, allow HUD container to scroll */
-    @media (max-width: 767px) {
-      body.hud-active,
-      html.hud-active {
-        position: fixed !important;
-        overflow: hidden !important;
-      }
-      #hud-container {
-        -webkit-overflow-scrolling: touch !important;
-        overscroll-behavior: contain !important;
-      }
-    }
+    /* HUD mode styles moved to main.css - use specificity instead of !important */
   
-/* === Strict overrides: no borders on HUD controls; mobile containment === */
-#hud-small-panel .hud-section-nav a,
-#hud-small-panel .hud-close-btn {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none !important;
-}
-/* PHASE C3.3: Hover styles moved to main.css with proper specificity */
-/* Big panel: contain within viewport; avoid horizontal overflow */
-/* REMOVED to restore fixed desktop layout; container/mobile rules remain */
-/*
-#hud-big-panel {
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  max-height: calc(100dvh - 260px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-*/
-/* When big panel is inside the responsive container */
-/*
-#hud-container #hud-big-panel {
-  width: 100%;
-  max-width: 100vw;
-  height: auto;
-  max-height: calc(100dvh - 260px);
-  overflow-y: auto;
-  overflow-x: hidden;
-  box-sizing: border-box;
-  overflow-wrap: anywhere;
-  word-break: break-word;
-}
-*/
-/* Tablet */
-@media (max-width: 767px) {
-  /* removed duplicate - using mobile styles from line 740 */
-}
-/* Mobile */
-@media (max-width: 479px) {
-  /* Show orbit toggle on mobile */
-  #mobile-orbit-toggle {
-    display: flex !important;
-  }
-}
+/* HUD controls styles moved to main.css - use specificity instead of !important */
+/* Media queries moved to main.css - use specificity instead of !important */
 
 
-/* === Patch: keep Prev/Next on one line === */
-#hud-small-panel .hud-section-nav {
-  display: flex;
-  justify-content: space-between;
-  gap: 8px;
-  flex-wrap: nowrap; /* do not wrap to second line */
-}
-#hud-small-panel .hud-section-nav a {
-  flex: 0 0 auto !important;   /* don't stretch, don't wrap */
-  white-space: nowrap !important;
-  padding: 2px 6px !important;  /* tighter to fit in one row */
-  font-weight: 200 !important;
-  line-height: 1.1 !important;
-}
-/* Ensure link in big panel has same weight as main text */
-#hud-big-panel .hud-tab-link {
-  font-weight: 200 !important;
-  color: var(--HUD/Text/Muted) !important;  /* same color as links panel */
-}
-#hud-big-panel .hud-tab-link:hover {
-  color: var(--Color/Accent/Primary) !important;  /* same hover color as links panel */
-}
-/* Style links in solution text */
-#hud-big-panel a[target="_blank"]:not(.hud-tab-link) {
-  color: var(--HUD/Text/Muted) !important;  /* same color as links panel */
-  text-decoration: none;
-  font-weight: 200 !important;
-  font-size: inherit !important;  /* same size as main text */
-  border-bottom: 1px solid var(--Color/Dark/Border/Subtle);
-  transition: border-color 0.2s, color 0.2s;
-}
-#hud-big-panel a[target="_blank"]:not(.hud-tab-link):hover {
-  color: var(--Color/Accent/Primary) !important;  /* same hover color as links panel */
-  border-bottom-color: var(--Color/Accent/Primary);
-}
+/* Navigation styles moved to main.css - use specificity instead of !important */
+/* Links in big panel styles moved to main.css - use specificity instead of !important */
 
 /* Mobile orbit mode toggle */
-#mobile-orbit-toggle {
-  position: fixed;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 900;
-  display: flex;
-}
-
-#toggle-orbit-btn {
-  background: var(--hud-panel-bg);
-      border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 8px 14px;
-      color: var(--text);
-  font-size: 14px;
-  font-weight: 500;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: 0 0 0 1px var(--Color/Dark/Border/Subtle) inset, 0 2px 10px var(--Color/Effect/Shadow/Soft);
-  white-space: nowrap;
-  opacity: 0.96;
-}
-
-#toggle-orbit-btn:hover {
-  background: var(--Color/State/Hover/Background);
-  border-color: var(--Color/Accent/Primary);
-  color: var(--HUD/Text/Base);
-}
-
-#toggle-orbit-btn.active {
-  background: var(--Color/State/Active/Background);
-  border-color: var(--Color/Accent/Primary);
-  color: var(--Color/Accent/Primary);
-}
-
-#toggle-orbit-btn.active:hover {
-  border-color: var(--Color/Accent/Hover);
-  color: var(--HUD/Text/Base);
-}
-
-#toggle-orbit-icon {
-  width: 24px;
-  height: 24px;
-  display: block;
-  filter: brightness(0) saturate(100%) invert(65%) sepia(8%) saturate(443%) hue-rotate(177deg) brightness(94%) contrast(92%);
-  transition: filter 200ms ease;
-}
-
-/* Active orbit mode: tint icon to accent blue */
-#toggle-orbit-btn.active #toggle-orbit-icon {
-  filter: brightness(0) saturate(100%) invert(42%) sepia(66%) saturate(1675%) hue-rotate(189deg) brightness(101%) contrast(98%);
-}
+/* PHASE 3E: Styles moved to main.css to eliminate duplication */
 
 /* Disable smooth scroll globally */
 html {
@@ -1261,254 +166,25 @@ html {
 }
 
 /* === Mobile: scroll the HUD container instead of the big panel to guarantee bottom visibility === */
-@media (max-width: 479px) {
-  #hud-container {
-    top: 64px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 94% !important;
-    height: auto !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    padding-bottom: 24px !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain !important;
-    /* hide scrollbar on mobile */
-    scrollbar-width: none;
-  }
-  #hud-container::-webkit-scrollbar { width: 0; height: 0; }
-  #hud-container #hud-big-panel {
-    height: auto !important;
-    max-height: none !important;
-    overflow: visible !important;
-    padding-bottom: 40px !important;
-  }
-  /* Увеличиваем крестик закрытия на мобильных */
-  #hud-small-panel .hud-close-btn {
-    font-size: 22px !important;
-    padding: 6px 8px !important;
-    min-width: 36px !important;
-    min-height: 36px !important;
-  }
-}
+/* PHASE: Styles moved to main.css */
 
-/* Ultra-narrow safeguard */
-@media (max-width: 360px) {
-  #hud-small-panel .hud-section-nav a {
-    font-size: 16px !important;
-    font-weight: 200 !important;
-    padding: 2px 4px !important;
-  }
-}
+/* Ultra-narrow safeguard styles moved to main.css */
 
 
-/* Mobile header: hide logo, left-align buttons */
-@media (max-width: 479px) {
-  header#site-header { justify-content: flex-start !important; gap: 8px !important; }
-  header#site-header .header-logo { display: none !important; }
-  header#site-header .header-spacer { display: none !important; }
-  .header-btn { padding: 8px 12px !important; height: 36px; }
-  /* Keep btn-demo visible - это кнопка "Демо" для быстрого доступа к контенту */
-  /* Настоящая кнопка темы: #theme-toggle-btn (создаётся hud-manager.js, живёт в #theme-toggle-container) */
-  #btn-demo { display: inline-flex !important; }
-}
-
-
-/* === HUD title font refinement === */
-#hud-small-panel .hud-section-title {
-  font-weight: 400 !important;  /* same weight as labels for consistency */
-  font-size: 15px !important;
-  letter-spacing: 0.2px;
-}
-#hud-small-panel .hud-section-summary {
-  font-weight: 400 !important;
-  font-size: 16px !important;
-  color: #A5B4C3 !important;
-}
+/* HUD title and summary styles moved to main.css */
 
 
 /* === Tablet: mirror mobile behavior (container scroll, tail always reachable) === */
-@media (max-width: 767px) {
-  #hud-container {
-    top: 72px !important;
-    bottom: 12px !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    width: 94% !important;
-    height: auto !important;
-    max-height: none !important;
-    overflow-y: auto !important;          /* scroll on container */
-    overflow-x: hidden !important;
-    padding-bottom: 24px !important;
-    -webkit-overflow-scrolling: touch;
-    overscroll-behavior: contain !important;
-    /* hide scrollbar on tablet */
-    scrollbar-width: none;
-  }
-  #hud-container::-webkit-scrollbar { width: 0; height: 0; }
-  #hud-container #hud-big-panel {
-    width: 100% !important;
-    max-width: 100vw !important;
-    height: auto !important;
-    max-height: none !important;          /* let it grow; container handles scroll */
-    overflow: visible !important;
-    padding-bottom: 16px !important;      /* ensure last line/link is not cut */
-    box-sizing: border-box !important;
-    overflow-wrap: anywhere !important;
-    word-break: break-word !important;
-  }
-  /* Keep Prev/Next in one row on tablet too */
-  #hud-small-panel .hud-section-nav {
-    flex-wrap: nowrap !important;
-  }
-  #hud-small-panel .hud-section-nav a {
-    flex: 0 0 auto !important;
-    white-space: nowrap !important;
-    padding: 4px 8px !important;
-    line-height: 1.4 !important;
-    font-size: 16px !important;  /* Единый размер с мобильной версией */
-    font-weight: 200 !important;
-  }
-}
+/* PHASE: Styles moved to main.css */
 
-/* Размер шрифта кнопок навигации для мобильных (переопределяет планшетный стиль) */
-@media (max-width: 479px) {
-  #hud-small-panel .hud-section-nav a {
-    font-size: 16px !important;
-    font-weight: 200 !important;
-    padding: 4px 8px !important;
-    white-space: nowrap !important;
-    flex: 0 0 auto !important;
-    line-height: 1.4 !important;
-  }
-}
+/* Mobile navigation styles moved to main.css */
 
-
-/* === Tablet header: show only logo (no tagline) and buttons === */
-@media (min-width: 480px) and (max-width: 767px) {
-  header#site-header { justify-content: space-between !important; gap: 12px !important; }
-  header#site-header .header-logo { display: flex !important; align-items: center !important; }
-  header#site-header .header-logo .tagline { display: none !important; } /* убрать подзаголовок */
-  /* Кнопки в одну строку, компактные отступы */
-  .header-btn { padding: 8px 12px !important; height: 36px; }
-  /* #btn-demo — кнопка "Демо" для быстрого доступа к контенту, всегда видна */
-  /* Настоящая кнопка темы: #theme-toggle-btn (создаётся hud-manager.js, живёт в #theme-toggle-container) */
-  #btn-demo { display: inline-flex !important; }
-}
-
-
-/* === Unified thin dark scrollbars (mobile-like) === */
-html, body { scrollbar-gutter: stable; }
-
-/* Firefox */
-html, body,
-#overlay {
-  scrollbar-width: thin;
-  scrollbar-color: #3B4A5F transparent;
-}
-#hud-big-panel {
-  scrollbar-width: none;
-  scrollbar-color: transparent transparent;
-}
-
-/* Chromium/WebKit */
-html::-webkit-scrollbar,
-body::-webkit-scrollbar,
-#overlay::-webkit-scrollbar { width: 8px; height: 8px; }
-#hud-big-panel::-webkit-scrollbar { width: 0px; height: 0px; display: none; }
-
-html::-webkit-scrollbar-track,
-body::-webkit-scrollbar-track,
-#overlay::-webkit-scrollbar-track { background: transparent; }
-#hud-big-panel::-webkit-scrollbar-track { background: transparent; display: none; }
-
-html::-webkit-scrollbar-thumb,
-body::-webkit-scrollbar-thumb,
-#overlay::-webkit-scrollbar-thumb {
-  background: rgba(59, 74, 95, 0.9);
-  border-radius: 8px;
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-#hud-big-panel::-webkit-scrollbar-thumb {
-  display: none;
-}
-
-#overlay:hover::-webkit-scrollbar-thumb,
-#hud-big-panel:hover::-webkit-scrollbar-thumb,
-html:hover::-webkit-scrollbar-thumb,
-body:hover::-webkit-scrollbar-thumb {
-  background: rgba(59, 74, 95, 1);
-}
+/* Scrollbar styles moved to main.css */
 
 /* === HUD Grid hologram effect === */
-.grid-line {
-  pointer-events: none;
-  will-change: opacity, filter, transform, background-position;
-  /* dashed via repeating gradient; color set via --c */
-  --c: var(--grid-color);
-  --dash: 10px;   /* length of visible segment */
-  --gap: 8px;     /* length of gap */
-  --phase: 0px;   /* starting offset */
-  background: none;
-  box-shadow:
-    0 0 3px var(--grid-color),
-    0 0 8px var(--grid-color);
-  mix-blend-mode: screen;
-  opacity: var(--grid-opacity);
-  filter: hue-rotate(var(--grid-hue, 0deg)) saturate(var(--grid-sat, 1.1));
-}
-.grid-line::after {
-  content: '';
-  position: absolute; inset: 0;
-  pointer-events: none;
-}
-.grid-line.h { /* horizontal dashed */
-  background-image: repeating-linear-gradient(
-    90deg,
-    var(--c) 0 calc(var(--dash)),
-    rgba(255,255,255,0) calc(var(--dash)) calc(calc(var(--dash) + var(--gap)))
-  );
-  background-size: calc(var(--dash) + var(--gap)) 100%;
-  background-position: var(--phase, 0px) 0;
-}
-.grid-line.h::after {
-  /* горизонтальная линия: лёгкий бегущий блик */
-  background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(200,240,255,0.35) 50%, rgba(255,255,255,0) 100%);
-  background-size: 220% 100%;
-  background-position: var(--shimmerH, 0%) 0;
-}
-.grid-line.v { /* vertical dashed */
-  background-image: repeating-linear-gradient(
-    180deg,
-    var(--c) 0 calc(var(--dash)),
-    rgba(255,255,255,0) calc(var(--dash)) calc(calc(var(--dash) + var(--gap)))
-  );
-  background-size: 100% calc(var(--dash) + var(--gap));
-  background-position: 0 var(--phase, 0px);
-}
-.grid-line.v::after {
-  /* вертикальная линия: блик сверху вниз */
-  background: linear-gradient(180deg, rgba(255,255,255,0) 0%, rgba(200,240,255,0.35) 50%, rgba(255,255,255,0) 100%);
-  background-size: 100% 220%;
-  background-position: 0 var(--shimmerV, 0%);
-}
-/* Убраны CSS-анимации; значения управляются из движка через CSS-переменные */
+/* PHASE AUDIT: Moved to main.css */
 
-/* Mobile performance: remove will-change on mobile */
-@media (max-width: 767px) {
-  .grid-line {
-    will-change: auto; /* Remove will-change on mobile for better performance */
-  }
-}
-
-/* Final override: hide container scrollbar on mobile/tablet (Chromium/WebKit + Firefox) */
-@media (max-width: 767px) {
-  #hud-container { scrollbar-width: none !important; }
-  #hud-container::-webkit-scrollbar { width: 0 !important; height: 0 !important; }
-  #hud-container::-webkit-scrollbar-thumb { background: transparent !important; }
-  #hud-container { scrollbar-gutter: auto; }
-}
+/* Container scrollbar styles moved to main.css */
 
 
 /* remove stray flex override; container visibility controlled above */
@@ -1517,36 +193,77 @@ body:hover::-webkit-scrollbar-thumb {
 
 /* (Reset rules are defined once above; duplicates removed) */
 
-  /* === HUD spacing normalization: equal top padding in headers and big panel === */
-  #hud-small-panel .hud-section-header { padding: 16px 12px 12px 12px; }
-  #hud-big-panel, #hud-container #hud-big-panel { padding-top: 16px; }
-  #hud-big-panel > :first-child, #hud-container #hud-big-panel > :first-child { margin-top: 0 !important; }
+  /* === HUD spacing normalization === */
+  /* PHASE AUDIT: All HUD spacing rules moved to main.css */
 
-  /* === Tour restart icon next to theme toggle === */
-  #tour-restart-btn { display:inline-flex; align-items:center; justify-content:center; width: 44px; height: 44px; margin-left: 6px; border:1px solid var(--border); border-radius: 10px; background: transparent; color: var(--tour-text-muted); cursor: pointer; transition: background .2s, color .2s, border-color .2s; }
-  #tour-restart-btn:hover { background: var(--Color/State/Hover/Surface); color: var(--tour-text-secondary); border-color: var(--Color/Accent/Primary); }
-  #tour-restart-btn:active { color: var(--tour-text-secondary); border-color: var(--Color/Accent/Hover); }
-  #tour-restart-btn:focus { outline: 2px solid var(--Color/Accent/Primary); outline-offset: 2px; }
-  #tour-restart-btn .icon { font-size: 18px; line-height: 1; }
+  /* === Tour restart button (text "Пуск") === */
+  /* Styles inherited from .header-btn in main.css */
 
 </style>
 </head>
-<body>
+<body class="theme-dark">
 
 <!-- Preloader overlay -->
-<div id="preloader-overlay" aria-hidden="true">
-  <iframe id="preloader-frame" src="" title="UX4AI Preloader" loading="eager"></iframe>
-  <style>
-    #preloader-overlay {
-      position: fixed; inset: 0; z-index: 3000;
-      /* PHASE C2: Use token with fallback for FOUC prevention */
-      background: var(--Color/Dark/Background/Primary, #0B0F14); /* match theme bg to avoid flash */
-      display: flex; align-items: center; justify-content: center;
-    }
-    #preloader-overlay.hidden { display: none !important; }
-    #preloader-frame { width: 100%; height: 100%; border: 0; }
-  </style>
+<!-- Refactored: inline HTML, no iframe -->
+<!-- Critical CSS in <head> ensures visibility even if main.css hasn't loaded yet -->
+<div id="preloader-overlay" role="status" aria-live="polite" aria-label="Loading UX4AI">
+  <div class="preloader-inner">
+    <div class="preloader-logo">
+      <svg class="ux4ai-logo" viewBox="0 0 1200 320" aria-hidden="true" id="logo">
+        <defs>
+          <linearGradient id="grad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#e6f1ff"/>
+            <stop offset="100%" stop-color="#b6cfff"/>
+          </linearGradient>
+
+          <!-- Фильтр шума/дисплейсмента для glitch outline -->
+          <filter id="noiseDisp" x="-20%" y="-40%" width="140%" height="180%">
+            <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.012" numOctaves="2" seed="3" result="noise"/>
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="6" xChannelSelector="R" yChannelSelector="G"/>
+          </filter>
+        </defs>
+
+        <!-- base shadow and main -->
+        <text x="600" y="160" class="ux4ai-glyph ux4ai-text shadow" id="shadow">UX4AI</text>
+        <text x="600" y="160" class="ux4ai-glyph ux4ai-text main" id="main">UX4AI</text>
+
+        <!-- OUTLINE-ONLY GLITCH layers (same size, only stroke) -->
+        <g id="glitchGroup" filter="url(#noiseDisp)" opacity="0">
+          <text x="600" y="160" class="ux4ai-glyph" id="gC"
+                fill="none" stroke="var(--preloader-glitch-cyan)" stroke-width="2">UX4AI</text>
+          <text x="600" y="160" class="ux4ai-glyph" id="gM"
+                fill="none" stroke="var(--preloader-glitch-magenta)" stroke-width="1.6">UX4AI</text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="preloader-caption">initializing interface</div>
+
+    <div class="preloader-stream-wrap">
+      <ul class="preloader-stream" id="streamList"></ul>
+    </div>
+  </div>
 </div>
+
+<script>
+  // Simple preloader visibility script - runs immediately after element is parsed
+  (function() {
+    try {
+      const overlay = document.getElementById('preloader-overlay');
+      if (overlay) {
+        // Critical styles are already set in <head> critical CSS
+        // Only ensure visibility if somehow critical CSS didn't apply
+        overlay.classList.remove('hidden');
+        overlay.classList.remove('hidden');
+        if (typeof performance !== 'undefined' && performance.now) {
+          window.__PRELOADER_START_TIME__ = performance.now();
+        }
+      }
+    } catch (e) {
+      console.error('[Bootstrap] Error showing preloader:', e);
+    }
+  })();
+</script>
 
 <!-- Guided Tour Overlay (A/B/C) -->
 <div id="tour-overlay" aria-hidden="true" class="hidden" inert>
@@ -1562,7 +279,7 @@ body:hover::-webkit-scrollbar-thumb {
     <div class="tour-interactives" id="tour-interactives" aria-hidden="true">
       <noscript>
         <div class="tour-interactives-fallback">
-          <p style="color: var(--tour-text-muted); font: 400 14px/1.3 ui-sans-serif, system-ui; text-align: center; margin: 0;">
+          <p style="color: var(--hud-text-muted); font: 400 14px/1.3 ui-sans-serif, system-ui; text-align: center; margin: 0;">
             Интерактивные элементы требуют JavaScript
           </p>
         </div>
@@ -1571,890 +288,24 @@ body:hover::-webkit-scrollbar-thumb {
     <div class="tour-actions" id="tour-actions"></div>
     <div class="tour-frame-lines" aria-hidden="true"></div>
   </div>
-  <style>
-    #tour-overlay { position: fixed; inset: 0; z-index: 2500; display: flex; align-items: center; justify-content: center; }
-    #tour-overlay.hidden { display: none !important; }
-    #tour-overlay .tour-backdrop { position:absolute; inset:0; background: var(--tour-backdrop); backdrop-filter: blur(2px) saturate(120%); z-index: 1; }
-    @media (max-width: 767px) {
-      /* Disable backdrop-filter on mobile, but keep visual effect with gradients and shadows */
-      #tour-overlay .tour-backdrop { 
-        backdrop-filter: none; 
-        background: var(--tour-backdrop);
-        /* Add subtle gradient for depth - use CSS variables for light theme compatibility */
-        background-image: radial-gradient(circle at center, var(--tour-backdrop) 0%, var(--tour-backdrop) 100%);
-        opacity: 0.7;
-      }
-      #tour-overlay .tour-card { 
-        backdrop-filter: none !important; 
-        /* Use more transparent background for better visibility - increased transparency */
-        background: var(--tour-card-bg-mobile) !important;
-        /* Remove border-radius and top border to match desktop style */
-        border-radius: 0 !important;
-        border-top: none !important;
-        /* Add subtle border glow and inner highlight for glass effect - remove top border */
-        box-shadow: 
-          0 12px 40px rgba(0,0,0,0.45),
-          inset 0 -1px 0 rgba(0,0,0,0.2),
-          0 0 0 1px var(--Color/Dark/Border/Subtle),
-          0 -1px 0 transparent !important; /* Remove top border shadow */
-        /* Add pseudo-element for additional glass effect */
-        position: relative;
-      }
-      /* Remove top border effect - no pseudo-element needed */
-      #tour-overlay .tour-card::before {
-        display: none;
-      }
-      /* Ensure content is above pseudo-element */
-      #tour-overlay .tour-card > * {
-        position: relative;
-        z-index: 1;
-      }
-    }
-    /* HUD-like styling: straight corners; no inner grid - grid visible through card */
-    #tour-overlay .tour-card { position: relative; width: min(720px, 92vw);
-      background: var(--tour-card-bg);
-      backdrop-filter: blur(2px) saturate(140%);
-      border:1px solid var(--border); border-top: none; border-radius: 0; box-shadow: 0 12px 40px var(--Color/Effect/Shadow/Medium); padding: 20px 20px 20px 20px; color: var(--tour-text); z-index: 2; }
-    /* Disable per-card grid to keep through-grid effect like HUD */
-    #tour-overlay .tour-frame-lines { display:none; }
-    /* Close link inside actions */
-    #tour-overlay .tour-actions .close-link { 
-      background: transparent; border: none; color: var(--tour-text-muted); text-decoration: none; 
-      padding: 10px 14px; height: 44px; display:inline-flex; align-items:center; justify-content:center;
-      font: 400 18px/1 ui-sans-serif, system-ui; box-sizing: border-box;
-      opacity: 0.5;
-    }
-    #tour-overlay .tour-actions .close-link:hover { color: var(--tour-text-secondary); opacity: 1; }
-    @media (min-width: 480px) {
-      #tour-overlay .tour-actions .close-link { margin-left: auto; }
-    }
-    #tour-overlay .tour-header h2 { margin: 0 0 32px 0; font: 600 24px/1.3 ui-sans-serif, system-ui; color: var(--tour-text-secondary); white-space: pre-line; }
-    #tour-overlay .tour-header .tour-sub { margin: 0 0 32px 0; color: var(--tour-text-muted); font: 400 18px/1.3 ui-sans-serif, system-ui; }
-    /* Reduce sub margin when followed by links list (step 2) */
-    #tour-overlay .tour-card.tour-step-2 .tour-header .tour-sub { margin-bottom: 8px !important; }
-    /* Ensure consistent spacing: sub → content (16px), content → buttons (32px) */
-    #tour-overlay .tour-body { margin-top: 0; }
-    #tour-overlay .tour-body p { margin: 0 0 32px 0; color: var(--tour-text-body); font: 300 18px/1.3 ui-sans-serif, system-ui; }
-    /* Icon color matching text color - use mask to inherit text color */
-    #tour-overlay .tour-body p img { 
-      filter: brightness(0) saturate(100%) invert(72%) sepia(2%) saturate(1000%) hue-rotate(180deg);
-    }
-    /* Tour case links styled like HUD "contacts" links */
-    #tour-overlay .tour-body .tour-list { 
-      margin: 0 0 px 0; 
-      padding: 0; 
-      list-style: none; 
-      display: flex; 
-      flex-direction: column; 
-      gap: 0; 
-      align-items: flex-start; 
-    }
-    /* When list is inside p, remove p's margin and let list handle spacing */
-    #tour-overlay .tour-body p:has(.tour-list) { margin: 0; }
-    #tour-overlay .tour-body .tour-list li { margin: 0; line-height: 1; }
-    #tour-overlay .tour-body .tour-list a {
-      display: flex; 
-      align-items: center;
-      gap: 8px;
-      text-decoration: none; 
-      font: 400 18px/1 ui-sans-serif, system-ui;
-      color: var(--tour-text-muted) !important; 
-      background: transparent; 
-      border: none; 
-      border-radius: 0;
-      transition: color 0.2s, background 0.2s;
-    }
-    /* Icon color matching link text color */
-    #tour-overlay .tour-body .tour-list a img {
-      filter: brightness(0) saturate(100%) invert(65%) sepia(5%) saturate(500%) hue-rotate(180deg);
-      transition: filter 0.2s;
-    }
-    #tour-overlay .tour-body .tour-list a:hover { 
-      color: var(--Link/HoverText) !important; 
-      background: var(--Link/HoverBg) !important; 
-    }
-    /* Icon color on hover - match accent color */
-    #tour-overlay .tour-body .tour-list a:hover img {
-      filter: brightness(0) saturate(100%) invert(60%) sepia(100%) saturate(2000%) hue-rotate(200deg);
-    }
-    #tour-overlay .tour-body .tour-list a:visited { color: var(--tour-text-muted) !important; }
-    #tour-overlay .tour-body .tour-list a:visited:hover { color: var(--Color/Accent/Primary) !important; }
-    #tour-overlay .tour-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 0; }
-      #tour-overlay .tour-actions .btn { 
-      padding: 10px 14px; 
-      border-radius: 0; 
-      border:1px solid var(--border); 
-      background: var(--tour-card-bg); 
-      color: var(--tour-text-muted); 
-      font: 400 18px/1 ui-sans-serif, system-ui; 
-      text-decoration: none; 
-      cursor: pointer; 
-      transition: background .2s, color .2s, border-color .2s; 
-      display:inline-flex; 
-      align-items:center; 
-      justify-content:center; 
-      height: 44px; 
-      box-sizing: border-box;
-      /* Критично для мобильных - улучшение отклика */
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
-      pointer-events: auto !important;
-      position: relative;
-      z-index: 2503;
-      /* Removed will-change and transform - they create unnecessary compositing layers */
-    }
-    #tour-overlay .tour-actions .btn:hover { background: var(--Color/State/Hover/Surface); color: var(--tour-text-secondary); border-color: var(--Color/Accent/Primary); }
-    #tour-overlay .tour-actions .btn-primary { color: var(--tour-text-secondary); background: var(--Color/State/Selected/Background); border-color: var(--Color/Accent/Primary); }
-    #tour-overlay .tour-actions .btn-primary:hover { background: var(--Color/State/Active/Background); }
-    @media (max-width: 479px) {
-      #tour-overlay { 
-        align-items: flex-start; 
-        padding-top: 20px; 
-        padding-bottom: 40px;
-        /* Исправление проблем с зависанием */
-        position: fixed !important;
-        z-index: 2500 !important;
-        /* Removed will-change - not needed for static overlay */
-      }
-      /* Card fills the viewport height with 20px top and 40px bottom gutters; buttons at bottom */
-      #tour-overlay .tour-card {
-        padding: 16px;
-        margin-left: auto; 
-        margin-right: auto;
-        display: flex; 
-        flex-direction: column;
-        width: calc(100vw - 40px);
-        max-height: calc(100dvh - 60px);
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-        /* Исправление проблем с откликом */
-        position: relative;
-        z-index: 2501;
-        /* Предотвращение проблем с масштабированием и GPU acceleration */
-        transform: scale(1) translateZ(0) !important;
-        transform-origin: top center;
-        /* Removed will-change: scroll-position - browser optimizes scrolling automatically */
-      }
-      #tour-overlay .tour-body { 
-        flex: 0 0 auto; 
-        overflow-y: visible;
-        -webkit-overflow-scrolling: auto;
-      }
-      #tour-overlay .tour-actions { 
-        flex-direction: column; 
-        margin-top: auto;
-        /* Улучшение отклика кнопок */
-        position: relative;
-        z-index: 2502;
-      }
-      #tour-overlay .tour-actions .btn { 
-        width: 100%; 
-        text-align: center;
-        /* Критично для мобильных - улучшение отклика */
-        min-height: 44px !important;
-        touch-action: manipulation;
-        -webkit-tap-highlight-color: rgba(91, 156, 255, 0.2);
-        /* Предотвращение проблем с кликами */
-        pointer-events: auto !important;
-        position: relative;
-        z-index: 2503;
-        /* Remove transitions on mobile for instant feedback */
-        transition: none !important;
-        /* Removed will-change and transform - they create unnecessary compositing layers */
-        /* Prevent text selection during touch */
-        -webkit-user-select: none;
-        user-select: none;
-      }
-    }
-    /* Block page scroll when tour is active, but allow scrolling inside tour card */
-    body.tour-active,
-    html.tour-active {
-      overflow: hidden !important;
-      height: 100% !important;
-      position: fixed !important;
-      width: 100% !important;
-      /* Предотвращение проблем с масштабированием на мобильных */
-      touch-action: none;
-      -webkit-user-select: none;
-      user-select: none;
-    }
-    /* Разрешить скролл только внутри карточки тура */
-    body.tour-active #tour-overlay .tour-card,
-    body.tour-active #tour-overlay .tour-body {
-      touch-action: pan-y;
-      -webkit-overflow-scrolling: touch;
-    }
-    /* В обычном режиме (не тур, не HUD) - разрешить скролл для 3D-сцены */
-    @media (max-width: 767px) {
-      html:not(.tour-active):not(.hud-active):not(.orbit-active) {
-        overflow-x: hidden !important;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
-      }
-      body:not(.tour-active):not(.hud-active):not(.orbit-active) {
-        overflow-x: hidden !important;
-        /* Убрал !important - navigation.js управляет скроллом */
-        overflow-y: auto;
-        position: relative !important;
-        /* Убрал touch-action - скролл управляется через navigation.js */
-        -webkit-overflow-scrolling: touch;
-        /* НЕ устанавливаем height - navigation.js устанавливает высоту динамически */
-      }
-      /* Не блокируем touch-action для #three-container - navigation.js управляет этим */
-    }
-    /* Allow scrolling inside tour card */
-    #tour-overlay .tour-card {
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      max-height: calc(100vh - 40px);
-    }
-    @media (max-width: 479px) {
-      #tour-overlay .tour-card {
-        max-height: calc(100dvh - 60px);
-      }
-    }
-    
-    /* Tour Interactives Styles */
-    #tour-overlay .tour-interactives {
-      margin-top: 32px;
-      margin-bottom: 40px;
-    }
-    
-    #tour-overlay .tour-interactives.loaded {
-      opacity: 1;
-    }
-    
-    /* Skeleton loaders */
-    #tour-overlay .tour-interactives-skeleton {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    #tour-overlay .skeleton-header,
-    #tour-overlay .skeleton-status {
-      height: 24px;
-      background: rgba(36, 48, 65, 0.5);
-      border-radius: 0;
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-    
-    #tour-overlay .skeleton-header {
-      width: 60%;
-    }
-    
-    #tour-overlay .skeleton-status {
-      width: 80%;
-      height: 16px;
-    }
-    
-    #tour-overlay .skeleton-interactives {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 24px;
-    }
-    
-    #tour-overlay .skeleton-item {
-      height: 200px;
-      background: rgba(36, 48, 65, 0.5);
-      border-radius: 0;
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-    
-    #tour-overlay .skeleton-cta {
-      height: 44px;
-      width: 60%;
-      margin: 0 auto;
-      background: rgba(36, 48, 65, 0.5);
-      border-radius: 0;
-      animation: skeleton-pulse 1.5s ease-in-out infinite;
-    }
-    
-    @keyframes skeleton-pulse {
-      0%, 100% { opacity: 0.5; }
-      50% { opacity: 0.8; }
-    }
-    
-    #tour-overlay .tour-interactives-wrapper {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-    }
-    
-    /* Section header */
-    #tour-overlay .tour-interactives-header {
-      margin: 0 0 20px 0;
-      font: 600 20px/1.3 ui-sans-serif, system-ui;
-      color: var(--tour-text-secondary);
-    }
-    
-    /* Status bar */
-    #tour-overlay .tour-status-bar {
-      padding: 8px 0;
-      font: 400 14px/1.3 ui-sans-serif, system-ui;
-      color: var(--tour-text-muted);
-      border-bottom: 1px solid var(--HUD/Panel/Border);
-    }
-    
-    /* Interactives layout - single column */
-    
-    #tour-overlay .tour-interactive {
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
-    
-    /* Interactive A - left aligned, vertical layout */
-    #tour-overlay .tour-interactive-a {
-      align-items: flex-start !important;
-      display: flex !important;
-      flex-direction: column !important;
-      flex-wrap: nowrap !important;
-    }
-    
-    /* Thermometer widget container */
-    #tour-overlay .thermometer-widget-container {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      width: 100%;
-    }
-    
-    /* Thermometer widget header */
-    #tour-overlay .thermometer-widget-header {
-      margin: 0 0 12px 0;
-      font: 600 24px/1.3 ui-sans-serif, system-ui;
-      color: var(--tour-text-secondary);
-      text-align: left;
-      width: 100%;
-      flex-shrink: 0;
-      display: block;
-    }
-    
-    /* Thermometer widget description */
-    #tour-overlay .thermometer-widget-description {
-      margin: 0 0 32px 0;
-      font: 300 18px/1.3 ui-sans-serif, system-ui;
-      color: #B8C3CF;
-      text-align: left;
-      width: 100%;
-      flex-shrink: 0;
-    }
-    
-    /* Thermometer container */
-    #tour-overlay .thermometer-container {
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-      align-items: flex-start;
-      width: 100%;
-      flex-shrink: 0;
-    }
-    
-    /* Override gap between segments and user feeling text */
-    #tour-overlay .thermometer-segments-container + .thermometer-user-feeling {
-      margin-top: -12px;
-    }
-    
-    #tour-overlay .thermometer-container:focus {
-      outline: 2px solid var(--Color/Accent/Primary);
-      outline-offset: 2px;
-    }
-    
-    /* Placeholder (top right corner) */
-    #tour-overlay .readout-placeholder {
-      position: absolute;
-      top: 0;
-      right: 0;
-      max-width: 300px;
-      width: 300px;
-      font: 300 18px/1.3 ui-sans-serif, system-ui;
-      color: #B8C3CF;
-      transition: color 0.3s ease;
-      text-align: right;
-      word-wrap: break-word;
-      white-space: pre-line;
-    }
-    
-    /* Readout (above buttons, left-aligned) */
-    #tour-overlay .thermometer-readout {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      align-items: flex-start;
-      width: 100%;
-    }
-    
-    #tour-overlay .readout-value {
-      font: 600 56px/1 ui-sans-serif, system-ui;
-      color: var(--tour-text-secondary);
-      transition: color 0.3s ease;
-    }
-    
-    #tour-overlay .readout-status {
-      font: 400 14px/1.3 ui-sans-serif, system-ui;
-      color: var(--tour-text-muted);
-      transition: color 0.3s ease;
-    }
-    
-    /* User feeling text (under buttons) */
-    #tour-overlay .thermometer-user-feeling {
-      margin: 4px 0 0 0;
-      font: 300 18px/1.3 ui-sans-serif, system-ui;
-      color: #B8C3CF;
-      text-align: left;
-      width: 100%;
-    }
-    
-    /* Segments container (horizontal row) */
-    #tour-overlay .thermometer-segments-container {
-      display: flex;
-      flex-direction: row;
-      gap: 8px;
-      flex-wrap: nowrap;
-      width: 100%;
-    }
-    
-    /* Thermometer segments */
-    #tour-overlay .thermometer-segment {
-      flex: 1;
-      min-width: 0;
-      padding: 12px 8px;
-      background: var(--HUD/Panel/Bg);
-      border: 1px solid var(--HUD/Panel/Border);
-      color: var(--tour-text-muted);
-      font: 400 14px/1 ui-sans-serif, system-ui;
-      text-align: center;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      border-radius: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    /* Default zone colors (dim) */
-    #tour-overlay .thermometer-segment.zone-1 {
-      background: var(--Color/State/Success/Background);
-      border-color: var(--Color/State/Success/Border);
-      opacity: 0.3;
-    }
-    
-    #tour-overlay .thermometer-segment.zone-2 {
-      background: var(--Color/State/Success/Background);
-      border-color: var(--Color/State/Success/Border);
-      opacity: 0.3;
-    }
-    
-    #tour-overlay .thermometer-segment.zone-3 {
-      background: var(--Color/State/Warning/Background);
-      border-color: var(--Color/State/Warning/Border);
-      opacity: 0.3;
-    }
-    
-    #tour-overlay .thermometer-segment.zone-4 {
-      background: var(--Color/State/Warning/Background);
-      border-color: var(--Color/State/Warning/Border);
-      opacity: 0.3;
-    }
-    
-    #tour-overlay .thermometer-segment.zone-5 {
-      background: var(--Color/State/Error/Background);
-      border-color: var(--Color/State/Error/Border);
-      opacity: 0.3;
-    }
-    
-    #tour-overlay .thermometer-segment:hover {
-      background: var(--Color/State/Hover/Background);
-      border-color: var(--Color/Accent/Primary);
-      opacity: 0.8;
-      transform: translateY(-1px);
-    }
-    
-    #tour-overlay .thermometer-segment:focus {
-      outline: 2px solid var(--Color/Accent/Primary);
-      outline-offset: 2px;
-    }
-    
-    /* Active state (bright colors) */
-    #tour-overlay .thermometer-segment.active {
-      color: var(--tour-text-secondary);
-      font-weight: 600;
-      opacity: 1;
-      transform: translateY(-2px);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    
-    #tour-overlay .thermometer-segment.zone-1.active {
-      background: var(--Color/State/Success/BackgroundActive);
-      border-color: var(--Color/State/Success/Border);
-    }
-    
-    #tour-overlay .thermometer-segment.zone-2.active {
-      background: var(--Color/State/Success/BackgroundActive);
-      border-color: var(--Color/State/Success/Border);
-    }
-    
-    #tour-overlay .thermometer-segment.zone-3.active {
-      background: var(--Color/State/Warning/BackgroundActive);
-      border-color: var(--Color/State/Warning/Border);
-    }
-    
-    #tour-overlay .thermometer-segment.zone-4.active {
-      background: var(--Color/State/Warning/BackgroundActive);
-      border-color: var(--Color/State/Warning/Border);
-    }
-    
-    #tour-overlay .thermometer-segment.zone-5.active {
-      background: var(--Color/State/Error/BackgroundActive);
-      border-color: var(--Color/State/Error/Border);
-    }
-    
-    
-    /* CTA Container */
-    #tour-overlay .tour-cta-container {
-      grid-column: 1 / -1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 8px;
-      margin-top: 8px;
-    }
-    
-    #tour-overlay .tour-cta-btn {
-      flex: 1;
-      min-width: 0;
-      padding: 12px 8px;
-      background: var(--Color/State/Active/Background);
-      border: 1px solid var(--Color/Accent/Primary);
-      color: var(--tour-text-secondary);
-      font: 400 14px/1 ui-sans-serif, system-ui;
-      text-decoration: none;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 0;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    
-    #tour-overlay .tour-cta-btn:hover {
-      background: var(--Color/State/Selected/Background);
-      border-color: var(--Color/Accent/Hover);
-    }
-    
-    #tour-overlay .tour-cta-btn:focus {
-      outline: 2px solid var(--Color/Accent/Primary);
-      outline-offset: 2px;
-    }
-    
-    #tour-overlay .tour-cta-subtext {
-      margin: 0;
-      color: var(--tour-text-muted);
-      font: 300 12px/1.3 ui-sans-serif, system-ui;
-      text-align: center;
-    }
-    
-    /* Desktop and Tablet styles (>=768px) */
-    @media (min-width: 768px) {
-      #tour-overlay .thermometer-widget-description {
-        max-width: 100%;
-      }
-      
-      #tour-overlay .thermometer-container {
-        max-width: 100%;
-      }
-      
-      #tour-overlay .thermometer-segments-container {
-        max-width: 100%;
-      }
-      
-      #tour-overlay .thermometer-user-feeling {
-        max-width: 100%;
-      }
-      
-      #tour-overlay .readout-value {
-        font-size: 61px;
-      }
-      
-      #tour-overlay .readout-status {
-        font-size: 19px;
-      }
-      
-      #tour-overlay .readout-placeholder {
-        font-size: 18px;
-        max-width: 400px;
-        width: auto;
-      }
-    }
-    
-    /* Mobile Responsive */
-    @media (max-width: 767px) {
-      
-      #tour-overlay .thermometer-widget-header {
-        font-size: 20px;
-      }
-      
-      #tour-overlay .readout-value {
-        font-size: 42px;
-      }
-      
-      #tour-overlay .readout-placeholder {
-        font-size: 14px;
-      }
-      
-      #tour-overlay .thermometer-segments-container {
-        max-width: 352px;
-      }
-      
-      #tour-overlay .skeleton-interactives {
-        grid-template-columns: 1fr;
-      }
-    }
-    
-    @media (max-width: 479px) {
-      #tour-overlay .tour-cta-btn {
-        width: 100%;
-      }
-    }
-    
-    /* Light theme support */
-    .theme-light #tour-overlay .skeleton-header,
-    .theme-light #tour-overlay .skeleton-status,
-    .theme-light #tour-overlay .skeleton-item,
-    .theme-light #tour-overlay .skeleton-cta {
-      background: rgba(226, 232, 240, 0.5);
-    }
-    
-    .theme-light #tour-overlay .tour-interactives-header {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .tour-status-bar {
-      color: var(--tour-text-muted);
-      border-bottom-color: var(--Color/Light/Border/Base);
-    }
-    
-    .theme-light #tour-overlay .thermometer-widget-header {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .thermometer-widget-description {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment {
-      background: rgba(241, 245, 249, 0.6);
-      border-color: var(--Color/Light/Border/Base);
-      color: var(--tour-text-muted);
-    }
-    
-    /* Default zone colors for light theme (dim) */
-    .theme-light #tour-overlay .thermometer-segment.zone-1 {
-      background: var(--Color/State/Success/Background);
-      border-color: var(--Color/State/Success/Border);
-      opacity: 0.4;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-2 {
-      background: var(--Color/State/Success/Background);
-      border-color: var(--Color/State/Success/Border);
-      opacity: 0.4;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-3 {
-      background: var(--Color/State/Warning/Background);
-      border-color: var(--Color/State/Warning/Border);
-      opacity: 0.4;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-4 {
-      background: var(--Color/State/Warning/Background);
-      border-color: var(--Color/State/Warning/Border);
-      opacity: 0.4;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-5 {
-      background: var(--Color/State/Error/Background);
-      border-color: var(--Color/State/Error/Border);
-      opacity: 0.4;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment:hover {
-      background: var(--Color/State/Hover/Background);
-      border-color: var(--Color/Accent/Primary);
-      opacity: 0.8;
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.active {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-1.active {
-      background: var(--Color/State/Success/BackgroundActive);
-      border-color: var(--Color/State/Success/Border);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-2.active {
-      background: var(--Color/State/Success/BackgroundActive);
-      border-color: var(--Color/State/Success/Border);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-3.active {
-      background: var(--Color/State/Warning/BackgroundActive);
-      border-color: var(--Color/State/Warning/Border);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-4.active {
-      background: var(--Color/State/Warning/BackgroundActive);
-      border-color: var(--Color/State/Warning/Border);
-    }
-    
-    .theme-light #tour-overlay .thermometer-segment.zone-5.active {
-      background: var(--Color/State/Error/BackgroundActive);
-      border-color: var(--Color/State/Error/Border);
-    }
-    
-    .theme-light #tour-overlay .readout-value {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .readout-placeholder {
-      color: var(--tour-text-muted);
-    }
-    
-    .theme-light #tour-overlay .readout-example {
-      color: var(--tour-text-muted);
-    }
-    
-    .theme-light #tour-overlay .thermometer-user-feeling {
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .readout-status {
-      color: var(--tour-text-muted);
-    }
-    
-    .theme-light #tour-overlay .tour-cta-subtext {
-      color: var(--tour-text-muted);
-    }
-    
-    .theme-light #tour-overlay .tour-cta-btn {
-      background: rgba(59, 130, 246, 0.12);
-      border-color: var(--Color/Accent/Primary);
-      color: var(--tour-text-secondary);
-    }
-    
-    .theme-light #tour-overlay .tour-cta-btn:hover {
-      background: rgba(59, 130, 246, 0.18);
-    }
-    
-    /* HUD big panel headings - tour style (highest priority, at end of CSS) */
-    #hud-big-panel h1,
-    #hud-big-panel h2,
-    #hud-big-panel h3,
-    #hud-big-panel h4,
-    #hud-big-panel h5,
-    #hud-big-panel h6,
-    .hud-active #hud-big-panel h1,
-    .hud-active #hud-big-panel h2,
-    .hud-active #hud-big-panel h3,
-    .hud-active #hud-big-panel h4,
-    .hud-active #hud-big-panel h5,
-    .hud-active #hud-big-panel h6,
-    #hud-container #hud-big-panel h1,
-    #hud-container #hud-big-panel h2,
-    #hud-container #hud-big-panel h3,
-    #hud-container #hud-big-panel h4,
-    #hud-container #hud-big-panel h5,
-    #hud-container #hud-big-panel h6,
-    .hud-active #hud-container #hud-big-panel h1,
-    .hud-active #hud-container #hud-big-panel h2,
-    .hud-active #hud-container #hud-big-panel h3,
-    .hud-active #hud-container #hud-big-panel h4,
-    .hud-active #hud-container #hud-big-panel h5,
-    .hud-active #hud-container #hud-big-panel h6 {
-      font: 600 20px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-      white-space: normal !important;
-    }
-    /* Main heading (h2) - 10px margin bottom to paragraph (highest priority) */
-    #hud-big-panel h2,
-    .hud-active #hud-big-panel h2,
-    #hud-container #hud-big-panel h2,
-    .hud-active #hud-container #hud-big-panel h2 {
-      margin: 0 0 10px 0 !important;
-    }
-    /* Subheadings (h3, h4) - smaller than main heading (highest priority) */
-    #hud-big-panel h3,
-    .hud-active #hud-big-panel h3,
-    #hud-container #hud-big-panel h3,
-    .hud-active #hud-container #hud-big-panel h3 {
-      font: 600 18px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-      white-space: normal !important;
-    }
-    #hud-big-panel h4,
-    .hud-active #hud-big-panel h4,
-    #hud-container #hud-big-panel h4,
-    .hud-active #hud-container #hud-big-panel h4 {
-      font: 600 16px/1.3 ui-sans-serif, system-ui !important;
-      color: var(--HUD/Text/Base) !important;
-      margin: 0 0 0 0 !important;
-      font-weight: 600 !important;
-      white-space: normal !important;
-    }
-    /* Paragraph spacing: 20px between paragraphs (highest priority) */
-    #hud-big-panel p,
-    .hud-active #hud-big-panel p,
-    #hud-container #hud-big-panel p,
-    .hud-active #hud-container #hud-big-panel p {
-      margin: 0 0 20px 0 !important;
-      line-height: 1.5 !important;
-    }
-    #hud-big-panel p:last-child,
-    .hud-active #hud-big-panel p:last-child,
-    #hud-container #hud-big-panel p:last-child,
-    .hud-active #hud-container #hud-big-panel p:last-child {
-      margin-bottom: 0 !important;  /* Убрать отступ у последнего абзаца */
-    }
-    /* Remove spacing after subheadings - no margin for first paragraph after h3/h4 (highest priority) */
-    #hud-big-panel h3 + p,
-    #hud-big-panel h4 + p,
-    .hud-active #hud-big-panel h3 + p,
-    .hud-active #hud-big-panel h4 + p,
-    #hud-container #hud-big-panel h3 + p,
-    #hud-container #hud-big-panel h4 + p,
-    .hud-active #hud-container #hud-big-panel h3 + p,
-    .hud-active #hud-container #hud-big-panel h4 + p {
-      margin-top: 0 !important;  /* Убрать отступ у первого абзаца после подзаголовка */
-    }
-  </style>
+  <!-- PHASE C4: Tour styles moved to main.css -->
 </div>
 
 <!-- No-JS Fallback -->
 <noscript>
-  <div style="position: fixed; inset: 0; z-index: 9999; background: var(--Color/Dark/Background/Primary); color: var(--Color/Light/Text/Primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: ui-sans-serif, system-ui, sans-serif;">
-    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: var(--Color/Light/Text/Secondary);">Интерактивные элементы требуют JavaScript</h1>
-    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0; color: var(--Color/Light/Text/Muted);">
+  <div style="position: fixed; inset: 0; z-index: 9999; background: var(--color-dark-bg-primary); color: var(--color-light-text-primary); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; font-family: ui-sans-serif, system-ui, sans-serif;">
+    <h1 style="font-size: 24px; font-weight: 600; margin: 0 0 16px 0; color: var(--color-light-text-secondary);">Интерактивные элементы требуют JavaScript</h1>
+    <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0; color: var(--color-light-text-muted);">
       Этот сайт использует 3D-интерактивы и требует включения JavaScript для полноценной работы.
     </p>
     <p style="font-size: 16px; line-height: 1.5; max-width: 600px; margin: 0 0 24px 0;">
       Вы можете ознакомиться с материалами в статическом формате:
     </p>
-    <a href="./Vladimir_Kostyal_Resume.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background: var(--Color/Accent/Primary); color: var(--Color/Light/Text/OnBrand); text-decoration: none; font-weight: 500; margin-bottom: 12px;">
+    <a href="./Vladimir_Kostyal_Resume.pdf" target="_blank" style="display: inline-block; padding: 12px 24px; background: var(--color-accent-primary); color: var(--color-light-text-on-brand); text-decoration: none; font-weight: 500; margin-bottom: 12px;">
       Скачать резюме (PDF)
     </a>
-    <p style="font-size: 14px; color: var(--Color/Light/Text/Muted); margin-top: 24px;">
-      Или свяжитесь напрямую: <a href="https://t.me/scrumux" target="_blank" style="color: var(--Color/Accent/Primary); text-decoration: underline;">Telegram</a>
+    <p style="font-size: 14px; color: var(--color-light-text-muted); margin-top: 24px;">
+      Или свяжитесь напрямую: <a href="https://t.me/scrumux" target="_blank" style="color: var(--color-accent-primary); text-decoration: underline;">Telegram</a>
     </p>
   </div>
 </noscript>
@@ -2462,21 +313,22 @@ body:hover::-webkit-scrollbar-thumb {
 <!-- Header -->
 <header id="site-header">
   <div class="header-logo">
-    <span class="name">Владимир Костял</span>
-    <span class="tagline">проектирую UX архитектуру и интерфейсы для AI сервисов</span>
+    <img src="./UX4AILOGO.svg" alt="" class="header-icon" width="24" height="24">
+    <span class="name">UX4AI</span>
+    <span class="tagline"> UX архитектура и интерфейсы для AI сервисов</span>
   </div>
   <div class="header-spacer"></div>
   <button class="header-btn" id="btn-demo">Демо</button>
   <button class="header-btn" id="btn-links">Ссылки</button>
   <button class="header-btn" id="btn-about">Автор</button>
-  <div id="theme-toggle-container"></div>
+  <!-- Кнопки Пуск и Тема добавляются динамически через JS напрямую в header -->
 </header>
 
 <!-- Mode banner -->
 <div id="mode-banner">Режим: Орбита (ESC — вернуться к пролистыванию)</div>
 
 <!-- Mobile orbit mode toggle -->
-<div id="mobile-orbit-toggle" style="display: none;">
+<div id="mobile-orbit-toggle">
   <button id="toggle-orbit-btn">
     <img id="toggle-orbit-icon" src="./camera_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Camera" loading="lazy" width="24" height="24" />
   </button>
@@ -2533,27 +385,155 @@ body:hover::-webkit-scrollbar-thumb {
   window.__UX4AI_BASE_PATH__ = base;
   console.log('[Bootstrap] UX4AI base path set to "." (relative root)');
   
-  // ===== PHASE B: Set preloader iframe src with fixed relative path =====
-  // Прелоадер всегда грузится из текущей папки рядом с index.html
-  (function() {
-    const preloaderFrame = document.getElementById('preloader-frame');
-    if (preloaderFrame) {
-      const preloaderPath = './ux4ai-preloader-loop-outline-noise.html';
-      preloaderFrame.src = preloaderPath;
-      console.log('[Bootstrap] Preloader path set:', preloaderFrame.src);
-      
-      preloaderFrame.addEventListener('error', (e) => {
-        console.error('[Bootstrap] Preloader iframe failed to load:', preloaderPath);
-        console.error('[Bootstrap] This may indicate that the file is missing next to index.html');
-      }, { once: true });
-    } else {
-      console.warn('[Bootstrap] Preloader iframe element not found');
-    }
-  })();
+  // ===== Preloader initialization (refactored: no longer uses iframe) =====
+  // Preloader is now inline HTML, initialized via core/preloader.js module
+  // NOTE: Preloader visibility script is located immediately after #preloader-overlay element
 </script>
 <script type="module">
+// ===== Preloader is already shown by synchronous script above =====
+// This module script only initializes animation, doesn't need to show preloader
+console.log('[Bootstrap] Module script started, DOM ready state:', document.readyState);
+
+// ===== DIAGNOSTIC FUNCTION: dumpLayoutSnapshot =====
+// Temporary diagnostic function to compare layout state at different initialization stages
+function dumpLayoutSnapshot(label) {
+  const html = document.documentElement;
+  const body = document.body;
+  
+  // Get classes
+  const htmlClasses = html.className || '';
+  const bodyClasses = body.className || '';
+  
+  // Check for preload lock
+  const hasPreloadLock = htmlClasses.includes('ux4ai-preload-lock') || bodyClasses.includes('ux4ai-preload-lock');
+  
+  // Check header buttons
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  const headerBtns = document.querySelectorAll('.header-btn');
+  
+  const headerButtonsState = {
+    themeToggleBtn: {
+      exists: !!themeToggleBtn,
+      display: themeToggleBtn ? getComputedStyle(themeToggleBtn).display : 'N/A',
+      visibility: themeToggleBtn ? getComputedStyle(themeToggleBtn).visibility : 'N/A',
+      parent: themeToggleBtn ? (themeToggleBtn.parentNode?.id || 'unknown') : 'N/A'
+    },
+    allHeaderBtns: {
+      count: headerBtns.length,
+      buttons: Array.from(headerBtns).map(btn => ({
+        id: btn.id || 'no-id',
+        className: btn.className || '',
+        display: getComputedStyle(btn).display,
+        visibility: getComputedStyle(btn).visibility
+      }))
+    }
+  };
+  
+  // Check HUD panels
+  const hudBigPanel = document.getElementById('hud-big-panel');
+  const hudSmallPanel = document.getElementById('hud-small-panel');
+  const hudContainer = document.getElementById('hud-container');
+  
+  const hudState = {
+    bigPanel: {
+      exists: !!hudBigPanel,
+      display: hudBigPanel ? getComputedStyle(hudBigPanel).display : 'N/A'
+    },
+    smallPanel: {
+      exists: !!hudSmallPanel,
+      display: hudSmallPanel ? getComputedStyle(hudSmallPanel).display : 'N/A'
+    },
+    container: {
+      exists: !!hudContainer,
+      display: hudContainer ? getComputedStyle(hudContainer).display : 'N/A'
+    }
+  };
+  
+  const snapshot = {
+    label,
+    timestamp: new Date().toISOString(),
+    htmlClasses,
+    bodyClasses,
+    hasPreloadLock,
+    headerButtons: headerButtonsState,
+    hud: hudState
+  };
+  
+  console.log(`[LayoutSnapshot:${label}]`, snapshot);
+  return snapshot;
+}
+
+// Expose diagnostic function globally for use in other modules
+if (typeof window !== 'undefined') {
+  window.dumpLayoutSnapshot = dumpLayoutSnapshot;
+}
+
 async function init() {
   try {
+    // ===== Initialize preloader animation in background (don't block) =====
+    // Preloader is already visible thanks to synchronous script above
+    const base = window.__UX4AI_BASE_PATH__ || '';
+    let hidePreloaderFn = null;
+    let loadFallbackTimeout = null; // For window.load fallback
+    
+    // Load preloader module in background (don't await - non-blocking)
+    const preloaderInitPromise = (async () => {
+      try {
+        // Wait for DOM if needed
+        if (document.readyState === 'loading') {
+          await new Promise(resolve => {
+            if (document.readyState === 'loading') {
+              document.addEventListener('DOMContentLoaded', resolve, { once: true });
+            } else {
+              resolve();
+            }
+          });
+        }
+        
+        // Import preloader module
+        const preloaderModule = await import(`${base}/core/preloader.js`);
+        const initPreloader = preloaderModule.initPreloader;
+        hidePreloaderFn = preloaderModule.hidePreloader;
+        
+        if (!initPreloader || !hidePreloaderFn) {
+          throw new Error('Preloader module exports not found');
+        }
+        
+        // Initialize animation
+        const overlayEl = document.getElementById('preloader-overlay');
+        if (overlayEl) {
+          initPreloader();
+          console.log('[Bootstrap] Preloader animation started');
+        } else {
+          console.warn('[Bootstrap] Preloader overlay not found when trying to initialize animation');
+        }
+      } catch (e) {
+        console.error('[Bootstrap] Failed to initialize preloader animation:', e);
+        console.error('[Bootstrap] Error details:', e.message, e.stack);
+        // Preloader is already visible, so we continue without animation
+        // BUT: Try to manually show text even if module failed
+        const overlayEl = document.getElementById('preloader-overlay');
+        if (overlayEl) {
+          const mainText = overlayEl.querySelector('#main');
+          const shadowText = overlayEl.querySelector('#shadow');
+          if (mainText) {
+            mainText.style.strokeDashoffset = '0';
+            console.log('[Bootstrap] Preloader text manually shown (module failed)');
+          }
+          if (shadowText) {
+            shadowText.style.strokeDashoffset = '0';
+          }
+        }
+      }
+    })();
+    
+    // Store hidePreloaderFn in a way that's accessible later
+    // We'll update it when module loads
+    const updateHidePreloaderFn = (fn) => {
+      hidePreloaderFn = fn;
+    };
+    
+    // Continue with other imports immediately (don't wait for preloader module)
     
     console.log('[Bootstrap] Importing THREE via importmap...');
     const THREE = await import('three');
@@ -2564,12 +544,11 @@ async function init() {
     window.THREE = THREE;
     
     console.log('[Bootstrap] Importing modules...');
-    // Use base path for all imports
-    const base = window.__UX4AI_BASE_PATH__ || '';
+    // Use base path for all imports (already defined above)
     
     const { createEngine } = await import(`${base}/core/engine.js?v=38`);
     const { initThemeSwitcher, toggleTheme } = await import(`${base}/ui/themeSwitcher.js?v=38`);
-    const { initHUD } = await import(`${base}/core/hud-manager.js?v=47`);
+    const { initHUD } = await import(`${base}/core/hud-manager.js?v=48`);
     const { initTheme, setEngine, getCurrentThemeId } = await import(`${base}/ui/theme-controller.js`);
     
     // ===== PHASE B: Expose theme functions globally for HUD =====
@@ -2601,7 +580,7 @@ async function init() {
     
     // Ensure engine scene background matches current theme immediately
     try {
-      const { getSceneColors } = await import(`${base}/core/theme-colors.js`);
+      const { getSceneColors } = await import(`${base}/core/theme-colors.js?v=3`);
       const sceneColors = getSceneColors();
       if (engine.scene && engine.scene.background) {
         engine.scene.background = new THREE.Color(sceneColors.background);
@@ -2613,6 +592,159 @@ async function init() {
     // NOTE: Preloader will be hidden after theme fully mounts (see below)
     // Expose engine for grid overlay to query current scene state
     try { window._engine = engine; } catch(_) {}
+    
+    // PHASE 3 FIX: Register themeMounted listener BEFORE initThemeSwitcher to ensure it catches the event
+    // Listen for theme mounted event
+    // HUD is initialized early, but we need to update it with nodes after scene is mounted
+    engine.on('themeMounted', async ({ themeId }) => {
+      console.log('[Bootstrap] Theme mounted event received:', themeId);
+      
+      // Update HUD with nodes from mounted scene
+      try {
+        const plugin = engine.currentPlugin || window._calmPlugin;
+        if (plugin && plugin.nodes) {
+          console.log('[Bootstrap] Updating HUD with', plugin.nodes.length, 'nodes');
+          // HUD should get nodes from engine, but we can also update it here
+          // The nodes are already passed via initNavigationAndHUD, but let's ensure HUD has access
+          if (typeof window._hud === 'object' && window._hud) {
+            // HUD already has nodes from initNavigationAndHUD
+            console.log('[Bootstrap] HUD already has nodes');
+          }
+        }
+      } catch (e) {
+        console.warn('[Bootstrap] Could not update HUD with nodes:', e);
+      }
+      
+      // ===== ФАЗА B: Bootstrap НЕ манипулирует кнопкой темы напрямую =====
+      // КОНТРАКТ: Bootstrap НЕ имеет права изменять #theme-toggle-btn напрямую
+      // RESPONSIBILITY:
+      //   - Bootstrap может только вызывать HUD API для стабилизации кнопки
+      //   - НЕ может менять display/visibility/opacity/pointer-events напрямую
+      //   - НЕ может искать #theme-toggle-btn через getElementById/querySelector
+      //   - НЕ может перемещать или удалять кнопку
+      // CRITICAL INVARIANT: Единственный владелец #theme-toggle-btn — HUD Manager
+      // ФАЗА B: Используем HUD API вместо прямых манипуляций
+      try {
+        if (window.hud && typeof window.hud.ensureThemeButton === 'function') {
+          window.hud.ensureThemeButton();
+          console.log('[Bootstrap] Theme button stabilized via HUD API after theme mount (ФАЗА B: контракт)');
+        } else {
+          console.warn('[Bootstrap] HUD API not available, cannot stabilize theme button');
+        }
+      } catch (e) {
+        console.error('[Bootstrap] Error calling HUD API for theme button:', e);
+      }
+      
+      // Hide preloader when the first theme fully mounts
+      // Unified hide function with fallback
+      const hidePreloaderWithFallback = async () => {
+        try {
+          // Wait for preloader module to load (if still loading)
+          await preloaderInitPromise.catch(() => {}); // Ignore errors, we have fallback
+          
+          // Get hidePreloaderFn from module if available
+          if (!hidePreloaderFn) {
+            try {
+              const preloaderModule = await import(`${base}/core/preloader.js`);
+              hidePreloaderFn = preloaderModule.hidePreloader;
+            } catch (e) {
+              // Module not available, will use fallback
+            }
+          }
+          
+          // Calculate minimum display time (ensure at least 1 second visible)
+          const preloaderStartTime = window.__PRELOADER_START_TIME__ || performance.now();
+          const elapsed = performance.now() - preloaderStartTime;
+          const minDisplayTime = 1000; // Minimum 1 second
+          const delay = Math.max(150, minDisplayTime - elapsed);
+          
+          console.log('[Bootstrap] Preloader display time:', elapsed.toFixed(0), 'ms, delay:', delay.toFixed(0), 'ms');
+          
+          setTimeout(() => {
+            const overlay = document.getElementById('preloader-overlay');
+            if (!overlay) return;
+            
+            if (hidePreloaderFn && typeof hidePreloaderFn === 'function') {
+              hidePreloaderFn();
+              console.log('[Bootstrap] Preloader hidden via module');
+            } else {
+              // Fallback: direct class manipulation
+              // CRITICAL: Always remove preload lock
+              try {
+                document.documentElement.classList.remove('ux4ai-preload-lock');
+                document.body.classList.remove('ux4ai-preload-lock');
+              } catch (e) {
+                console.warn('[Bootstrap] Error removing preload lock in fallback:', e);
+              }
+              
+              overlay.classList.add('hidden');
+              
+              // Remove inline styles after hiding
+              setTimeout(() => {
+                if (overlay) {
+                  try {
+                    overlay.style.cssText = '';
+                  } catch (e) {
+                    console.warn('[Bootstrap] Error clearing inline styles in fallback:', e);
+                  }
+                }
+              }, 50);
+              
+              // Remove from DOM after animation
+              setTimeout(() => {
+                if (overlay && overlay.parentNode) {
+                  try {
+                    overlay.remove();
+                  } catch (e) {
+                    console.warn('[Bootstrap] Error removing overlay in fallback:', e);
+                  }
+                }
+              }, 700);
+              console.log('[Bootstrap] Preloader hidden via fallback');
+            }
+          }, delay);
+        } catch (e) {
+          console.error('[Bootstrap] Error hiding preloader:', e);
+          // Last resort fallback
+          // CRITICAL: Always remove preload lock
+          try {
+            document.documentElement.classList.remove('ux4ai-preload-lock');
+            document.body.classList.remove('ux4ai-preload-lock');
+          } catch (err) {
+            console.warn('[Bootstrap] Error removing preload lock in last resort fallback:', err);
+          }
+          
+          const overlay = document.getElementById('preloader-overlay');
+          if (overlay) {
+            overlay.classList.add('hidden');
+            
+            // Remove inline styles after hiding
+            setTimeout(() => {
+              if (overlay) {
+                try {
+                  overlay.style.cssText = '';
+                } catch (err) {
+                  console.warn('[Bootstrap] Error clearing inline styles in last resort fallback:', err);
+                }
+              }
+            }, 50);
+            
+            setTimeout(() => {
+              if (overlay && overlay.parentNode) {
+                try {
+                  overlay.remove();
+                } catch (err) {
+                  console.warn('[Bootstrap] Error removing overlay in last resort fallback:', err);
+                }
+              }
+            }, 700);
+          }
+        }
+      };
+      
+      // Hide on themeMounted (primary mechanism)
+      hidePreloaderWithFallback();
+    });
     
     // Initialize theme switcher (mounts scene ONCE)
     console.log('[Bootstrap] Initializing theme switcher...');
@@ -2662,29 +794,26 @@ async function init() {
     // Bootstrap НЕ может перемещать или удалять кнопку
     // Bootstrap может ТОЛЬКО вызывать window.hud.ensureThemeButton() для стабилизации
     try {
-      const container = document.getElementById('theme-toggle-container') || document.getElementById('site-header');
-      if (container) {
+      const header = document.getElementById('site-header');
+      if (header) {
         // PHASE TT1: Check if button already exists (idempotent creation)
         let btn = document.getElementById('tour-restart-btn');
         if (!btn) {
           // PHASE TT1: Create button ONCE - this is the single source of creation
-          // CRITICAL: Only creates tour-restart-btn, never touches other children
           btn = document.createElement('button');
           btn.id = 'tour-restart-btn';
           btn.className = 'header-btn';
-          btn.setAttribute('aria-label', 'Перезапустить тур');
-          btn.title = 'Перезапустить тур';
+          btn.setAttribute('aria-label', 'Запустить тур');
+          btn.title = 'Запустить тур';
           btn.tabIndex = 0;
-          btn.innerHTML = '<img src="./replay_24dp_434343_FILL0_wght400_GRAD0_opsz24.svg" alt="Restart tour" width="24" height="24" loading="lazy" aria-hidden="true" />';
+          btn.textContent = 'Пуск';
           btn.style.display = 'inline-flex';
           
-          // PHASE TT1: Append ONLY tour-restart-btn to container
-          // CRITICAL: Does NOT remove, clear, or touch other children (e.g., theme-toggle-btn)
-          container.appendChild(btn);
-          console.log('[Bootstrap] Tour restart button created (PHASE TT1: isolated creation)');
+          // Добавляем в конец header (после theme-toggle-btn)
+          header.appendChild(btn);
+          console.log('[Bootstrap] Tour restart button created');
         } else {
-          // PHASE TT1: Button already exists - just ensure it's visible
-          // CRITICAL: Does NOT touch other children of container
+          // Button already exists - just ensure it's visible
           btn.style.display = 'inline-flex';
         }
         
@@ -2755,73 +884,105 @@ async function init() {
       console.error('[Bootstrap] Failed to create tour restart button:', e);
     }
     
-    // Listen for theme mounted event
-    // HUD is initialized early, but we need to update it with nodes after scene is mounted
-    engine.on('themeMounted', ({ themeId }) => {
-      console.log('[Bootstrap] Theme mounted event received:', themeId);
-      
-      // Update HUD with nodes from mounted scene
-      try {
-        const plugin = engine.currentPlugin || window._calmPlugin;
-        if (plugin && plugin.nodes) {
-          console.log('[Bootstrap] Updating HUD with', plugin.nodes.length, 'nodes');
-          // HUD should get nodes from engine, but we can also update it here
-          // The nodes are already passed via initNavigationAndHUD, but let's ensure HUD has access
-          if (typeof window._hud === 'object' && window._hud) {
-            // HUD already has nodes from initNavigationAndHUD
-            console.log('[Bootstrap] HUD already has nodes');
-          }
-        }
-      } catch (e) {
-        console.warn('[Bootstrap] Could not update HUD with nodes:', e);
-      }
-      
-      // ===== ФАЗА B: Bootstrap НЕ манипулирует кнопкой темы напрямую =====
-      // КОНТРАКТ: Bootstrap НЕ имеет права изменять #theme-toggle-btn напрямую
-      // RESPONSIBILITY:
-      //   - Bootstrap может только вызывать HUD API для стабилизации кнопки
-      //   - НЕ может менять display/visibility/opacity/pointer-events напрямую
-      //   - НЕ может искать #theme-toggle-btn через getElementById/querySelector
-      //   - НЕ может перемещать или удалять кнопку
-      // CRITICAL INVARIANT: Единственный владелец #theme-toggle-btn — HUD Manager
-      // ФАЗА B: Используем HUD API вместо прямых манипуляций
-      try {
-        if (window.hud && typeof window.hud.ensureThemeButton === 'function') {
-          window.hud.ensureThemeButton();
-          console.log('[Bootstrap] Theme button stabilized via HUD API after theme mount (ФАЗА B: контракт)');
-        } else {
-          console.warn('[Bootstrap] HUD API not available, cannot stabilize theme button');
-        }
-      } catch (e) {
-        console.error('[Bootstrap] Error calling HUD API for theme button:', e);
-      }
-      
-      // Hide preloader when the first theme fully mounts
-      try {
-        const pre = document.getElementById('preloader-overlay');
-        if (pre) setTimeout(() => pre.classList.add('hidden'), 150);
-      } catch {}
-    });
+    // PHASE 3 FIX: Listener already registered above (before initThemeSwitcher)
+    // This duplicate registration is removed to avoid double handling
     
     console.log('[Bootstrap] ✅ Ready!');
-    // Safety: hide preloader on load even if themeMounted didn't fire (fallback)
+    
+    // Fallback mechanisms for hiding preloader (if themeMounted doesn't fire)
+    // 1. window.load fallback (after 3 seconds from load)
     window.addEventListener('load', () => {
-      try {
-        const pre = document.getElementById('preloader-overlay');
-        if (pre) pre.classList.add('hidden');
-      } catch {}
-    }, { once: true });
-    // Absolute safety: hide regardless after a maximum wait
+      loadFallbackTimeout = setTimeout(() => {
+        const overlay = document.getElementById('preloader-overlay');
+        if (overlay && !overlay.classList.contains('hidden')) {
+          console.warn('[Bootstrap] Preloader still visible after window.load, hiding via fallback');
+          
+          // CRITICAL: Always remove preload lock
+          try {
+            document.documentElement.classList.remove('ux4ai-preload-lock');
+            document.body.classList.remove('ux4ai-preload-lock');
+          } catch (e) {
+            console.warn('[Bootstrap] Error removing preload lock in window.load fallback:', e);
+          }
+          
+          const elapsed = performance.now() - (window.__PRELOADER_START_TIME__ || 0);
+          const delay = Math.max(0, 1000 - elapsed);
+          setTimeout(() => {
+            overlay.classList.add('hidden');
+            
+            // Remove inline styles after hiding
+            setTimeout(() => {
+              if (overlay) {
+                try {
+                  overlay.style.cssText = '';
+                } catch (e) {
+                  console.warn('[Bootstrap] Error clearing inline styles in window.load fallback:', e);
+                }
+              }
+            }, 50);
+            
+            setTimeout(() => {
+              if (overlay && overlay.parentNode) {
+                try {
+                  overlay.remove();
+                } catch (e) {
+                  console.warn('[Bootstrap] Error removing overlay in window.load fallback:', e);
+                }
+              }
+            }, 700);
+          }, delay);
+        }
+      }, 3000); // Wait 3 seconds after load
+    });
+    
+    // 2. Hard timeout fallback (5 seconds max)
     setTimeout(() => {
-      try { const pre = document.getElementById('preloader-overlay'); if (pre) pre.classList.add('hidden'); } catch {}
-    }, 8000);
+      // CRITICAL: Always remove preload lock
+      try {
+        document.documentElement.classList.remove('ux4ai-preload-lock');
+        document.body.classList.remove('ux4ai-preload-lock');
+      } catch (e) {
+        console.warn('[Bootstrap] Error removing preload lock in 5s timeout fallback:', e);
+      }
+      
+      const overlay = document.getElementById('preloader-overlay');
+      if (overlay && !overlay.classList.contains('hidden')) {
+        console.warn('[Bootstrap] Preloader still visible after 5 seconds, forcing hide');
+        overlay.classList.add('hidden');
+        
+        // Remove inline styles after hiding
+        setTimeout(() => {
+          if (overlay) {
+            try {
+              overlay.style.cssText = '';
+            } catch (e) {
+              console.warn('[Bootstrap] Error clearing inline styles in 5s timeout fallback:', e);
+            }
+          }
+        }, 50);
+        
+        setTimeout(() => {
+          if (overlay && overlay.parentNode) {
+            try {
+              overlay.remove();
+            } catch (e) {
+              console.warn('[Bootstrap] Error removing overlay in 5s timeout fallback:', e);
+            }
+          }
+        }, 700);
+      }
+      // Clear load fallback if it's still pending
+      if (loadFallbackTimeout) {
+        clearTimeout(loadFallbackTimeout);
+      }
+    }, 5000);
 
     // ===== Guided Tour (PHASE 3: Using tour module) =====
     (async function initGuidedTour(){
       try {
         // Import tour module
         const base = window.__UX4AI_BASE_PATH__ || '';
-        const { initTour, TOUR_STEPS } = await import(`${base}/core/tour.js?v=1`);
+        const { initTour, TOUR_STEPS } = await import(`${base}/core/tour.js?v=4`);
         
         // Parse URL parameters
       const params = new URLSearchParams(location.search);
@@ -2895,15 +1056,66 @@ async function init() {
           console.warn('[Tour] Could not setup close button:', e);
         }
         
-        // Schedule display as soon as preloader hides
-        const tryShow = () => {
+        // Utility function to wait for CSS to be loaded
+        // Simplified: only check if stylesheets exist (don't try to read rules due to CORS issues with Service Worker)
+        const waitForCSS = (timeout = 2000) => {
+          return new Promise((resolve) => {
+            const startTime = performance.now();
+            
+            const checkCSS = () => {
+              const stylesheets = Array.from(document.styleSheets);
+              const requiredCSS = ['tokens.css', 'main.css'];
+              
+              // Check if stylesheets exist (don't try to read rules - CORS can block it with Service Worker)
+              const loaded = requiredCSS.every(required => {
+                return stylesheets.some(s => {
+                  try {
+                    return s.href && s.href.includes(required);
+                  } catch (e) {
+                    return false;
+                  }
+                });
+              });
+              
+              if (loaded) {
+                // CSS files are present, wait for styles to be applied
+                requestAnimationFrame(() => {
+                  requestAnimationFrame(() => {
+                    resolve();
+                  });
+                });
+                return;
+              }
+              
+              // Check timeout
+              const elapsed = performance.now() - startTime;
+              if (elapsed >= timeout) {
+                console.warn('[Tour] CSS loading timeout, proceeding anyway');
+                resolve();
+                return;
+              }
+              
+              // Retry after a short delay
+              setTimeout(checkCSS, 50);
+            };
+            
+            checkCSS();
+          });
+        };
+        
+        // Schedule display as soon as preloader hides AND CSS is loaded
+        const tryShow = async () => {
           const preHidden = !document.getElementById('preloader-overlay') || document.getElementById('preloader-overlay').classList.contains('hidden');
           if (!preHidden) {
             setTimeout(tryShow, 120);
             return;
           }
+          
+          // Wait for CSS to be loaded and applied before starting tour
+          await waitForCSS();
+          
           const step = Number((typeof localStorage !== 'undefined' && localStorage.getItem('tour_step')) || '1') || 1;
-          console.log('[Tour] Attempting to start tour from step:', step);
+          console.log('[Tour] CSS loaded and applied, starting tour from step:', step);
           const started = tour.startTour(step);
           if (!started) {
             console.error('[Tour] Failed to start tour on page load. Check console for detailed error messages from tour module.');
@@ -2924,14 +1136,23 @@ async function init() {
 
     // -------- HUD Grid (through-borders) ----------
     // Renders 1px lines across the whole viewport at the edges of HUD panels.
-    const GRID_COLOR = 'rgba(120, 220, 255, 0.25)';
-    const overlay = document.getElementById('grid-overlay');
-    overlay.style.position = 'fixed';
-    overlay.style.inset = '0';
-    overlay.style.pointerEvents = 'none';
-    overlay.style.zIndex = '850'; // above scene, below labels/HUD
+    // PHASE 3C: Read grid color from CSS variable with fallback
+    const getCSSVariable = (name, fallback) => {
+      try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return value || fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+    const GRID_COLOR = getCSSVariable('--grid-color', 'rgba(120, 220, 255, 0.25)');
+    const gridOverlay = document.getElementById('grid-overlay');
+    gridOverlay.style.position = 'fixed';
+    gridOverlay.style.inset = '0';
+    gridOverlay.style.pointerEvents = 'none';
+    gridOverlay.style.zIndex = '850'; // above scene, below labels/HUD
     // Disable DOM-line overlay; we will draw via canvas for reliable animation
-    overlay.style.display = 'none';
+    gridOverlay.style.display = 'none';
 
     // Canvas grid overlay (reliable, animated in sync with core pulse)
     const canvas = document.getElementById('grid-canvas');
@@ -2939,12 +1160,12 @@ async function init() {
     canvas.style.position = 'fixed';
     canvas.style.inset = '0';
     canvas.style.pointerEvents = 'none';
-    canvas.style.zIndex = '850';
+    canvas.style.zIndex = '1100'; // Edge lines ABOVE panels (1000) and overlay
     if (canvasBg) {
       canvasBg.style.position = 'fixed';
       canvasBg.style.inset = '0';
       canvasBg.style.pointerEvents = 'none';
-      canvasBg.style.zIndex = '890';
+      canvasBg.style.zIndex = '930'; // Full grid BELOW backdrop (940)
     }
     // Grid only active in HUD mode or during tour
     function isGridActive() {
@@ -2975,7 +1196,12 @@ async function init() {
     ];
 
     function clearLines() {
-      while (overlay.firstChild) overlay.removeChild(overlay.firstChild);
+      while (gridOverlay.firstChild) gridOverlay.removeChild(gridOverlay.firstChild);
+      // OPTIMIZATION: Invalidate engine's grid cache when lines are cleared
+      // This prevents engine from trying to update deleted DOM elements
+      if (typeof window !== 'undefined') {
+        window._gridCacheInvalid = true;
+      }
     }
 
     function addLine(x, y, w, h) {
@@ -3007,7 +1233,7 @@ async function init() {
         if (h === 1) ty = ty || 0.5;
       }
       if (tx || ty) el.style.transform = `translate(${tx}px, ${ty}px)`;
-      overlay.appendChild(el);
+      gridOverlay.appendChild(el);
     }
 
     // Cache arrays for canvas drawing (declared early so buildGrid can fill them)
@@ -3335,10 +1561,10 @@ async function init() {
         const tourOverlayEl = document.getElementById('tour-overlay');
         const tourActive = tourOverlayEl && !tourOverlayEl.classList.contains('hidden');
         const hudOnly = hudActiveFlag && !linksActive && !tourActive;
-        // Base border color #243041 with reduced opacity
-        const baseBorderColor = 'rgba(36,48,65,0.35)'; // reduced visibility
-        // In HUD mode reduce flash visibility from 0.27 to 0.18
-        const flashColor = hudOnly ? 'rgba(91,156,255,0.18)' : 'rgba(91,156,255,0.27)';
+        // PHASE 3C: Read grid line colors from CSS variables with fallback
+        // Edge lines (above overlay) - use more transparent Edge tokens
+        const baseBorderColor = getCSSVariable('--grid-line-edge-base', 'rgba(255,255,255,0.12)');
+        const flashColor = getCSSVariable('--grid-line-edge-flash', 'rgba(255,255,255,0.50)');
         ctx.lineWidth = 1;
         if (hudOrLinks) {
           // Draw grid lines only in HUD/Links mode
@@ -3386,9 +1612,11 @@ async function init() {
           ctxBg.clearRect(0,0,vw,vh);
           const isMobile = window.innerWidth <= 767;
           if (hudOnly || linksActive || tourActive || (isMobile && (hudActiveFlag || linksActive))) {
-            // Base opacity same; flash depends on mode (tour brighter)
-            const baseBorderColor = 'rgba(36,48,65,0.35)';
-            const flashColor = tourActive ? 'rgba(91,156,255,0.27)' : 'rgba(91,156,255,0.18)';
+            // PHASE 3C: Read grid line colors from CSS variables with fallback
+            const baseBorderColor = getCSSVariable('--grid-line-base', 'rgba(255,255,255,0.40)');
+            const flashColor = tourActive 
+              ? getCSSVariable('--grid-line-flash', 'rgba(255,255,255,0.95)')
+              : getCSSVariable('--grid-line-flash-hud', 'rgba(255,255,255,0.90)');
             const step = 24;
             // subtle flicker synced with tour logic
             const freq = 12;
@@ -3465,7 +1693,10 @@ async function init() {
       .map(sel => document.querySelector(sel)).filter(Boolean);
     if (moTargets.length) {
       const mo = new MutationObserver(debouncedBuildGrid);
-      moTargets.forEach(t => mo.observe(t, { attributes: true, attributeFilter: ['style', 'class'], subtree: true }));
+      // OPTIMIZATION: Removed subtree: true to prevent infinite loop
+      // Engine updates grid-line styles every frame, which was triggering MutationObserver
+      // Only watch for class changes on the target elements themselves (display/visibility)
+      moTargets.forEach(t => mo.observe(t, { attributes: true, attributeFilter: ['class'], subtree: false }));
     }
     // Watch for hud-active class changes on document root and tour overlay
     const hudObserver = new MutationObserver(() => {
@@ -3486,10 +1717,10 @@ async function init() {
         mutations.forEach((mutation) => {
           if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
             const isHidden = tourOverlay.classList.contains('hidden');
-            if (isHidden) {
-              document.body.classList.remove('tour-active');
-            } else {
-              document.body.classList.add('tour-active');
+            // CRITICAL: Tour no longer modifies global classes
+            // Removed: document.body.classList.remove('tour-active');
+            // Removed: document.body.classList.add('tour-active');
+            if (!isHidden) {
               debouncedBuildGrid(); // rebuild grid when tour opens
             }
             // Trigger grid rebuild
@@ -3519,6 +1750,9 @@ async function init() {
     
     engine.resize(window.innerWidth, window.innerHeight);
     
+    // DIAGNOSTIC: Log layout state at end of init()
+    dumpLayoutSnapshot('end-of-init');
+    
   } catch (error) {
     console.error('[Bootstrap] ❌ Error:', error);
     // Do not replace body; keep app visible for diagnostics
@@ -3527,7 +1761,8 @@ async function init() {
 
 init();
 </script>
-<!-- Service Worker Registration -->
+<!-- Service Worker Registration (disabled for local development to avoid stale CSS/theme cache) -->
+<!--
 <script>
   // Service Worker registration with update notification
   if ('serviceWorker' in navigator) {
@@ -3569,6 +1804,23 @@ init();
   
   // Show update notification
   function showUpdateNotification(worker) {
+    // PHASE 3E: Read colors from CSS variables with fallback
+    const getCSSVariable = (name, fallback) => {
+      try {
+        const value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+        return value || fallback;
+      } catch (e) {
+        return fallback;
+      }
+    };
+    
+    const bannerBg = getCSSVariable('--update-banner-bg', 'rgba(91, 156, 255, 0.95)');
+    const bannerText = getCSSVariable('--update-banner-text', '#ffffff');
+    const bannerShadow = getCSSVariable('--update-banner-shadow', 'rgba(0, 0, 0, 0.3)');
+    const buttonBg = getCSSVariable('--update-banner-btn-bg', '#ffffff');
+    const buttonText = getCSSVariable('--update-banner-btn-text', '#58A6FF');
+    const buttonBorder = getCSSVariable('--update-banner-btn-border', 'rgba(255, 255, 255, 0.5)');
+    
     // Create notification banner
     const banner = document.createElement('div');
     banner.id = 'update-banner';
@@ -3578,11 +1830,11 @@ init();
       left: 50%;
       transform: translateX(-50%);
       z-index: 3000;
-      background: rgba(91, 156, 255, 0.95);
-      color: #fff;
+      background: ${bannerBg};
+      color: ${bannerText};
       padding: 12px 24px;
       border-radius: 0;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 4px 12px ${bannerShadow};
       display: flex;
       align-items: center;
       gap: 16px;
@@ -3594,8 +1846,8 @@ init();
       <span>Доступна новая версия сайта</span>
       <button id="update-btn" style="
         padding: 6px 12px;
-        background: var(--Color/Light/Surface/1);
-        color: var(--Color/Accent/Primary);
+        background: ${buttonBg};
+        color: ${buttonText};
         border: none;
         font-weight: 500;
         cursor: pointer;
@@ -3603,8 +1855,8 @@ init();
       <button id="dismiss-btn" style="
         padding: 6px 12px;
         background: transparent;
-        color: #fff;
-        border: 1px solid rgba(255, 255, 255, 0.5);
+        color: ${bannerText};
+        border: 1px solid ${buttonBorder};
         font-weight: 500;
         cursor: pointer;
       ">Позже</button>
@@ -3641,6 +1893,7 @@ init();
     }
   };
 </script>
+-->
 </body>
 </html>
 

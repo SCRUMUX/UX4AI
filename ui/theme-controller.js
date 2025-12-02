@@ -78,6 +78,24 @@ export function applyThemeById(themeId, options = {}) {
     document.body.classList.add(cls);
   });
   
+  // Verify classes were applied
+  const htmlHasCorrectTheme = themeConfig.cssClasses.html.some(cls => 
+    document.documentElement.classList.contains(cls)
+  );
+  const bodyHasCorrectTheme = themeConfig.cssClasses.body.some(cls => 
+    document.body.classList.contains(cls)
+  );
+  
+  if (!htmlHasCorrectTheme || !bodyHasCorrectTheme) {
+    console.error('[ThemeController] Failed to apply theme classes:', {
+      themeId,
+      htmlClasses: document.documentElement.className,
+      bodyClasses: document.body.className,
+      expectedHtml: themeConfig.cssClasses.html,
+      expectedBody: themeConfig.cssClasses.body
+    });
+  }
+  
   // 4. Update meta theme-color tags for mobile browsers
   const metaThemeColor = document.getElementById('meta-theme-color');
   const metaNavButton = document.getElementById('meta-navbutton-color');
@@ -239,6 +257,25 @@ export function initTheme() {
     updateHash: false,
     reload: false
   });
+  
+  // DIAGNOSTIC: Verify theme classes were applied
+  const htmlHasTheme = document.documentElement.classList.contains('theme-dark') || 
+                       document.documentElement.classList.contains('theme-light');
+  const bodyHasTheme = document.body.classList.contains('theme-dark') || 
+                       document.body.classList.contains('theme-light');
+  
+  if (!htmlHasTheme || !bodyHasTheme) {
+    console.warn('[ThemeController] Theme classes may not have been applied correctly:', {
+      htmlClasses: document.documentElement.className,
+      bodyClasses: document.body.className,
+      expectedTheme: themeId
+    });
+  } else {
+    console.log('[ThemeController] Theme classes verified:', {
+      htmlClasses: document.documentElement.className,
+      bodyClasses: document.body.className
+    });
+  }
   
   return themeId;
 }
